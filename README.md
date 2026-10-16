@@ -1,383 +1,268 @@
-# Media Tracker
+<div align="center">
 
-Media Tracker es una aplicación web para registrar, organizar y compartir las películas, series, libros y videojuegos que consumes.
+# 🎬 Media Tracker
 
-El proyecto combina una biblioteca personal con funciones sociales: perfiles públicos, seguidores, actividad reciente, reviews, favoritos y seguimiento del progreso.
+**Track movies, series, books and games in one place — with personal libraries, reviews, progress tracking and social features.**
 
-Actualmente se encuentra en una etapa temprana de desarrollo.
+[![Status](https://img.shields.io/badge/status-pre--alpha-f59e0b?style=flat-square)](#-project-status)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=000000)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 
-## Demo
+**[🌐 Live app](https://frostiq.app)** · **[📦 Repository](https://github.com/josueterrones2004/media-tracker)**
 
-Media Tracker está desplegado en Vercel:
+</div>
 
-https://media-tracker-five-swart.vercel.app
+---
 
-## Funciones principales
+Media Tracker is a full-stack web application for keeping track of the movies, series, books and video games you consume.
 
-Media Tracker permite gestionar cuatro tipos de contenido:
+The project combines a personal media library with social features such as public profiles, follows, activity feeds, reviews, favorites and progress tracking. It is built as an evolving personal product rather than a finished one, so features and design continue to change as the project grows.
 
-- Películas
-- Series
-- Libros
-- Videojuegos
+> **Language:** the interface is currently available only in **Spanish**. English support and broader localization are planned for a future update.
+>
+> **Project status:** Media Tracker is currently in **pre-alpha** and under active development. It is not a finished product.
 
-Cada usuario puede mantener su propia biblioteca utilizando estados como:
+## ✨ What it includes
 
-- Pendiente
-- Viendo
-- Leyendo
-- Jugando
-- Abandonado
-- Completado / visto / leído
+- 🎬 Movies, series, books and video games in the same library.
+- 📚 Personal status tracking for pending, active, abandoned and completed media.
+- ⭐ Ratings from 0.5 to 5 stars, including half-stars.
+- 👍 Like / dislike reactions on media entries.
+- 📝 Optional written reviews with spoiler support.
+- 🔁 Rewatch, reread and replay tracking.
+- 📺 Episode-level progress for series.
+- 👤 Customizable public profiles with avatar, banner, bio and favorites.
+- 👥 Followers, following, activity feeds and social reviews.
+- 🔔 Notifications and user search.
+- 🔎 Search across movies, series, books, games and users.
+- 📱 Installable PWA experience with standalone mode.
+- 📰 In-app changelog support for new versions.
 
-Los estados activos pueden eliminarse volviendo a pulsarlos.
+---
 
-En el caso de las series, quitar una serie de "Viendo" no elimina los capítulos que ya fueron registrados como vistos.
+## 📚 Personal library
 
-## Reviews y puntuaciones
+Media Tracker supports four types of media:
 
-Los usuarios pueden registrar una película, serie, libro o videojuego aunque no escriban una review.
+- 🎬 Movies
+- 📺 Series
+- 📖 Books
+- 🎮 Video games
 
-Cada registro puede contener:
+Each user can organize their library using states such as:
 
-- Puntuación de 0.5 a 5 estrellas
-- Medias estrellas
+- Pending
+- Watching
+- Reading
+- Playing
+- Abandoned
+- Completed / watched / read
+
+Active states behave like toggles, so selecting the same state again removes the item from that category.
+
+For series, removing a show from **Watching** does not erase the episodes that were already registered as watched.
+
+---
+
+## ⭐ Reviews and ratings
+
+A media entry can be registered even without a written review.
+
+Entries can include:
+
+- A rating from **0.5 to 5 stars**
+- Half-star ratings
 - Like / dislike
-- Review escrita opcional
-- Spoilers
-- Rewatch
-- Relectura
-- Replay
-- Fecha del registro
+- Optional review text
+- Spoiler marking
+- Rewatch, reread or replay information
+- Registration date
 
-Las reviews pueden editarse o eliminarse posteriormente.
+Reviews can be edited or removed later.
 
-El borrado utiliza un diálogo propio de Media Tracker en lugar del popup nativo del navegador.
+Media Tracker uses its own confirmation interface for review deletion instead of relying on the browser's default popup.
 
-## Series
+---
 
-Las series tienen seguimiento individual de episodios.
+## 📺 Series progress
 
-Media Tracker conserva:
+Series include episode-level tracking.
 
-- Temporada
-- Número de episodio
-- Nombre del episodio
-- Fecha de visualización
-- Rewatch
+Media Tracker keeps information such as:
 
-El progreso de episodios se mantiene incluso si la serie deja de estar marcada como "Viendo".
+- Season
+- Episode number
+- Episode title
+- Watch date
+- Rewatch state
 
-## Videojuegos
+Episode history is stored independently from the current library status of the series, so previously watched episodes remain available even if the show is no longer marked as **Watching**.
 
-Los videojuegos pueden estar:
+---
 
-- Jugando
-- Pendientes
-- Abandonados
-- Completados
+## 🎮 Video games
 
-Los juegos completados funcionan como el resto de medios: al pulsar sobre uno se abre directamente su registro/review.
+Games can be organized as:
 
-También es posible registrar replays sin eliminar completados anteriores.
+- Playing
+- Pending
+- Abandoned
+- Completed
 
-## Perfiles
+Completed games behave like the other media types and can open their saved entry or review directly.
 
-Cada usuario dispone de un perfil personalizable con:
+Replay records can also be added without removing previous completions.
 
-- Nombre visible
+---
+
+## 👤 Profiles
+
+Each user has a customizable profile with support for:
+
+- Display name
 - Username
 - Bio
 - Avatar
 - Banner
-- Recorte personalizado de imágenes
-- Películas favoritas
-- Series favoritas
-- Libros favoritos
-- Juegos favoritos
-- Secciones configurables
-- Actividad reciente
-- Seguidores
-- Seguidos
+- Custom image cropping
+- Favorite movies
+- Favorite series
+- Favorite books
+- Favorite games
+- Configurable profile sections
+- Recent activity
+- Followers and following
 
-Los perfiles pueden tener roles especiales como:
+Profiles can also display special roles such as **Owner** and **Beta Tester**.
 
-- Owner
-- Beta Tester
+---
 
-## Social
+## 👥 Social features
 
-Media Tracker incluye funciones sociales para descubrir lo que están consumiendo otros usuarios.
+Media Tracker includes a social layer for discovering what other users are watching, reading and playing.
 
-Actualmente incluye:
+Current social features include:
 
-- Seguir y dejar de seguir usuarios
-- Perfiles públicos
-- Seguidores y seguidos
-- Feed de actividad
-- Likes en actividades
-- Reviews de personas seguidas
-- Notificaciones
-- Búsqueda de usuarios
+- Follow / unfollow
+- Public profiles
+- Followers and following lists
+- Activity feed
+- Likes on activity
+- Reviews from followed users
+- Notifications
+- User search
 
-## Inicio
+The home dashboard also brings together personal library progress, recent activity and reviews from people you follow.
 
-El dashboard principal muestra un resumen de la biblioteca del usuario, incluyendo contenido pendiente o en progreso, actividad reciente y reviews de personas seguidas.
+---
 
-## Búsqueda
+## 🔎 Search and discovery
 
-La aplicación dispone de búsqueda para encontrar:
+The application includes search for:
 
-- Películas
+- Movies
 - Series
-- Libros
-- Videojuegos
-- Usuarios
+- Books
+- Video games
+- Users
 
-## Aplicación instalable
-
-Media Tracker puede instalarse como una aplicación web progresiva.
-
-En navegadores compatibles aparece una opción para instalar Media Tracker directamente desde la web.
-
-Una vez instalada:
-
-- Aparece un icono en la pantalla de inicio
-- Se abre en modo standalone
-- No necesita abrirse manualmente desde una pestaña del navegador
-
-En iPhone y iPad se muestra una pequeña guía explicando cómo usar:
-
-Compartir → Añadir a pantalla de inicio → Añadir
-
-## Changelog dentro de la aplicación
-
-Cuando se publica una nueva versión, Media Tracker puede mostrar automáticamente un changelog al usuario.
-
-El changelog se muestra una sola vez por versión en cada navegador.
+Media data is pulled from external providers including **TMDB**, **Open Library** and **IGDB**.
 
 ---
 
-# Tecnologías
+## 📱 Installable PWA
 
-El proyecto utiliza:
+Media Tracker can be installed as a Progressive Web App.
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- Supabase
-- TMDB
-- Open Library
-- IGDB
-- Vercel
+On supported browsers, the application can show an installation option directly from the site. Once installed, it can:
 
-Supabase se utiliza para autenticación, perfiles, biblioteca, reviews, actividad y funciones sociales.
+- Appear with its own icon on the device.
+- Open in standalone mode.
+- Behave more like an installed application instead of a regular browser tab.
 
----
+On iPhone and iPad, Media Tracker shows a short guide for using:
 
-# Historial del proyecto
-
-## 15 de septiembre de 2026
-
-Se crea el proyecto base utilizando Create Next App.
-
-Esta versión todavía correspondía principalmente al scaffold inicial de Next.js.
-
-## v0.1.0 — 25 de septiembre de 2026
-
-Primera versión funcional de Media Tracker.
-
-### Biblioteca
-
-Se introduce el sistema principal para registrar contenido.
-
-Incluye:
-
-- Películas
-- Series
-- Libros
-- Estados de biblioteca
-- Reviews
-- Like / dislike
-- Rewatch y relectura
-
-### Series
-
-Se añade seguimiento individual de episodios y temporadas.
-
-Los episodios vistos pueden almacenarse de forma independiente al estado general de la serie.
-
-### Perfiles
-
-Se introduce el sistema de perfiles con:
-
-- Avatar
-- Banner
-- Bio
-- Username
-- Favoritos
-- Secciones configurables
-- Actividad reciente
-
-### Social
-
-Se crea la primera versión del sistema social:
-
-- Perfiles públicos
-- Seguidores
-- Seguidos
-- Feed de actividad
-- Likes
-- Reviews sociales
-
-### Juegos
-
-Durante esta primera etapa de desarrollo también se incorpora el seguimiento de videojuegos.
-
-### Navegación y búsqueda
-
-Se añaden las primeras vistas de biblioteca, búsqueda y navegación entre las principales áreas de la aplicación.
+```text
+Share → Add to Home Screen → Add
+```
 
 ---
 
-# Changelog
+## 📰 In-app changelog
 
-## v0.2.0 — 30 de septiembre de 2026
+Media Tracker includes an in-app changelog system for new versions.
 
-Primera actualización importante de Media Tracker.
-
-### Nuevo sistema de puntuaciones
-
-Se añade un sistema de puntuación de cinco estrellas.
-
-Permite utilizar:
-
-- 0.5
-- 1
-- 1.5
-- 2
-- 2.5
-- 3
-- 3.5
-- 4
-- 4.5
-- 5
-
-La puntuación es opcional.
-
-### Reviews opcionales
-
-Ya no es obligatorio escribir texto al registrar contenido.
-
-Ahora es posible guardar un registro únicamente con una puntuación, un like o incluso sin review escrita.
-
-### Edición de reviews
-
-Las reviews existentes pueden modificarse.
-
-Se pueden cambiar:
-
-- Texto
-- Puntuación
-- Like
-- Spoilers
-- Rewatch
-- Relectura
-- Replay
-
-### Eliminación de reviews
-
-Las reviews ahora pueden borrarse desde su modal.
-
-Se reemplaza el diálogo nativo del navegador por un popup diseñado específicamente para Media Tracker.
-
-### Mejor gestión de la biblioteca
-
-Los estados de biblioteca ahora funcionan como toggles.
-
-Si un elemento ya está marcado como:
-
-- Pendiente
-- Viendo
-- Leyendo
-- Jugando
-- Abandonado
-
-volver a pulsar el mismo estado lo elimina de esa categoría.
-
-### Progreso de series persistente
-
-Quitar una serie de "Viendo" ya no afecta los capítulos registrados.
-
-El historial de episodios permanece guardado.
-
-### Mejoras en videojuegos
-
-Los juegos completados ahora abren su review directamente en lugar de redirigir automáticamente a la ficha del juego.
-
-También se mejora el soporte para replays.
-
-### Rediseño visual
-
-Se revisan las principales áreas de Media Tracker:
-
-- Inicio
-- Películas
-- Series
-- Libros
-- Juegos
-- Perfil
-- Social
-- Navegación
-
-Se mejora especialmente el comportamiento responsive y la experiencia en dispositivos móviles.
-
-### Perfiles
-
-Se rediseña la página de perfil.
-
-Se mejora:
-
-- Banner
-- Avatar
-- Distribución de contenido
-- Favoritos
-- Actividad reciente
-- Pendientes
-- Navegación móvil
-- Estadísticas sociales
-
-### Social
-
-Se reorganiza la página Social y la búsqueda de usuarios.
-
-También se mejora la presentación de actividad y reviews.
-
-### PWA
-
-Media Tracker pasa a poder instalarse como aplicación.
-
-Incluye:
-
-- Web App Manifest
-- Icono de aplicación
-- Modo standalone
-- Prompt de instalación en navegadores compatibles
-- Guía específica para instalación en iOS
-
-### Changelog integrado
-
-Se añade un sistema de changelog dentro de Media Tracker.
-
-Cada nueva versión puede mostrar automáticamente sus novedades una única vez al usuario.
+When a new version is published, the application can show its changes automatically and remember that the changelog has already been seen in that browser.
 
 ---
 
-# Estado del proyecto
+## 🧰 Tech stack
 
-Media Tracker continúa en una etapa pre-alpha.
+| Area | Technologies |
+| --- | --- |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS |
+| Backend / Data | Supabase, PostgreSQL |
+| Media providers | TMDB, Open Library, IGDB |
+| Deployment | Vercel |
 
-La aplicación puede contener errores, funciones incompletas y cambios de diseño o comportamiento entre versiones.
+Supabase is used for authentication, profiles, library data, reviews, activity and social features.
 
-El proyecto se desarrolla principalmente como proyecto personal y de portfolio.
+---
+
+## 🚧 Project status
+
+Media Tracker is a **pre-alpha project in constant evolution**.
+
+It is not intended to represent a finished commercial product yet. Features may be incomplete, redesigned, replaced or removed while the application continues to evolve.
+
+Current development focuses on improving the overall product experience, refining existing systems and expanding the platform over time.
+
+### 🌍 Language support
+
+The application interface is currently available only in **Spanish**.
+
+English support is planned for a future version, with the goal of making the interface easier to localize into additional languages later on.
+
+---
+
+## 🗓️ Development history
+
+### v0.1.0 — September 25, 2026
+
+The first functional version introduced the core Media Tracker experience:
+
+- Movies, series and books.
+- Personal library states.
+- Reviews and like / dislike reactions.
+- Rewatch and reread tracking.
+- Episode tracking for series.
+- Custom profiles and favorites.
+- Public profiles, follows and activity feeds.
+- Early video game support.
+- Initial search and navigation.
+
+### v0.2.0 — September 30, 2026
+
+The first major update expanded and refined the application with:
+
+- Half-star ratings from 0.5 to 5.
+- Optional written reviews.
+- Review editing and deletion.
+- Toggle-based library states.
+- Persistent episode history for series.
+- Improved replay support for games.
+- Major responsive and mobile UI improvements.
+- Redesigned profiles and social pages.
+- PWA installation support.
+- In-app changelog support.
+
+---
+
+## 🧪 Early-stage software
+
+Because Media Tracker is still in pre-alpha, you may encounter bugs, unfinished features or behavior that changes between versions.
+
+That is expected at this stage of the project — the application is being actively built, tested and refined over time.
