@@ -1,103 +1,223 @@
 "use client";
 
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
-import Image from "next/image";
-
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
 import {
   Eye,
   EyeOff,
   Heart,
   HeartCrack,
+  Pencil,
+  Save,
   ShieldAlert,
   ShieldCheck,
   Trash2,
-  Pencil,
-  Save,
   X,
 } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import Link from "next/link";
+
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  useState,
+} from "react";
+
+import StarRating from "@/components/media/StarRating";
+
+import {
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
+
+import {
+  createClient,
+} from "@/lib/supabase/client";
 
 type Review = {
   id: string;
   external_id: string;
   title: string;
 
-  cover_url: string | null;
-  release_year: number | null;
+  cover_url:
+    | string
+    | null;
+
+  cover_position_x?:
+    number;
+
+  cover_position_y?:
+    number;
+
+  cover_zoom?:
+    number;
+
+  release_year:
+    | number
+    | null;
+
+  rating:
+    | number
+    | null;
 
   liked: boolean;
   is_rewatch: boolean;
   contains_spoilers: boolean;
 
-  show_consumed_date: boolean;
   consumed_at: string;
 
-  review_text: string;
+  review_text:
+    | string
+    | null;
 };
 
 export default function ReviewModalCard({
   review,
 }: {
-  review: Review;
+  review:
+    Review;
 }) {
-  const router = useRouter();
-  const supabase = createClient();
+  const router =
+    useRouter();
 
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const supabase =
+    createClient();
 
-  const [reviewText, setReviewText] = useState(
-    review.review_text
-  );
+  const [
+    open,
+    setOpen,
+  ] =
+    useState(
+      false
+    );
 
-  const [liked, setLiked] = useState(
-    review.liked
-  );
+  const [
+    editing,
+    setEditing,
+  ] =
+    useState(
+      false
+    );
 
-  const [isRewatch, setIsRewatch] = useState(
-    review.is_rewatch
-  );
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    message,
+    setMessage,
+  ] =
+    useState(
+      ""
+    );
+
+  const [
+    confirmDelete,
+    setConfirmDelete,
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    reviewText,
+    setReviewText,
+  ] =
+    useState(
+      review.review_text ??
+        ""
+    );
+
+  const [
+    rating,
+    setRating,
+  ] =
+    useState<
+      number |
+      null
+    >(
+      review.rating
+    );
+
+  const [
+    liked,
+    setLiked,
+  ] =
+    useState(
+      review.liked
+    );
+
+  const [
+    isRewatch,
+    setIsRewatch,
+  ] =
+    useState(
+      review.is_rewatch
+    );
 
   const [
     containsSpoilers,
     setContainsSpoilers,
-  ] = useState(
-    review.contains_spoilers
-  );
-
-  const [showDate, setShowDate] = useState(
-    review.show_consumed_date
-  );
+  ] =
+    useState(
+      review.contains_spoilers
+    );
 
   const [
     spoilersRevealed,
     setSpoilersRevealed,
-  ] = useState(
-    !review.contains_spoilers
-  );
+  ] =
+    useState(
+      !review.contains_spoilers
+    );
 
-  function formatDate(date: string) {
-    return new Intl.DateTimeFormat("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(
-      new Date(`${date}T12:00:00`)
+  const coverPositionX =
+    review.cover_position_x ??
+    50;
+
+  const coverPositionY =
+    review.cover_position_y ??
+    50;
+
+  const coverZoom =
+    review.cover_zoom ??
+    1;
+
+  function formatDate(
+    date:
+      string
+  ) {
+    return new Intl.DateTimeFormat(
+      "es-MX",
+      {
+        day:
+          "2-digit",
+
+        month:
+          "short",
+
+        year:
+          "numeric",
+      }
+    ).format(
+      new Date(
+        `${date}T12:00:00`
+      )
     );
   }
 
-  function openModal() {
-    setEditing(false);
-
+  function resetValues() {
     setReviewText(
-      review.review_text
+      review.review_text ??
+        ""
+    );
+
+    setRating(
+      review.rating
     );
 
     setLiked(
@@ -111,106 +231,144 @@ export default function ReviewModalCard({
     setContainsSpoilers(
       review.contains_spoilers
     );
+  }
 
-    setShowDate(
-      review.show_consumed_date
+  function openModal() {
+    setEditing(
+      false
     );
+
+    resetValues();
 
     setSpoilersRevealed(
       !review.contains_spoilers
     );
 
-    setMessage("");
+    setConfirmDelete(
+      false
+    );
 
-    setOpen(true);
+    setMessage(
+      ""
+    );
+
+    setOpen(
+      true
+    );
   }
 
   function closeModal() {
-    if (loading) return;
+    if (
+      loading
+    ) {
+      return;
+    }
 
-    setOpen(false);
-    setEditing(false);
-    setMessage("");
+    setOpen(
+      false
+    );
+
+    setEditing(
+      false
+    );
+
+    setConfirmDelete(
+      false
+    );
+
+    setMessage(
+      ""
+    );
   }
 
   function cancelEditing() {
-    setReviewText(
-      review.review_text
+    resetValues();
+
+    setEditing(
+      false
     );
 
-    setLiked(
-      review.liked
+    setMessage(
+      ""
     );
-
-    setIsRewatch(
-      review.is_rewatch
-    );
-
-    setContainsSpoilers(
-      review.contains_spoilers
-    );
-
-    setShowDate(
-      review.show_consumed_date
-    );
-
-    setEditing(false);
-    setMessage("");
   }
 
   async function saveChanges() {
-    if (!reviewText.trim()) {
+    if (
+      loading
+    ) {
+      return;
+    }
+
+    setLoading(
+      true
+    );
+
+    setMessage(
+      ""
+    );
+
+    const {
+      error,
+    } =
+      await supabase
+        .from(
+          "reviews"
+        )
+        .update({
+          review_text:
+            reviewText.trim() ||
+            null,
+
+          rating,
+
+          liked,
+
+          is_rewatch:
+            isRewatch,
+
+          contains_spoilers:
+            containsSpoilers,
+
+          experience:
+            isRewatch
+              ? "REWATCH"
+              : "FIRST_TIME",
+
+          updated_at:
+            new Date()
+              .toISOString(),
+        })
+        .eq(
+          "id",
+          review.id
+        );
+
+    if (
+      error
+    ) {
       setMessage(
-        "La review no puede estar vacía."
+        error.message
+      );
+
+      setLoading(
+        false
       );
 
       return;
     }
 
-    setLoading(true);
-    setMessage("");
-
-    const { error } = await supabase
-      .from("reviews")
-      .update({
-        review_text:
-          reviewText.trim(),
-
-        liked,
-
-        is_rewatch:
-          isRewatch,
-
-        contains_spoilers:
-          containsSpoilers,
-
-        show_consumed_date:
-          showDate,
-
-        experience:
-          isRewatch
-            ? "REWATCH"
-            : "FIRST_TIME",
-
-        updated_at:
-          new Date().toISOString(),
-      })
-      .eq("id", review.id);
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-
-      return;
-    }
-
-    setEditing(false);
+    setEditing(
+      false
+    );
 
     setSpoilersRevealed(
       !containsSpoilers
     );
 
-    setLoading(false);
+    setLoading(
+      false
+    );
 
     setMessage(
       "Review actualizada."
@@ -220,223 +378,302 @@ export default function ReviewModalCard({
   }
 
   async function deleteReview() {
-    const confirmed =
-      window.confirm(
-        "¿Seguro que quieres borrar esta review? Esta acción no se puede deshacer."
+    if (
+      loading
+    ) {
+      return;
+    }
+
+    setLoading(
+      true
+    );
+
+    setMessage(
+      ""
+    );
+
+    const {
+      error,
+    } =
+      await supabase
+        .from(
+          "reviews"
+        )
+        .delete()
+        .eq(
+          "id",
+          review.id
+        );
+
+    if (
+      error
+    ) {
+      setMessage(
+        error.message
       );
 
-    if (!confirmed) {
-      return;
-    }
+      setLoading(
+        false
+      );
 
-    setLoading(true);
-    setMessage("");
-
-    const { error } = await supabase
-      .from("reviews")
-      .delete()
-      .eq("id", review.id);
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
+      setConfirmDelete(
+        false
+      );
 
       return;
     }
 
-    setLoading(false);
-    setOpen(false);
+    setLoading(
+      false
+    );
+
+    setConfirmDelete(
+      false
+    );
+
+    setOpen(
+      false
+    );
 
     router.refresh();
   }
 
+  const hasText =
+    reviewText
+      .trim()
+      .length >
+    0;
+
   return (
     <>
-      {/* CARD */}
       <div>
         <button
           type="button"
-          onClick={openModal}
+          onClick={
+            openModal
+          }
           className="block w-full text-left"
         >
           <MovieCover
-            title={review.title}
-            coverUrl={review.cover_url}
+            title={
+              review.title
+            }
+            coverUrl={
+              review.cover_url
+            }
+            positionX={
+              coverPositionX
+            }
+            positionY={
+              coverPositionY
+            }
+            zoom={
+              coverZoom
+            }
           />
         </button>
 
-        <div className="mt-2 flex items-center gap-3 text-zinc-500">
-          {review.liked ? (
-            <Heart
-              size={17}
-              fill="currentColor"
+        <div className="mt-2">
+          {review.rating !==
+            null && (
+            <StarRating
+              value={
+                review.rating
+              }
+              readonly
+              size={
+                16
+              }
+              showLabel={
+                false
+              }
             />
-          ) : (
-            <HeartCrack size={17} />
           )}
 
-          {review.is_rewatch ? (
-            <Eye size={17} />
-          ) : (
-            <EyeOff size={17} />
-          )}
+          <div className="mt-1 flex items-center gap-3 text-zinc-500">
+            {review.liked ? (
+              <Heart
+                size={
+                  17
+                }
+                fill="currentColor"
+                className="text-red-500"
+              />
+            ) : (
+              <HeartCrack
+                size={
+                  17
+                }
+              />
+            )}
 
-          {review.contains_spoilers ? (
-            <ShieldAlert size={17} />
-          ) : (
-            <ShieldCheck size={17} />
-          )}
+            {review.is_rewatch ? (
+              <Eye
+                size={
+                  17
+                }
+              />
+            ) : (
+              <EyeOff
+                size={
+                  17
+                }
+              />
+            )}
+
+            {review.contains_spoilers ? (
+              <ShieldAlert
+                size={
+                  17
+                }
+              />
+            ) : (
+              <ShieldCheck
+                size={
+                  17
+                }
+              />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* MODAL */}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
-          onMouseDown={closeModal}
+          onMouseDown={
+            closeModal
+          }
         >
           <div
-            className="relative max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-7 shadow-2xl"
-            onMouseDown={(event) =>
+            className="relative max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl sm:p-7"
+            onMouseDown={(
+              event
+            ) =>
               event.stopPropagation()
             }
           >
-            {/* CERRAR */}
             <button
               type="button"
-              onClick={closeModal}
-              className="absolute right-5 top-5 text-zinc-500 transition hover:text-white"
+              onClick={
+                closeModal
+              }
+              disabled={
+                loading
+              }
+              className="absolute right-5 top-5 text-zinc-500 transition hover:text-white disabled:opacity-50"
+              aria-label="Cerrar"
             >
-              <X size={26} />
+              <X
+                size={
+                  26
+                }
+              />
             </button>
 
-            <div className="grid gap-8 md:grid-cols-[170px_1fr] md:items-stretch">
-
-              {/* PORTADA */}
-              <div className="flex h-full items-center justify-center">
+            <div className="grid gap-8 md:grid-cols-[170px_1fr]">
+              <div className="flex items-start justify-center md:pt-14">
                 <div className="w-full max-w-[150px]">
-                  {review.cover_url ? (
-                    <Link
-                      href={`/movies/${review.external_id}`}
-                      onClick={() =>
-                        setOpen(false)
+                  <Link
+                    href={`/movies/${review.external_id}`}
+                    onClick={() =>
+                      setOpen(
+                        false
+                      )
+                    }
+                  >
+                    <MovieCover
+                      title={
+                        review.title
                       }
-                      className="block"
-                    >
-                      <Image
-                        src={review.cover_url}
-                        alt={review.title}
-                        className="w-full rounded-xl border border-transparent object-cover shadow-xl transition-colors duration-200 hover:border-zinc-400"
-                      
-          width={500}
-          height={750}
-          unoptimized={shouldUseOriginalImage(review.cover_url)}
-        />
-                    </Link>
-                  ) : (
-                    <Link
-                      href={`/movies/${review.external_id}`}
-                      onClick={() =>
-                        setOpen(false)
+                      coverUrl={
+                        review.cover_url
                       }
-                      className="flex aspect-[2/3] w-full items-center justify-center rounded-xl border border-transparent bg-zinc-900 text-zinc-500 transition-colors duration-200 hover:border-zinc-400"
-                    >
-                      Sin imagen
-                    </Link>
-                  )}
+                      positionX={
+                        coverPositionX
+                      }
+                      positionY={
+                        coverPositionY
+                      }
+                      zoom={
+                        coverZoom
+                      }
+                    />
+                  </Link>
                 </div>
               </div>
 
-              {/* CONTENIDO */}
               <div className="min-w-0">
-
-                {/* TITULO */}
                 <div className="flex flex-wrap items-baseline gap-3 pr-10">
                   <h2 className="text-2xl font-bold">
-                    {review.title}
+                    {
+                      review.title
+                    }
                   </h2>
 
                   {review.release_year && (
                     <span className="text-lg text-zinc-500">
-                      {review.release_year}
+                      {
+                        review.release_year
+                      }
                     </span>
                   )}
                 </div>
 
-                {/* FECHA */}
-                {editing ? (
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowDate(
-                          !showDate
-                        )
-                      }
-                      className="flex items-center gap-3 text-sm text-zinc-300"
-                    >
-                      <span
-                        className={`flex h-5 w-5 items-center justify-center rounded-sm border transition ${
-                          showDate
-                            ? "border-zinc-300 bg-zinc-300"
-                            : "border-zinc-600 bg-transparent"
-                        }`}
-                      >
-                        {showDate && (
-                          <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#111827"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m5 12 4 4L19 6" />
-                          </svg>
-                        )}
-                      </span>
+                <p className="mt-2 text-sm text-zinc-500">
+                  Vista el{" "}
+                  <span className="text-zinc-300">
+                    {formatDate(
+                      review.consumed_at
+                    )}
+                  </span>
+                </p>
 
-                      <span>
-                        Watched on
-                      </span>
-                    </button>
+                <div className="mt-6">
+                  <StarRating
+                    value={
+                      rating
+                    }
+                    readonly={
+                      !editing
+                    }
+                    onChange={
+                      editing
+                        ? setRating
+                        : undefined
+                    }
+                    size={
+                      32
+                    }
+                  />
+                </div>
 
-                    <span className="rounded bg-zinc-800 px-2.5 py-1 text-sm text-zinc-200">
-                      {formatDate(
-                        review.consumed_at
-                      )}
-                    </span>
-                  </div>
-                ) : (
-                  showDate && (
-                    <p className="mt-2 text-sm text-zinc-500">
-                      Vista el{" "}
-                      {formatDate(
-                        review.consumed_at
-                      )}
-                    </p>
-                  )
-                )}
-
-                {/* ICONOS */}
-                <div className="mt-6 flex flex-wrap items-start gap-10">
+                <div className="mt-7 flex flex-wrap items-start gap-8">
                   <ReviewToggle
-                    editing={editing}
-                    active={liked}
+                    editing={
+                      editing
+                    }
+                    active={
+                      liked
+                    }
                     onClick={() =>
-                      setLiked(!liked)
+                      setLiked(
+                        !liked
+                      )
                     }
                     icon={
                       liked ? (
                         <Heart
-                          size={30}
+                          size={
+                            30
+                          }
                           fill="currentColor"
                         />
                       ) : (
                         <HeartCrack
-                          size={30}
+                          size={
+                            30
+                          }
                         />
                       )
                     }
@@ -448,8 +685,12 @@ export default function ReviewModalCard({
                   />
 
                   <ReviewToggle
-                    editing={editing}
-                    active={isRewatch}
+                    editing={
+                      editing
+                    }
+                    active={
+                      isRewatch
+                    }
                     onClick={() =>
                       setIsRewatch(
                         !isRewatch
@@ -457,9 +698,17 @@ export default function ReviewModalCard({
                     }
                     icon={
                       isRewatch ? (
-                        <Eye size={30} />
+                        <Eye
+                          size={
+                            30
+                          }
+                        />
                       ) : (
-                        <EyeOff size={30} />
+                        <EyeOff
+                          size={
+                            30
+                          }
+                        />
                       )
                     }
                     label={
@@ -470,7 +719,9 @@ export default function ReviewModalCard({
                   />
 
                   <ReviewToggle
-                    editing={editing}
+                    editing={
+                      editing
+                    }
                     active={
                       containsSpoilers
                     }
@@ -482,11 +733,15 @@ export default function ReviewModalCard({
                     icon={
                       containsSpoilers ? (
                         <ShieldAlert
-                          size={30}
+                          size={
+                            30
+                          }
                         />
                       ) : (
                         <ShieldCheck
-                          size={30}
+                          size={
+                            30
+                          }
                         />
                       )
                     }
@@ -498,24 +753,33 @@ export default function ReviewModalCard({
                   />
                 </div>
 
-                {/* REVIEW */}
                 <div className="mt-8">
                   {editing ? (
                     <textarea
-                      value={reviewText}
-                      onChange={(event) =>
+                      value={
+                        reviewText
+                      }
+                      onChange={(
+                        event
+                      ) =>
                         setReviewText(
                           event.target.value
                         )
                       }
-                      rows={7}
+                      placeholder="Escribe tu review..."
+                      rows={
+                        6
+                      }
                       className="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 p-4 leading-7 text-zinc-200 outline-none transition focus:border-fuchsia-500"
                     />
-                  ) : containsSpoilers &&
+                  ) : hasText &&
+                    containsSpoilers &&
                     !spoilersRevealed ? (
                     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-center">
                       <ShieldAlert
-                        size={32}
+                        size={
+                          32
+                        }
                         className="mx-auto text-zinc-400"
                       />
 
@@ -539,30 +803,48 @@ export default function ReviewModalCard({
                         Mostrar review
                       </button>
                     </div>
-                  ) : (
+                  ) : hasText ? (
                     <div className="rounded-xl bg-zinc-900/40 p-5">
                       <p className="whitespace-pre-wrap leading-7 text-zinc-300">
-                        {reviewText}
+                        {
+                          reviewText
+                        }
                       </p>
                     </div>
+                  ) : (
+                    <p className="text-sm italic text-zinc-600">
+                      Sin review escrita.
+                    </p>
                   )}
                 </div>
 
                 {message && (
                   <p className="mt-4 text-sm text-zinc-400">
-                    {message}
+                    {
+                      message
+                    }
                   </p>
                 )}
 
-                {/* BOTONES */}
                 <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
                   <button
                     type="button"
-                    onClick={deleteReview}
-                    disabled={loading}
+                    onClick={() =>
+                      setConfirmDelete(
+                        true
+                      )
+                    }
+                    disabled={
+                      loading
+                    }
                     className="flex items-center gap-2 rounded-xl border border-red-900/50 px-4 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-950/30 disabled:opacity-50"
                   >
-                    <Trash2 size={17} />
+                    <Trash2
+                      size={
+                        17
+                      }
+                    />
+
                     Borrar
                   </button>
 
@@ -571,12 +853,21 @@ export default function ReviewModalCard({
                       <button
                         type="button"
                         onClick={() =>
-                          setEditing(true)
+                          setEditing(
+                            true
+                          )
                         }
-                        disabled={loading}
+                        disabled={
+                          loading
+                        }
                         className="flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-900 disabled:opacity-50"
                       >
-                        <Pencil size={17} />
+                        <Pencil
+                          size={
+                            17
+                          }
+                        />
+
                         Editar
                       </button>
                     ) : (
@@ -604,7 +895,11 @@ export default function ReviewModalCard({
                           }
                           className="flex items-center gap-2 rounded-xl bg-fuchsia-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
                         >
-                          <Save size={17} />
+                          <Save
+                            size={
+                              17
+                            }
+                          />
 
                           {loading
                             ? "Guardando..."
@@ -619,6 +914,91 @@ export default function ReviewModalCard({
           </div>
         </div>
       )}
+
+      {open &&
+        confirmDelete && (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onMouseDown={() => {
+              if (
+                !loading
+              ) {
+                setConfirmDelete(
+                  false
+                );
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl"
+              onMouseDown={(
+                event
+              ) =>
+                event.stopPropagation()
+              }
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                <Trash2
+                  size={
+                    21
+                  }
+                />
+              </div>
+
+              <h3 className="mt-5 text-xl font-semibold text-zinc-100">
+                ¿Borrar review?
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                La review de{" "}
+                <span className="font-medium text-zinc-300">
+                  {
+                    review.title
+                  }
+                </span>{" "}
+                se eliminará permanentemente. Esta acción no se puede deshacer.
+              </p>
+
+              <div className="mt-7 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setConfirmDelete(
+                      false
+                    )
+                  }
+                  disabled={
+                    loading
+                  }
+                  className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    deleteReview
+                  }
+                  disabled={
+                    loading
+                  }
+                  className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2
+                    size={
+                      16
+                    }
+                  />
+
+                  {loading
+                    ? "Borrando..."
+                    : "Borrar review"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </>
   );
 }
@@ -630,17 +1010,30 @@ function ReviewToggle({
   icon,
   label,
 }: {
-  editing: boolean;
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
+  editing:
+    boolean;
+
+  active:
+    boolean;
+
+  onClick:
+    () => void;
+
+  icon:
+    React.ReactNode;
+
+  label:
+    string;
 }) {
   return (
     <button
       type="button"
-      disabled={!editing}
-      onClick={onClick}
+      disabled={
+        !editing
+      }
+      onClick={
+        onClick
+      }
       className={`flex min-w-[90px] flex-col items-center gap-2 text-center ${
         editing
           ? "cursor-pointer"
@@ -651,10 +1044,14 @@ function ReviewToggle({
           : "text-zinc-500"
       }`}
     >
-      {icon}
+      {
+        icon
+      }
 
       <span className="text-xs">
-        {label}
+        {
+          label
+        }
       </span>
     </button>
   );
@@ -663,24 +1060,54 @@ function ReviewToggle({
 function MovieCover({
   title,
   coverUrl,
+  positionX,
+  positionY,
+  zoom,
 }: {
-  title: string;
-  coverUrl: string | null;
+  title:
+    string;
+
+  coverUrl:
+    | string
+    | null;
+
+  positionX:
+    number;
+
+  positionY:
+    number;
+
+  zoom:
+    number;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition-colors duration-200 hover:border-zinc-400">
+    <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition-colors duration-200 hover:border-zinc-400">
       {coverUrl ? (
         <Image
-          src={coverUrl}
-          alt={title}
-          className="aspect-[2/3] w-full object-cover"
-        
-          width={500}
-          height={750}
-          unoptimized={shouldUseOriginalImage(coverUrl)}
+          src={
+            coverUrl
+          }
+          alt={
+            title
+          }
+          fill
+          sizes="(max-width: 768px) 40vw, 150px"
+          unoptimized={
+            shouldUseOriginalImage(
+              coverUrl
+            )
+          }
+          className="object-cover"
+          style={{
+            objectPosition:
+              `${positionX}% ${positionY}%`,
+
+            transform:
+              `scale(${zoom})`,
+          }}
         />
       ) : (
-        <div className="flex aspect-[2/3] items-center justify-center bg-zinc-800 px-4 text-center text-zinc-500">
+        <div className="flex h-full w-full items-center justify-center bg-zinc-800 px-4 text-center text-zinc-500">
           Sin imagen
         </div>
       )}

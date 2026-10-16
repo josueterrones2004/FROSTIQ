@@ -1,11 +1,26 @@
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import {
+  redirect,
+} from "next/navigation";
 
-import ReviewModalCard from "./ReviewModalCard";
+import LibraryReviewModalCard, {
+  type LibraryReview,
+} from "@/components/media/LibraryReviewModalCard";
+
+import {
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
+
+import {
+  getMediaArtworkOverrides,
+  type MediaArtworkOverride,
+} from "@/lib/media-artwork";
+
+import {
+  createClient,
+} from "@/lib/supabase/server";
 
 type LibraryBook = {
   id: string;
@@ -20,127 +35,160 @@ type LibraryBook = {
     | "DROPPED";
 };
 
-type ReviewRow = {
-  id: string;
-  external_id: string;
-  title: string;
-  cover_url: string | null;
+type ArtworkProps = {
+  coverUrl:
+    | string
+    | null;
 
-  liked: boolean;
-  is_rewatch: boolean;
-  contains_spoilers: boolean;
+  positionX:
+    number;
 
-  show_consumed_date: boolean;
-  consumed_at: string;
+  positionY:
+    number;
 
-  review_text: string;
-  created_at: string;
+  zoom:
+    number;
 };
+
+function getArtwork(
+  original:
+    string |
+    null,
+
+  override:
+    MediaArtworkOverride |
+    undefined
+): ArtworkProps {
+  return {
+    coverUrl:
+      override
+        ?.poster_url ??
+      original,
+
+    positionX:
+      override
+        ?.poster_position_x ??
+      50,
+
+    positionY:
+      override
+        ?.poster_position_y ??
+      50,
+
+    zoom:
+      override
+        ?.poster_zoom ??
+      1,
+  };
+}
 
 export default async function BooksPage() {
   const supabase =
     await createClient();
 
   const {
-    data: { user },
+    data: {
+      user,
+    },
   } =
     await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth");
+    redirect(
+      "/auth"
+    );
   }
 
-  /*
-   * LIBROS EN BIBLIOTECA
-   */
-  const {
-    data: libraryRows,
-    error: libraryError,
-  } =
-    await supabase
-      .from("library_items")
-      .select(`
-        id,
-        external_id,
-        title,
-        cover_url,
-        release_year,
-        status
-      `)
-      .eq(
-        "user_id",
-        user.id
-      )
-      .eq(
-        "media_type",
-        "BOOK"
-      )
-      .in(
-        "status",
-        [
-          "PENDING",
-          "IN_PROGRESS",
-          "DROPPED",
-        ]
-      )
-      .order(
-        "updated_at",
-        {
-          ascending: false,
-        }
-      );
+  const [
+    libraryResult,
+    reviewsResult,
+  ] =
+    await Promise.all([
+      supabase
+        .from(
+          "library_items"
+        )
+        .select(`
+          id,
+          external_id,
+          title,
+          cover_url,
+          release_year,
+          status
+        `)
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "media_type",
+          "BOOK"
+        )
+        .in(
+          "status",
+          [
+            "PENDING",
+            "IN_PROGRESS",
+            "DROPPED",
+          ]
+        )
+        .order(
+          "updated_at",
+          {
+            ascending:
+              false,
+          }
+        ),
 
-  /*
-   * LIBROS LEÍDOS
-   */
-  const {
-    data: reviewRows,
-    error: reviewsError,
-  } =
-    await supabase
-      .from("reviews")
-      .select(`
-        id,
-        external_id,
-        title,
-        cover_url,
-        liked,
-        is_rewatch,
-        contains_spoilers,
-        show_consumed_date,
-        consumed_at,
-        review_text,
-        created_at
-      `)
-      .eq(
-        "user_id",
-        user.id
-      )
-      .eq(
-        "media_type",
-        "BOOK"
-      )
-      .order(
-        "consumed_at",
-        {
-          ascending: false,
-        }
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false,
-        }
-      );
+      supabase
+        .from(
+          "reviews"
+        )
+        .select(`
+          id,
+          external_id,
+          title,
+          cover_url,
+          release_year,
+          rating,
+          liked,
+          is_rewatch,
+          contains_spoilers,
+          consumed_at,
+          review_text
+        `)
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "media_type",
+          "BOOK"
+        )
+        .order(
+          "consumed_at",
+          {
+            ascending:
+              false,
+          }
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false,
+          }
+        ),
+    ]);
 
   if (
-    libraryError ||
-    reviewsError
+    libraryResult.error ||
+    reviewsResult.error
   ) {
     console.error(
       "Error loading books:",
-      libraryError,
-      reviewsError
+      libraryResult.error,
+      reviewsResult.error
     );
 
     return (
@@ -157,30 +205,96 @@ export default async function BooksPage() {
   }
 
   const books =
-    (libraryRows ??
-      []) as LibraryBook[];
+    (
+      libraryResult.data ??
+      []
+    ) as LibraryBook[];
 
   const readBooks =
-    (reviewRows ??
-      []) as ReviewRow[];
+    (
+      reviewsResult.data ??
+      []
+    ) as LibraryReview[];
+
+  const overrides =
+    await getMediaArtworkOverrides(
+      "book",
+      [
+        ...books.map(
+          (
+            book
+          ) =>
+            book.external_id
+        ),
+
+        ...readBooks.map(
+          (
+            review
+          ) =>
+            review.external_id
+        ),
+      ]
+    );
+
+  const readBooksWithArtwork =
+    readBooks.map(
+      (
+        review
+      ) => {
+        const override =
+          overrides.get(
+            review.external_id
+          );
+
+        return {
+          ...review,
+
+          cover_url:
+            override
+              ?.poster_url ??
+            review.cover_url,
+
+          cover_position_x:
+            override
+              ?.poster_position_x ??
+            50,
+
+          cover_position_y:
+            override
+              ?.poster_position_y ??
+            50,
+
+          cover_zoom:
+            override
+              ?.poster_zoom ??
+            1,
+        };
+      }
+    );
 
   const reading =
     books.filter(
-      (book) =>
+      (
+        book
+      ) =>
         book.status ===
         "IN_PROGRESS"
     );
 
   const pending =
     books.filter(
-      (book) =>
+      (
+        book
+      ) =>
         book.status ===
         "PENDING"
     );
 
   const dropped =
     books.filter(
-      (book) =>
+      (
+        book
+      ) =>
         book.status ===
         "DROPPED"
     );
@@ -193,41 +307,46 @@ export default async function BooksPage() {
         </h1>
 
         <p className="mt-2 text-zinc-400">
-          Mis libros leyendo, leídos,
-          pendientes y abandonados
+          Mis libros leyendo, leídos, pendientes y abandonados
         </p>
       </div>
 
-      {/* LEYENDO */}
       <LibrarySection
         title="Leyendo"
-        books={reading}
+        books={
+          reading
+        }
+        overrides={
+          overrides
+        }
         emptyText="No estás leyendo ningún libro actualmente."
         label="Leyendo"
       />
 
-      {/* LEÍDOS */}
       <section className="mt-14">
         <h2 className="text-xl font-semibold">
           Leídos
         </h2>
 
-        {readBooks.length ===
+        {readBooksWithArtwork.length ===
         0 ? (
           <p className="mt-4 text-zinc-500">
             Todavía no has marcado ningún libro como leído.
           </p>
         ) : (
           <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {readBooks.map(
-              (review) => (
-                <ReviewModalCard
+            {readBooksWithArtwork.map(
+              (
+                review
+              ) => (
+                <LibraryReviewModalCard
                   key={
                     review.id
                   }
                   review={
                     review
                   }
+                  mediaType="BOOK"
                 />
               )
             )}
@@ -235,18 +354,26 @@ export default async function BooksPage() {
         )}
       </section>
 
-      {/* PENDIENTES */}
       <LibrarySection
         title="Pendientes"
-        books={pending}
+        books={
+          pending
+        }
+        overrides={
+          overrides
+        }
         emptyText="No tienes libros pendientes."
         label="Pendiente"
       />
 
-      {/* ABANDONADOS */}
       <LibrarySection
         title="Abandonados"
-        books={dropped}
+        books={
+          dropped
+        }
+        overrides={
+          overrides
+        }
         emptyText="No tienes libros abandonados."
         label="Abandonado"
       />
@@ -257,34 +384,63 @@ export default async function BooksPage() {
 function LibrarySection({
   title,
   books,
+  overrides,
   emptyText,
   label,
 }: {
-  title: string;
-  books: LibraryBook[];
-  emptyText: string;
-  label: string;
+  title:
+    string;
+
+  books:
+    LibraryBook[];
+
+  overrides:
+    Map<
+      string,
+      MediaArtworkOverride
+    >;
+
+  emptyText:
+    string;
+
+  label:
+    string;
 }) {
   return (
     <section className="mt-14">
       <h2 className="text-xl font-semibold">
-        {title}
+        {
+          title
+        }
       </h2>
 
-      {books.length === 0 ? (
+      {books.length ===
+      0 ? (
         <p className="mt-4 text-zinc-500">
-          {emptyText}
+          {
+            emptyText
+          }
         </p>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
           {books.map(
-            (book) => (
+            (
+              book
+            ) => (
               <BookLibraryCard
                 key={
                   book.id
                 }
                 book={
                   book
+                }
+                artwork={
+                  getArtwork(
+                    book.cover_url,
+                    overrides.get(
+                      book.external_id
+                    )
+                  )
                 }
                 label={
                   label
@@ -300,33 +456,50 @@ function LibrarySection({
 
 function BookLibraryCard({
   book,
+  artwork,
   label,
 }: {
-  book: LibraryBook;
-  label: string;
+  book:
+    LibraryBook;
+
+  artwork:
+    ArtworkProps;
+
+  label:
+    string;
 }) {
   return (
     <Link
       href={`/books/${book.external_id}`}
       className="group block"
     >
-      <div className="overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition-colors duration-200 group-hover:border-zinc-400">
-        {book.cover_url ? (
+      <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition group-hover:border-zinc-400">
+        {artwork.coverUrl ? (
           <Image
             src={
-              book.cover_url
+              artwork.coverUrl
             }
             alt={
               book.title
             }
-            className="aspect-[2/3] w-full object-cover"
-          
-          width={500}
-          height={750}
-          unoptimized={shouldUseOriginalImage(book.cover_url)}
-        />
+            fill
+            sizes="250px"
+            unoptimized={
+              shouldUseOriginalImage(
+                artwork.coverUrl
+              )
+            }
+            className="object-cover"
+            style={{
+              objectPosition:
+                `${artwork.positionX}% ${artwork.positionY}%`,
+
+              transform:
+                `scale(${artwork.zoom})`,
+            }}
+          />
         ) : (
-          <div className="flex aspect-[2/3] items-center justify-center bg-zinc-800 px-4 text-center text-zinc-500">
+          <div className="flex h-full items-center justify-center bg-zinc-800 px-4 text-center text-zinc-500">
             Sin imagen
           </div>
         )}
@@ -334,7 +507,9 @@ function BookLibraryCard({
 
       <div className="mt-3">
         <h3 className="font-semibold text-zinc-100">
-          {book.title}
+          {
+            book.title
+          }
         </h3>
 
         <div className="mt-1 flex gap-2 text-sm text-zinc-500">
@@ -346,12 +521,16 @@ function BookLibraryCard({
                 }
               </span>
 
-              <span>·</span>
+              <span>
+                ·
+              </span>
             </>
           )}
 
           <span>
-            {label}
+            {
+              label
+            }
           </span>
         </div>
       </div>

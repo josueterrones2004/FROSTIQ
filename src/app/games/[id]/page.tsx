@@ -1,13 +1,35 @@
-import Image from "next/image";
-import { notFound } from "next/navigation";
+import {
+  notFound,
+} from "next/navigation";
+
+import GameBigPictureLayout from "@/components/games/GameBigPictureLayout";
+
+import type {
+  BigPictureMediaItem,
+} from "@/components/media/MediaBigPictureShell";
+
+import MediaReviews, {
+  type MediaReviewItem,
+} from "@/components/media/MediaReviews";
 
 import {
+  getIGDBBackdropUrl,
   getIGDBGame,
   getIGDBImageUrl,
   getIGDBReleaseYear,
 } from "@/lib/igdb";
 
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
+import {
+  getMediaArtworkOverride,
+} from "@/lib/media-artwork";
+
+import {
+  getMediaRatingStats,
+} from "@/lib/media-ratings";
+
+import {
+  createClient,
+} from "@/lib/supabase/server";
 
 import GameActions from "./GameActions";
 
@@ -17,177 +39,997 @@ interface GamePageProps {
   }>;
 }
 
+type GameReviewRow = {
+  id: string;
+  user_id: string;
+
+  review_text:
+    | string
+    | null;
+
+  rating:
+    | number
+    | string
+    | null;
+
+  liked:
+    | boolean
+    | null;
+
+  contains_spoilers:
+    | boolean
+    | null;
+
+  created_at: string;
+
+  consumed_at:
+    | string
+    | null;
+};
+
+type ReviewProfileRow = {
+  id: string;
+
+  username:
+    | string
+    | null;
+
+  display_name:
+    | string
+    | null;
+
+  avatar_url:
+    | string
+    | null;
+};
+
+type FollowRow = {
+  following_id: string;
+};
+
+const HIDDEN_PLATFORMS =
+  new Set([
+    "google stadia",
+    "stadia",
+  ]);
+
+function normalizePlatformKey(
+  value: string,
+) {
+  return value
+    .trim()
+    .toLowerCase();
+}
+
+function getPlatformDisplayName(
+  value: string,
+) {
+  const clean =
+    value.trim();
+
+  const normalized =
+    normalizePlatformKey(
+      clean,
+    );
+
+  if (
+    normalized ===
+      "pc (microsoft windows)" ||
+    normalized ===
+      "microsoft windows" ||
+    normalized ===
+      "windows pc"
+  ) {
+    return "PC";
+  }
+
+  return clean;
+}
+
+function getPlatformPriority(
+  platform: string,
+) {
+  const normalized =
+    normalizePlatformKey(
+      platform,
+    );
+
+  if (
+    normalized ===
+    "playstation 5"
+  ) {
+    return 10;
+  }
+
+  if (
+    normalized.includes(
+      "xbox series",
+    )
+  ) {
+    return 20;
+  }
+
+  if (
+    normalized ===
+    "nintendo switch 2"
+  ) {
+    return 30;
+  }
+
+  if (
+    normalized ===
+    "pc"
+  ) {
+    return 40;
+  }
+
+  if (
+    normalized ===
+    "playstation 4"
+  ) {
+    return 50;
+  }
+
+  if (
+    normalized ===
+    "xbox one"
+  ) {
+    return 60;
+  }
+
+  if (
+    normalized ===
+    "nintendo switch"
+  ) {
+    return 70;
+  }
+
+  if (
+    normalized ===
+    "mac"
+  ) {
+    return 80;
+  }
+
+  if (
+    normalized.includes(
+      "linux",
+    )
+  ) {
+    return 90;
+  }
+
+  return 100;
+}
+
+function cleanPlatforms(
+  platforms: {
+    name: string;
+  }[],
+) {
+  const seen =
+    new Set<string>();
+
+  return platforms
+    .map(
+      (platform) =>
+        platform.name.trim(),
+    )
+    .filter(Boolean)
+    .filter(
+      (platform) =>
+        !HIDDEN_PLATFORMS.has(
+          normalizePlatformKey(
+            platform,
+          ),
+        ),
+    )
+    .map(
+      getPlatformDisplayName,
+    )
+    .filter(
+      (platform) => {
+        const key =
+          normalizePlatformKey(
+            platform,
+          );
+
+        if (
+          seen.has(key)
+        ) {
+          return false;
+        }
+
+        seen.add(key);
+
+        return true;
+      },
+    )
+    .sort(
+      (
+        first,
+        second,
+      ) => {
+        const priorityDifference =
+          getPlatformPriority(
+            first,
+          ) -
+          getPlatformPriority(
+            second,
+          );
+
+        if (
+          priorityDifference !==
+          0
+        ) {
+          return priorityDifference;
+        }
+
+        return first.localeCompare(
+          second,
+          "es",
+        );
+      },
+    );
+}
+
+function formatReleaseDate(
+  timestamp:
+    | number
+    | undefined,
+) {
+  if (!timestamp) {
+    return null;
+  }
+
+  try {
+    return new Intl.DateTimeFormat(
+      "es-MX",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    ).format(
+      new Date(
+        timestamp * 1000,
+      ),
+    );
+  } catch {
+    return null;
+  }
+}
+
+function uniqueUrls(
+  values: (
+    | string
+    | null
+  )[],
+) {
+  return Array.from(
+    new Set(
+      values.filter(
+        (
+          value,
+        ): value is string =>
+          Boolean(value),
+      ),
+    ),
+  );
+}
+
+function normalizeRating(
+  value:
+    | number
+    | string
+    | null,
+) {
+  if (
+    value === null
+  ) {
+    return null;
+  }
+
+  const numeric =
+    Number(value);
+
+  return Number.isFinite(
+    numeric,
+  )
+    ? numeric
+    : null;
+}
+
+function buildReviewItem(
+  review: GameReviewRow,
+
+  profile:
+    | ReviewProfileRow
+    | undefined,
+): MediaReviewItem {
+  const displayName =
+    profile
+      ?.display_name
+      ?.trim() ||
+    profile
+      ?.username
+      ?.trim() ||
+    "Usuario";
+
+  return {
+    id:
+      review.id,
+
+    userId:
+      review.user_id,
+
+    username:
+      profile
+        ?.username ??
+      null,
+
+    displayName,
+
+    avatarUrl:
+      profile
+        ?.avatar_url ??
+      null,
+
+    reviewText:
+      review
+        .review_text
+        ?.trim() ??
+      "",
+
+    rating:
+      normalizeRating(
+        review.rating,
+      ),
+
+    liked:
+      Boolean(
+        review.liked,
+      ),
+
+    containsSpoilers:
+      Boolean(
+        review
+          .contains_spoilers,
+      ),
+
+    createdAt:
+      review.created_at,
+
+    consumedAt:
+      review.consumed_at,
+  };
+}
+
 export default async function GamePage({
   params,
 }: GamePageProps) {
   const { id } =
     await params;
 
-  const game =
-    await getIGDBGame(id);
+  const supabase =
+    await createClient();
+
+  const [
+    game,
+    override,
+    ratingStats,
+    authResult,
+  ] =
+    await Promise.all([
+      getIGDBGame(id),
+
+      getMediaArtworkOverride(
+        "game",
+        id,
+      ),
+
+      getMediaRatingStats(
+        "GAME",
+        id,
+      ),
+
+      supabase.auth.getUser(),
+    ]);
 
   if (!game) {
     notFound();
   }
 
-  const cover =
+  const user =
+    authResult.data.user;
+
+  /*
+   * OWNER
+   */
+
+  let isOwner =
+    false;
+
+  if (user) {
+    const {
+      data: profile,
+
+      error:
+        profileError,
+    } =
+      await supabase
+        .from(
+          "profiles",
+        )
+        .select(
+          "special_role",
+        )
+        .eq(
+          "id",
+          user.id,
+        )
+        .maybeSingle();
+
+    if (
+      profileError
+    ) {
+      console.error(
+        "Error checking game owner status:",
+        profileError,
+      );
+    }
+
+    isOwner =
+      profile
+        ?.special_role ===
+      "OWNER";
+  }
+
+  /*
+   * ARTWORK
+   */
+
+  const automaticCover =
     getIGDBImageUrl(
-      game.cover?.image_id,
-      "cover_big"
+      game.cover
+        ?.image_id,
+      "cover_big",
     );
 
-  const backdrop =
-    getIGDBImageUrl(
-      game.screenshots?.[0]
-        ?.image_id,
-      "1080p"
+  const automaticBackdrop =
+    getIGDBBackdropUrl(
+      game,
     );
+
+  const cover =
+    override
+      ?.poster_url ??
+    automaticCover;
+
+  const backdrop =
+    override
+      ?.backdrop_url ??
+    automaticBackdrop;
+
+  /*
+   * INFO
+   */
 
   const releaseYear =
     getIGDBReleaseYear(
-      game.first_release_date
+      game.first_release_date,
     );
 
-  return (
-    <main className="mx-auto max-w-6xl pb-20">
-      {/* BACKDROP */}
+  const releaseDate =
+    formatReleaseDate(
+      game.first_release_date,
+    );
 
-      <div className="relative h-[320px] overflow-hidden rounded-2xl bg-zinc-900">
-        {backdrop && (
-          <Image
-            src={backdrop}
-            alt=""
-            fill
-            priority
-            unoptimized={
-              shouldUseOriginalImage(
-                backdrop
-              )
-            }
-            sizes="(max-width: 1200px) 100vw, 1200px"
-            className="object-cover"
-          />
-        )}
+  const platforms =
+    cleanPlatforms(
+      game.platforms ??
+        [],
+    );
 
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
-      </div>
+  const genres =
+    Array.from(
+      new Set(
+        (
+          game.genres ??
+          []
+        )
+          .map(
+            (genre) =>
+              genre.name.trim(),
+          )
+          .filter(
+            Boolean,
+          ),
+      ),
+    );
 
-      <div className="relative -mt-24 px-4 md:px-8">
-        <div className="flex flex-col gap-8 md:flex-row md:items-end">
-          {/* COVER */}
+  /*
+   * REVIEWS
+   */
 
-          <div className="relative z-10 w-48 shrink-0 md:w-56">
-            {cover ? (
-              <Image
-                src={cover}
-                alt={game.name}
-                width={500}
-                height={750}
-                priority
-                unoptimized={
-                  shouldUseOriginalImage(
-                    cover
-                  )
-                }
-                className="aspect-[2/3] w-full rounded-xl border-4 border-zinc-950 object-cover shadow-2xl"
-              />
-            ) : (
-              <div className="flex aspect-[2/3] w-full items-center justify-center rounded-xl border-4 border-zinc-950 bg-zinc-900 px-4 text-center text-zinc-500">
-                Sin imagen
-              </div>
-            )}
-          </div>
+  const {
+    data:
+      reviewRowsData,
 
-          {/* INFORMATION */}
+    error:
+      reviewsError,
+  } =
+    await supabase
+      .from(
+        "reviews",
+      )
+      .select(`
+        id,
+        user_id,
+        review_text,
+        rating,
+        liked,
+        contains_spoilers,
+        created_at,
+        consumed_at
+      `)
+      .eq(
+        "media_type",
+        "GAME",
+      )
+      .eq(
+        "external_id",
+        String(
+          game.id,
+        ),
+      )
+      .not(
+        "review_text",
+        "is",
+        null,
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            false,
+        },
+      )
+      .limit(50);
 
-          <div className="pb-4">
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-100">
-              {game.name}
-            </h1>
+  if (
+    reviewsError
+  ) {
+    console.error(
+      "Error loading game reviews:",
+      reviewsError,
+    );
+  }
 
-            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-zinc-400">
-              {releaseYear && (
-                <span>
-                  {releaseYear}
-                </span>
-              )}
+  const reviewRows =
+    (
+      reviewRowsData ??
+      []
+    ) as GameReviewRow[];
 
-              {game.platforms &&
-                game.platforms.length >
-                  0 && (
-                  <>
-                    {releaseYear && (
-                      <span>·</span>
-                    )}
+  /*
+   * No enseñamos registros
+   * que no tengan realmente
+   * texto de review.
+   */
 
-                    <span>
-                      {game.platforms
-                        .slice(0, 4)
-                        .map(
-                          (
-                            platform
-                          ) =>
-                            platform.name
-                        )
-                        .join(", ")}
-                    </span>
-                  </>
-                )}
-            </div>
+  const reviewsWithText =
+    reviewRows.filter(
+      (review) =>
+        Boolean(
+          review
+            .review_text
+            ?.trim(),
+        ),
+    );
 
-            {game.genres &&
-              game.genres.length >
-                0 && (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {game.genres.map(
-                    (genre) => (
-                      <span
-                        key={
-                          genre.id
-                        }
-                        className="rounded-full bg-zinc-900 px-3 py-1.5 text-sm text-zinc-300"
-                      >
-                        {
-                          genre.name
-                        }
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-          </div>
-        </div>
+  /*
+   * PERFILES DE LOS AUTORES
+   */
 
-        {/* DESCRIPTION */}
+  const reviewUserIds =
+    Array.from(
+      new Set(
+        reviewsWithText.map(
+          (review) =>
+            review.user_id,
+        ),
+      ),
+    );
 
-        <section className="mt-10 max-w-4xl">
-          <h2 className="text-xl font-semibold text-zinc-100">
-            Sinopsis
-          </h2>
+  let reviewProfiles:
+    ReviewProfileRow[] =
+      [];
 
-          <p className="mt-4 whitespace-pre-line leading-7 text-zinc-300">
-            {game.summary ||
-              "No hay descripción disponible para este juego."}
-          </p>
-        </section>
+  if (
+    reviewUserIds.length >
+    0
+  ) {
+    const {
+      data:
+        profilesData,
 
-        {/* ACTIONS */}
+      error:
+        profilesError,
+    } =
+      await supabase
+        .from(
+          "profiles",
+        )
+        .select(`
+          id,
+          username,
+          display_name,
+          avatar_url
+        `)
+        .in(
+          "id",
+          reviewUserIds,
+        );
 
-        <GameActions
-          game={{
-            id: String(
-              game.id
+    if (
+      profilesError
+    ) {
+      console.error(
+        "Error loading game review profiles:",
+        profilesError,
+      );
+    }
+
+    reviewProfiles =
+      (
+        profilesData ??
+        []
+      ) as ReviewProfileRow[];
+  }
+
+  const profileByUserId =
+    new Map(
+      reviewProfiles.map(
+        (
+          profile,
+        ) => [
+          profile.id,
+          profile,
+        ],
+      ),
+    );
+
+  /*
+   * USUARIOS SEGUIDOS
+   */
+
+  let followingIds =
+    new Set<string>();
+
+  if (user) {
+    const {
+      data:
+        followingData,
+
+      error:
+        followingError,
+    } =
+      await supabase
+        .from(
+          "profile_follows",
+        )
+        .select(
+          "following_id",
+        )
+        .eq(
+          "follower_id",
+          user.id,
+        );
+
+    if (
+      followingError
+    ) {
+      console.error(
+        "Error loading followed users for game reviews:",
+        followingError,
+      );
+    }
+
+    followingIds =
+      new Set(
+        (
+          followingData ??
+          []
+        ).map(
+          (follow) =>
+            (
+              follow as FollowRow
+            ).following_id,
+        ),
+      );
+  }
+
+  /*
+   * CONVERTIR A MediaReviewItem
+   */
+
+  const allReviews =
+    reviewsWithText.map(
+      (review) =>
+        buildReviewItem(
+          review,
+
+          profileByUserId.get(
+            review.user_id,
+          ),
+        ),
+    );
+
+  /*
+   * Amigos separados
+   * de las reviews normales
+   * para no duplicarlas.
+   */
+
+  const friendReviews =
+    allReviews.filter(
+      (review) =>
+        followingIds.has(
+          review.userId,
+        ),
+    );
+
+  const communityReviews =
+    allReviews.filter(
+      (review) =>
+        !followingIds.has(
+          review.userId,
+        ),
+    );
+
+  const reviewsContent = (
+    <MediaReviews
+      friendReviews={
+        friendReviews
+      }
+      reviews={
+        communityReviews
+      }
+      mediaTitle={
+        game.name
+      }
+      mediaYear={
+        releaseYear
+      }
+      mediaPosterUrl={
+        cover
+      }
+      mediaTypeLabel="Juego"
+    />
+  );
+
+  /*
+   * GALERÍA
+   */
+
+  const screenshotUrls =
+    uniqueUrls(
+      (
+        game.screenshots ??
+        []
+      ).map(
+        (screenshot) =>
+          getIGDBImageUrl(
+            screenshot
+              .image_id,
+            "1080p",
+          ),
+      ),
+    );
+
+  const artworkUrls =
+    uniqueUrls(
+      (
+        game.artworks ??
+        []
+      ).map(
+        (artwork) =>
+          getIGDBImageUrl(
+            artwork
+              .image_id,
+            "1080p",
+          ),
+      ),
+    ).filter(
+      (url) =>
+        url !==
+        backdrop,
+    );
+
+  const galleryItems:
+    BigPictureMediaItem[] =
+      [
+        ...screenshotUrls.map(
+          (
+            url,
+            index,
+          ) => ({
+            id:
+              `game-${game.id}-screenshot-${index}`,
+
+            src:
+              url,
+
+            alt:
+              `${game.name} captura ${index + 1}`,
+          }),
+        ),
+
+        ...artworkUrls.map(
+          (
+            url,
+            index,
+          ) => ({
+            id:
+              `game-${game.id}-artwork-${index}`,
+
+            src:
+              url,
+
+            alt:
+              `${game.name} artwork ${index + 1}`,
+          }),
+        ),
+      ].slice(
+        0,
+        10,
+      );
+
+  /*
+   * DEV / EDIT ART
+   */
+
+  const devSearchParams =
+    new URLSearchParams({
+      kind:
+        "game",
+
+      id:
+        String(
+          game.id,
+        ),
+
+      title:
+        game.name,
+
+      href:
+        `/games/${game.id}`,
+    });
+
+  if (cover) {
+    devSearchParams.set(
+      "image",
+      cover,
+    );
+  }
+
+  if (
+    releaseYear
+  ) {
+    devSearchParams.set(
+      "year",
+
+      String(
+        releaseYear,
+      ),
+    );
+  }
+
+  const developerActionHref =
+    isOwner
+      ? `/admin/media?${devSearchParams.toString()}`
+      : null;
+
+  /*
+   * ACCIONES
+   */
+
+  const actions =
+    user ? (
+      <GameActions
+        game={{
+          id:
+            String(
+              game.id,
             ),
-            title:
-              game.name,
-            coverUrl:
-              cover,
-            backdropUrl:
-              backdrop,
-            releaseYear,
-          }}
-        />
-      </div>
-    </main>
+
+          title:
+            game.name,
+
+          coverUrl:
+            cover,
+
+          backdropUrl:
+            backdrop,
+
+          releaseYear,
+        }}
+      />
+    ) : undefined;
+
+  return (
+    <GameBigPictureLayout
+      title={
+        game.name
+      }
+      description={
+        game.summary ??
+        null
+      }
+      posterUrl={
+        cover
+      }
+      backdropUrl={
+        backdrop
+      }
+      posterPositionX={
+        override
+          ?.poster_position_x ??
+        50
+      }
+      posterPositionY={
+        override
+          ?.poster_position_y ??
+        50
+      }
+      posterZoom={
+        override
+          ?.poster_zoom ??
+        1
+      }
+      backdropPositionX={
+        override
+          ?.backdrop_position_x ??
+        50
+      }
+      backdropPositionY={
+        override
+          ?.backdrop_position_y ??
+        50
+      }
+      backdropZoom={
+        override
+          ?.backdrop_zoom ??
+        1
+      }
+      galleryItems={
+        galleryItems
+      }
+      year={
+        releaseYear
+      }
+      releaseDate={
+        releaseDate
+      }
+      platforms={
+        platforms
+      }
+      genres={
+        genres
+      }
+      ratingStats={
+        ratingStats
+      }
+      actions={
+        actions
+      }
+      mainContent={
+        reviewsContent
+      }
+      developerActionHref={
+        developerActionHref
+      }
+    />
   );
 }

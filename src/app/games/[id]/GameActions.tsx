@@ -1,20 +1,21 @@
 "use client";
 
+import Image from "next/image";
 import {
+  Clock3,
+  Gamepad2,
   Heart,
+  Play,
   Repeat2,
   ShieldAlert,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import MediaActionBar from "@/components/media/MediaActionBar";
+import StarRating from "@/components/media/StarRating";
 
-import {
-  useRouter,
-} from "next/navigation";
-
+import { shouldUseOriginalImage } from "@/lib/image-optimization";
 import { createClient } from "@/lib/supabase/client";
 
 interface GameActionsProps {
@@ -41,6 +42,16 @@ type GameStatus =
   | "IN_PROGRESS"
   | "DROPPED";
 
+function isGameStatus(
+  value: string,
+): value is GameStatus {
+  return (
+    value === "PENDING" ||
+    value === "IN_PROGRESS" ||
+    value === "DROPPED"
+  );
+}
+
 function getToday() {
   const now =
     new Date();
@@ -49,12 +60,29 @@ function getToday() {
     new Date(
       now.getTime() -
         now.getTimezoneOffset() *
-          60_000
+          60_000,
     );
 
   return local
     .toISOString()
     .slice(0, 10);
+}
+
+function formatDate(
+  date: string,
+) {
+  return new Intl.DateTimeFormat(
+    "es-MX",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  ).format(
+    new Date(
+      `${date}T12:00:00`,
+    ),
+  );
 }
 
 export default function GameActions({
@@ -64,8 +92,9 @@ export default function GameActions({
     useRouter();
 
   const [supabase] =
-    useState(() =>
-      createClient()
+    useState(
+      () =>
+        createClient(),
     );
 
   const [
@@ -73,8 +102,15 @@ export default function GameActions({
     setStatus,
   ] =
     useState<
-      GameStatus | null
+      GameStatus |
+      null
     >(null);
+
+  const [
+    hasCompletedBefore,
+    setHasCompletedBefore,
+  ] =
+    useState(false);
 
   const [
     loading,
@@ -95,6 +131,15 @@ export default function GameActions({
     useState("");
 
   const [
+    rating,
+    setRating,
+  ] =
+    useState<
+      number |
+      null
+    >(null);
+
+  const [
     liked,
     setLiked,
   ] =
@@ -113,17 +158,11 @@ export default function GameActions({
     useState(false);
 
   const [
-    showDate,
-    setShowDate,
-  ] =
-    useState(true);
-
-  const [
     completedDate,
     setCompletedDate,
   ] =
     useState(
-      getToday()
+      getToday(),
     );
 
   const [
@@ -132,7 +171,9 @@ export default function GameActions({
   ] =
     useState("");
 
-  /* LOAD CURRENT STATE */
+  /*
+   * CARGAR ESTADO REAL DEL JUEGO
+   */
 
   useEffect(() => {
     let cancelled =
@@ -156,38 +197,70 @@ export default function GameActions({
               return;
             }
 
-            const {
-              data,
-              error,
-            } =
-              await supabase
-                .from(
-                  "library_items"
-                )
-                .select(
-                  "status"
-                )
-                .eq(
-                  "user_id",
-                  user.id
-                )
-                .eq(
-                  "media_type",
-                  "GAME"
-                )
-                .eq(
-                  "external_id",
-                  game.id
-                )
-                .maybeSingle();
+            const [
+              libraryResult,
+              reviewResult,
+            ] =
+              await Promise.all([
+                supabase
+                  .from(
+                    "library_items",
+                  )
+                  .select(
+                    "status",
+                  )
+                  .eq(
+                    "user_id",
+                    user.id,
+                  )
+                  .eq(
+                    "media_type",
+                    "GAME",
+                  )
+                  .eq(
+                    "external_id",
+                    game.id,
+                  )
+                  .maybeSingle(),
 
-            if (error) {
+                supabase
+                  .from(
+                    "reviews",
+                  )
+                  .select(
+                    "id",
+                  )
+                  .eq(
+                    "user_id",
+                    user.id,
+                  )
+                  .eq(
+                    "media_type",
+                    "GAME",
+                  )
+                  .eq(
+                    "external_id",
+                    game.id,
+                  )
+                  .limit(1),
+              ]);
+
+            if (
+              libraryResult.error
+            ) {
               console.error(
                 "Error loading game state:",
-                error
+                libraryResult.error,
               );
+            }
 
-              return;
+            if (
+              reviewResult.error
+            ) {
+              console.error(
+                "Error loading game reviews:",
+                reviewResult.error,
+              );
             }
 
             if (
@@ -196,32 +269,46 @@ export default function GameActions({
               return;
             }
 
+            const loadedStatus =
+              libraryResult
+                .data
+                ?.status;
+
             if (
-              data?.status ===
+              loadedStatus ===
                 "PENDING" ||
-              data?.status ===
+              loadedStatus ===
                 "IN_PROGRESS" ||
-              data?.status ===
+              loadedStatus ===
                 "DROPPED"
             ) {
               setStatus(
-                data.status
+                loadedStatus,
               );
             } else {
               setStatus(
-                null
+                null,
               );
             }
+
+            setHasCompletedBefore(
+              Boolean(
+                reviewResult
+                  .data
+                  ?.length,
+              ),
+            );
           })();
         },
-        0
+        0,
       );
 
     return () => {
-      cancelled = true;
+      cancelled =
+        true;
 
       window.clearTimeout(
-        timeout
+        timeout,
       );
     };
   }, [
@@ -230,7 +317,7 @@ export default function GameActions({
   ]);
 
   function getGameData(
-    userId: string
+    userId: string,
   ) {
     return {
       user_id:
@@ -259,18 +346,58 @@ export default function GameActions({
     };
   }
 
-  async function createActivity(
+  async function clearTemporaryActivity(
     userId: string,
-    activityType:
-      | "STARTED"
-      | "ADDED_PENDING"
   ) {
     const {
       error,
     } =
       await supabase
         .from(
-          "activity_events"
+          "activity_events",
+        )
+        .delete()
+        .eq(
+          "user_id",
+          userId,
+        )
+        .eq(
+          "media_type",
+          "GAME",
+        )
+        .eq(
+          "external_id",
+          game.id,
+        )
+        .in(
+          "activity_type",
+          [
+            "ADDED_PENDING",
+            "STARTED",
+          ],
+        );
+
+    if (error) {
+      console.error(
+        "Error clearing temporary game activity:",
+        error,
+      );
+    }
+  }
+
+  async function createActivity(
+    userId: string,
+
+    activityType:
+      | "STARTED"
+      | "ADDED_PENDING",
+  ) {
+    const {
+      error,
+    } =
+      await supabase
+        .from(
+          "activity_events",
         )
         .insert({
           user_id:
@@ -295,14 +422,15 @@ export default function GameActions({
     if (error) {
       console.error(
         "Error creating game activity:",
-        error
+        error,
       );
     }
   }
 
   async function setLibraryStatus(
     newStatus:
-      GameStatus
+      | GameStatus
+      | null,
   ) {
     if (loading) {
       return;
@@ -312,30 +440,91 @@ export default function GameActions({
     setMessage("");
 
     const {
-      data: { user },
+      data: {
+        user,
+      },
     } =
       await supabase.auth.getUser();
 
     if (!user) {
       setMessage(
-        "Debes iniciar sesión."
+        "Debes iniciar sesión.",
       );
 
       setLoading(false);
+
       return;
     }
+
+    if (
+      newStatus ===
+      null
+    ) {
+      const {
+        error,
+      } =
+        await supabase
+          .from(
+            "library_items",
+          )
+          .delete()
+          .eq(
+            "user_id",
+            user.id,
+          )
+          .eq(
+            "media_type",
+            "GAME",
+          )
+          .eq(
+            "external_id",
+            game.id,
+          );
+
+      if (error) {
+        setMessage(
+          error.message,
+        );
+
+        setLoading(false);
+
+        return;
+      }
+
+      await clearTemporaryActivity(
+        user.id,
+      );
+
+      setStatus(
+        null,
+      );
+
+      setMessage(
+        "Juego quitado de tu biblioteca.",
+      );
+
+      setLoading(false);
+
+      router.refresh();
+
+      return;
+    }
+
+    await clearTemporaryActivity(
+      user.id,
+    );
 
     const {
       error,
     } =
       await supabase
         .from(
-          "library_items"
+          "library_items",
         )
         .upsert(
           {
             ...getGameData(
-              user.id
+              user.id,
             ),
 
             status:
@@ -344,15 +533,16 @@ export default function GameActions({
           {
             onConflict:
               "user_id,media_type,external_id",
-          }
+          },
         );
 
     if (error) {
       setMessage(
-        error.message
+        error.message,
       );
 
       setLoading(false);
+
       return;
     }
 
@@ -362,7 +552,7 @@ export default function GameActions({
     ) {
       await createActivity(
         user.id,
-        "STARTED"
+        "STARTED",
       );
     }
 
@@ -372,12 +562,12 @@ export default function GameActions({
     ) {
       await createActivity(
         user.id,
-        "ADDED_PENDING"
+        "ADDED_PENDING",
       );
     }
 
     setStatus(
-      newStatus
+      newStatus,
     );
 
     if (
@@ -385,7 +575,7 @@ export default function GameActions({
       "IN_PROGRESS"
     ) {
       setMessage(
-        "Juego marcado como jugando."
+        "Juego marcado como jugando.",
       );
     }
 
@@ -394,7 +584,7 @@ export default function GameActions({
       "PENDING"
     ) {
       setMessage(
-        "Juego añadido a pendientes."
+        "Juego añadido a pendientes.",
       );
     }
 
@@ -403,7 +593,7 @@ export default function GameActions({
       "DROPPED"
     ) {
       setMessage(
-        "Juego marcado como abandonado."
+        "Juego marcado como abandonado.",
       );
     }
 
@@ -416,13 +606,15 @@ export default function GameActions({
     setMessage("");
 
     const {
-      data: { user },
+      data: {
+        user,
+      },
     } =
       await supabase.auth.getUser();
 
     if (!user) {
       setMessage(
-        "Debes iniciar sesión."
+        "Debes iniciar sesión.",
       );
 
       return;
@@ -431,70 +623,65 @@ export default function GameActions({
     const {
       data:
         previousReviews,
+
       error,
     } =
       await supabase
-        .from("reviews")
-        .select("id")
+        .from(
+          "reviews",
+        )
+        .select(
+          "id",
+        )
         .eq(
           "user_id",
-          user.id
+          user.id,
         )
         .eq(
           "media_type",
-          "GAME"
+          "GAME",
         )
         .eq(
           "external_id",
-          game.id
+          game.id,
         )
         .limit(1);
 
     if (error) {
       console.error(
         "Error checking previous game reviews:",
-        error
+        error,
       );
     }
 
-    setIsReplay(
+    const completedBefore =
       Boolean(
-        previousReviews &&
-          previousReviews.length >
-            0
-      )
+        previousReviews
+          ?.length,
+      );
+
+    setIsReplay(
+      completedBefore,
     );
 
     setReview("");
+    setRating(null);
     setLiked(true);
 
     setContainsSpoilers(
-      false
+      false,
     );
 
-    setShowDate(true);
-
     setCompletedDate(
-      getToday()
+      getToday(),
     );
 
     setShowReview(
-      true
+      true,
     );
   }
 
   async function saveReview() {
-    const cleanReview =
-      review.trim();
-
-    if (!cleanReview) {
-      setMessage(
-        "La review es obligatoria."
-      );
-
-      return;
-    }
-
     if (loading) {
       return;
     }
@@ -502,28 +689,37 @@ export default function GameActions({
     setLoading(true);
     setMessage("");
 
+    const cleanReview =
+      review.trim();
+
     const {
-      data: { user },
+      data: {
+        user,
+      },
     } =
       await supabase.auth.getUser();
 
     if (!user) {
       setMessage(
-        "Debes iniciar sesión."
+        "Debes iniciar sesión.",
       );
 
       setLoading(false);
+
       return;
     }
 
     const {
       data:
         createdReview,
+
       error:
         reviewError,
     } =
       await supabase
-        .from("reviews")
+        .from(
+          "reviews",
+        )
         .insert({
           user_id:
             user.id,
@@ -538,7 +734,10 @@ export default function GameActions({
             game.title,
 
           review_text:
-            cleanReview,
+            cleanReview ||
+            null,
+
+          rating,
 
           liked,
 
@@ -549,7 +748,7 @@ export default function GameActions({
             containsSpoilers,
 
           show_consumed_date:
-            showDate,
+            true,
 
           experience:
             isReplay
@@ -568,56 +767,65 @@ export default function GameActions({
           release_year:
             game.releaseYear,
         })
-        .select("id")
+        .select(
+          "id",
+        )
         .single();
 
-    if (reviewError) {
+    if (
+      reviewError
+    ) {
       setMessage(
-        reviewError.message
+        reviewError.message,
       );
 
       setLoading(false);
+
       return;
     }
 
-    const {
-      error:
-        activityError,
-    } =
-      await supabase
-        .from(
-          "activity_events"
-        )
-        .insert({
-          user_id:
-            user.id,
-
-          activity_type:
-            "REVIEWED",
-
-          media_type:
-            "GAME",
-
-          external_id:
-            game.id,
-
-          title:
-            game.title,
-
-          cover_url:
-            game.coverUrl,
-
-          review_id:
-            createdReview.id,
-        });
-
     if (
-      activityError
+      createdReview
     ) {
-      console.error(
-        "Error creating game review activity:",
+      const {
+        error:
+          activityError,
+      } =
+        await supabase
+          .from(
+            "activity_events",
+          )
+          .insert({
+            user_id:
+              user.id,
+
+            activity_type:
+              "REVIEWED",
+
+            media_type:
+              "GAME",
+
+            external_id:
+              game.id,
+
+            title:
+              game.title,
+
+            cover_url:
+              game.coverUrl,
+
+            review_id:
+              createdReview.id,
+          });
+
+      if (
         activityError
-      );
+      ) {
+        console.error(
+          "Error creating game review activity:",
+          activityError,
+        );
+      }
     }
 
     const {
@@ -626,38 +834,54 @@ export default function GameActions({
     } =
       await supabase
         .from(
-          "library_items"
+          "library_items",
         )
         .delete()
         .eq(
           "user_id",
-          user.id
+          user.id,
         )
         .eq(
           "media_type",
-          "GAME"
+          "GAME",
         )
         .eq(
           "external_id",
-          game.id
+          game.id,
         );
 
-    if (deleteError) {
+    if (
+      deleteError
+    ) {
       setMessage(
-        deleteError.message
+        deleteError.message,
       );
 
       setLoading(false);
+
       return;
     }
 
-    setStatus(null);
-    setShowReview(false);
+    await clearTemporaryActivity(
+      user.id,
+    );
+
+    setStatus(
+      null,
+    );
+
+    setHasCompletedBefore(
+      true,
+    );
+
+    setShowReview(
+      false,
+    );
 
     setMessage(
       isReplay
         ? "Replay guardado."
-        : "Juego marcado como completado."
+        : "Juego marcado como completado.",
     );
 
     setLoading(false);
@@ -667,278 +891,365 @@ export default function GameActions({
 
   return (
     <>
-      <section className="mt-10">
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={
-              openCompletedModal
-            }
-            disabled={
-              loading
-            }
-            className="rounded-xl bg-fuchsia-500 px-5 py-3 font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
-          >
-            Marcar como completado
-          </button>
+      <div className="mt-6">
+        <MediaActionBar
+          primaryLabel={
+            hasCompletedBefore
+              ? "✓ Completado"
+              : "Marcar como completado"
+          }
+          primaryActive={
+            hasCompletedBefore
+          }
+          onPrimaryAction={
+            openCompletedModal
+          }
+          primaryDisabled={
+            loading
+          }
+          activeStatus={
+            status
+          }
+          statusDisabled={
+            loading
+          }
+          statusOptions={[
+            {
+              value:
+                "IN_PROGRESS",
 
-          <button
-            type="button"
-            onClick={() =>
-              setLibraryStatus(
-                "IN_PROGRESS"
+              label:
+                "Jugando",
+
+              icon: (
+                <Play
+                  size={
+                    13
+                  }
+                />
+              ),
+            },
+            {
+              value:
+                "PENDING",
+
+              label:
+                "Pendiente",
+
+              icon: (
+                <Clock3
+                  size={
+                    13
+                  }
+                />
+              ),
+            },
+          ]}
+          onStatusChange={(
+            newStatus,
+          ) => {
+            if (
+              newStatus ===
+              null
+            ) {
+              return setLibraryStatus(
+                null,
+              );
+            }
+
+            if (
+              !isGameStatus(
+                newStatus,
               )
+            ) {
+              return;
             }
-            disabled={
-              loading ||
-              status ===
-                "IN_PROGRESS"
-            }
-            className="rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-3 font-medium text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-50"
-          >
-            {status ===
-            "IN_PROGRESS"
-              ? "✓ Jugando"
-              : "Jugando"}
-          </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              setLibraryStatus(
-                "PENDING"
-              )
-            }
-            disabled={
-              loading ||
-              status ===
-                "PENDING"
-            }
-            className="rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-3 font-medium text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-50"
-          >
-            {status ===
-            "PENDING"
-              ? "✓ Pendiente"
-              : "Pendiente"}
-          </button>
+            return setLibraryStatus(
+              newStatus,
+            );
+          }}
+          message={
+            message
+          }
+        />
+      </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setLibraryStatus(
-                "DROPPED"
-              )
-            }
-            disabled={
-              loading ||
-              status ===
-                "DROPPED"
-            }
-            className="rounded-xl border border-zinc-700 bg-zinc-900 px-5 py-3 font-medium text-zinc-200 transition hover:bg-zinc-800 disabled:opacity-50"
-          >
-            {status ===
-            "DROPPED"
-              ? "✓ Abandonado"
-              : "Abandonar"}
-          </button>
-        </div>
-
-        {message && (
-          <p className="mt-3 text-sm text-zinc-400">
-            {message}
-          </p>
-        )}
-      </section>
-
-      {/* REVIEW MODAL */}
-
-      {showReview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 p-7 shadow-2xl">
+      {showReview ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="relative max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl sm:p-7">
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setShowReview(
-                  false
-                )
+                  false,
+                );
+
+                setMessage("");
+              }}
+              disabled={
+                loading
               }
-              className="absolute right-5 top-4 text-3xl text-zinc-500 transition hover:text-white"
+              className="absolute right-5 top-5 text-3xl leading-none text-zinc-500 transition hover:text-white disabled:opacity-50"
               aria-label="Cerrar"
             >
               ×
             </button>
 
-            <h2 className="pr-10 text-2xl font-bold">
-              {game.title}
-            </h2>
+            <div className="grid gap-8 md:grid-cols-[180px_1fr] md:items-start">
+              <div className="flex justify-center md:justify-start md:pt-12">
+                <div className="w-full max-w-[180px]">
+                  {game.coverUrl ? (
+                    <Image
+                      src={
+                        game.coverUrl
+                      }
+                      alt={
+                        game.title
+                      }
+                      width={
+                        500
+                      }
+                      height={
+                        750
+                      }
+                      unoptimized={
+                        shouldUseOriginalImage(
+                          game.coverUrl,
+                        )
+                      }
+                      className="w-full rounded-xl object-cover shadow-xl"
+                    />
+                  ) : (
+                    <div className="flex aspect-[2/3] w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500">
+                      Sin imagen
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            <div className="mt-6">
-              <label className="text-sm text-zinc-400">
-                Fecha de finalización
-              </label>
-
-              <input
-                type="date"
-                value={
-                  completedDate
-                }
-                onChange={(
-                  event
-                ) =>
-                  setCompletedDate(
-                    event.target.value
-                  )
-                }
-                className="mt-2 block rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-zinc-200 outline-none focus:border-fuchsia-500"
-              />
-            </div>
-
-            <textarea
-              value={review}
-              onChange={(
-                event
-              ) =>
-                setReview(
-                  event.target.value
-                )
-              }
-              placeholder="Escribe tu review..."
-              rows={7}
-              className="mt-6 w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-fuchsia-500"
-            />
-
-            <div className="mt-7 grid grid-cols-3 gap-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setIsReplay(
-                    (current) =>
-                      !current
-                  )
-                }
-                className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
-                  isReplay
-                    ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300"
-                    : "border-zinc-800 text-zinc-400 hover:bg-zinc-900"
-                }`}
-              >
-                <Repeat2
-                  size={28}
-                />
-
-                <span className="text-sm">
+              <div className="min-w-0 pt-2 md:pt-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
                   {isReplay
-                    ? "Replay"
-                    : "Primera partida"}
-                </span>
-              </button>
+                    ? "Registrar replay"
+                    : "Juego completado"}
+                </p>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setContainsSpoilers(
-                    (current) =>
-                      !current
-                  )
-                }
-                className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
-                  containsSpoilers
-                    ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300"
-                    : "border-zinc-800 text-zinc-400 hover:bg-zinc-900"
-                }`}
-              >
-                <ShieldAlert
-                  size={28}
-                />
+                <div className="mt-2 flex flex-wrap items-baseline gap-3 pr-10">
+                  <h2 className="text-2xl font-bold text-zinc-100">
+                    {
+                      game.title
+                    }
+                  </h2>
 
-                <span className="text-sm">
-                  {containsSpoilers
-                    ? "Con spoilers"
-                    : "Sin spoilers"}
-                </span>
-              </button>
+                  {game.releaseYear ? (
+                    <span className="text-lg text-zinc-500">
+                      {
+                        game.releaseYear
+                      }
+                    </span>
+                  ) : null}
+                </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setLiked(
-                    (current) =>
-                      !current
-                  )
-                }
-                className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
-                  liked
-                    ? "border-red-500/40 bg-red-500/10 text-red-400"
-                    : "border-zinc-800 text-zinc-400 hover:bg-zinc-900"
-                }`}
-              >
-                <Heart
-                  size={28}
-                  fill={
-                    liked
-                      ? "currentColor"
-                      : "none"
+                <p className="mt-5 text-sm text-zinc-500">
+                  Completado el{" "}
+                  <span className="text-zinc-300">
+                    {formatDate(
+                      completedDate,
+                    )}
+                  </span>
+                </p>
+
+                <input
+                  type="date"
+                  value={
+                    completedDate
                   }
+                  max={
+                    getToday()
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setCompletedDate(
+                      event.target.value,
+                    )
+                  }
+                  className="mt-3 h-10 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-300 outline-none transition focus:border-fuchsia-500"
                 />
 
-                <span className="text-sm">
-                  {liked
-                    ? "Me gustó"
-                    : "No me gustó"}
-                </span>
-              </button>
-            </div>
+                <div className="mt-6">
+                  <p className="mb-2 text-sm font-medium text-zinc-300">
+                    Tu puntuación
+                  </p>
 
-            <div className="mt-6 flex items-center gap-3">
-              <input
-                id="show-game-date"
-                type="checkbox"
-                checked={
-                  showDate
-                }
-                onChange={(
-                  event
-                ) =>
-                  setShowDate(
-                    event.target.checked
-                  )
-                }
-                className="h-4 w-4"
-              />
+                  <StarRating
+                    value={
+                      rating
+                    }
+                    onChange={
+                      setRating
+                    }
+                    size={
+                      34
+                    }
+                    showLabel={
+                      false
+                    }
+                  />
+                </div>
 
-              <label
-                htmlFor="show-game-date"
-                className="text-sm text-zinc-400"
-              >
-                Mostrar fecha públicamente
-              </label>
-            </div>
+                <textarea
+                  value={
+                    review
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setReview(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Escribe tu review (opcional)..."
+                  rows={
+                    6
+                  }
+                  className="mt-6 w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm leading-6 text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
+                />
 
-            {message && (
-              <p className="mt-5 text-sm text-zinc-400">
-                {message}
-              </p>
-            )}
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsReplay(
+                        (
+                          current,
+                        ) =>
+                          !current,
+                      )
+                    }
+                    className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
+                      isReplay
+                        ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300"
+                        : "border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+                    }`}
+                  >
+                    {isReplay ? (
+                      <Repeat2
+                        size={
+                          25
+                        }
+                      />
+                    ) : (
+                      <Gamepad2
+                        size={
+                          25
+                        }
+                      />
+                    )}
 
-            <div className="mt-8 flex justify-end">
-              <button
-                type="button"
-                onClick={
-                  saveReview
-                }
-                disabled={
-                  loading
-                }
-                className="rounded-xl bg-fuchsia-500 px-6 py-3 font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
-              >
-                {loading
-                  ? "Guardando..."
-                  : "Guardar review"}
-              </button>
+                    <span className="text-sm">
+                      {isReplay
+                        ? "Replay"
+                        : "Primera partida"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setContainsSpoilers(
+                        (
+                          current,
+                        ) =>
+                          !current,
+                      )
+                    }
+                    className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
+                      containsSpoilers
+                        ? "border-fuchsia-500/50 bg-fuchsia-500/10 text-fuchsia-300"
+                        : "border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+                    }`}
+                  >
+                    <ShieldAlert
+                      size={
+                        25
+                      }
+                    />
+
+                    <span className="text-sm">
+                      {containsSpoilers
+                        ? "Con spoilers"
+                        : "Sin spoilers"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLiked(
+                        (
+                          current,
+                        ) =>
+                          !current,
+                      )
+                    }
+                    className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition ${
+                      liked
+                        ? "border-red-500/40 bg-red-500/10 text-red-400"
+                        : "border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+                    }`}
+                  >
+                    <Heart
+                      size={
+                        25
+                      }
+                      fill={
+                        liked
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+
+                    <span className="text-sm">
+                      {liked
+                        ? "Me gustó"
+                        : "No me gustó"}
+                    </span>
+                  </button>
+                </div>
+
+                {message ? (
+                  <p className="mt-5 text-sm text-zinc-500">
+                    {
+                      message
+                    }
+                  </p>
+                ) : null}
+
+                <div className="mt-7 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void saveReview();
+                    }}
+                    disabled={
+                      loading
+                    }
+                    className="rounded-xl bg-fuchsia-500 px-6 py-3 text-sm font-medium text-white transition hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Guardando..."
+                      : isReplay
+                        ? "Guardar replay"
+                        : "Guardar"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -14,7 +13,7 @@ import {
 } from "react";
 
 import Cropper, {
-  Area,
+  type Area,
 } from "react-easy-crop";
 
 export type SavedCrop = {
@@ -25,17 +24,21 @@ export type SavedCrop = {
 };
 
 interface ImageCropModalProps {
-  image: string;
+  image:
+    string;
 
   type:
     | "avatar"
     | "banner";
 
-  onCancel: () => void;
+  onCancel:
+    () => void;
 
-  onApply: (
-    crop: SavedCrop
-  ) => void;
+  onApply:
+    (
+      crop:
+        SavedCrop
+    ) => void;
 }
 
 export default function ImageCropModal({
@@ -44,29 +47,41 @@ export default function ImageCropModal({
   onCancel,
   onApply,
 }: ImageCropModalProps) {
-  const [crop, setCrop] =
+  const [
+    crop,
+    setCrop,
+  ] =
     useState({
       x: 0,
       y: 0,
     });
 
-  const [zoom, setZoom] =
-    useState(1);
+  const [
+    zoom,
+    setZoom,
+  ] =
+    useState(
+      1
+    );
 
   const [
-    croppedAreaPercentages,
-    setCroppedAreaPercentages,
+    croppedArea,
+    setCroppedArea,
   ] =
-    useState<Area | null>(
+    useState<
+      Area |
+      null
+    >(
       null
     );
 
   const handleCropComplete =
     useCallback(
       (
-        areaPercentages: Area
+        areaPercentages:
+          Area
       ) => {
-        setCroppedAreaPercentages(
+        setCroppedArea(
           areaPercentages
         );
       },
@@ -75,94 +90,137 @@ export default function ImageCropModal({
 
   function applyCrop() {
     if (
-      !croppedAreaPercentages
+      !croppedArea
     ) {
       return;
     }
 
     onApply({
       x:
-        croppedAreaPercentages.x,
+        croppedArea.x,
 
       y:
-        croppedAreaPercentages.y,
+        croppedArea.y,
 
       width:
-        croppedAreaPercentages.width,
+        croppedArea.width,
 
       height:
-        croppedAreaPercentages.height,
+        croppedArea.height,
     });
   }
 
-  /* IMAGE ASPECT RATIO */
-
   const aspect =
-    type === "avatar"
+    type ===
+    "avatar"
       ? 1
       : 3 / 1;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-100">
-              {type === "avatar"
-                ? "Recortar foto de perfil"
-                : "Recortar banner"}
-            </h2>
+    <div className="fixed inset-0 z-[200] bg-zinc-950 lg:flex lg:items-center lg:justify-center lg:bg-black/80 lg:p-6 lg:backdrop-blur-sm">
+      <div className="flex h-[100dvh] w-full flex-col bg-zinc-950 lg:h-auto lg:max-h-[90dvh] lg:max-w-3xl lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800">
+        {/* HEADER */}
 
-            <p className="mt-1 text-sm text-zinc-500">
-              Arrastra la imagen y ajusta el zoom
-              hasta que quede como quieres.
-            </p>
-          </div>
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
+          <button
+            type="button"
+            onClick={
+              onCancel
+            }
+            className="rounded-full p-2 text-zinc-300 hover:bg-zinc-900"
+            aria-label="Cancelar"
+          >
+            <X
+              size={21}
+            />
+          </button>
+
+          <h2 className="font-semibold text-zinc-100">
+            {type ===
+            "avatar"
+              ? "Ajustar foto"
+              : "Ajustar banner"}
+          </h2>
 
           <button
             type="button"
-            onClick={onCancel}
-            className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200"
-            aria-label="Cerrar"
+            onClick={
+              applyCrop
+            }
+            disabled={
+              !croppedArea
+            }
+            className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-40"
           >
-            <X size={20} />
-          </button>
-        </div>
+            <Check
+              size={15}
+            />
 
-        <div className="relative h-[430px] bg-black">
+            Aplicar
+          </button>
+        </header>
+
+        {/* CROPPER */}
+
+        <div className="relative min-h-0 flex-1 bg-black lg:h-[500px] lg:flex-none">
           <Cropper
-            image={image}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspect}
+            image={
+              image
+            }
+            crop={
+              crop
+            }
+            zoom={
+              zoom
+            }
+            aspect={
+              aspect
+            }
             cropShape={
-              type === "avatar"
+              type ===
+              "avatar"
                 ? "round"
                 : "rect"
             }
-            showGrid
+            showGrid={
+              false
+            }
             objectFit="contain"
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
+            onCropChange={
+              setCrop
+            }
+            onZoomChange={
+              setZoom
+            }
             onCropComplete={
               handleCropComplete
             }
           />
         </div>
 
-        <div className="border-t border-zinc-800 p-5">
+        {/* ZOOM */}
+
+        <div className="shrink-0 border-t border-zinc-800 px-5 py-5">
           <div className="flex items-center gap-4">
             <Minus
-              size={18}
-              className="text-zinc-500"
+              size={17}
+              className="text-zinc-600"
             />
 
             <input
               type="range"
-              min={1}
-              max={4}
-              step={0.01}
-              value={zoom}
+              min={
+                1
+              }
+              max={
+                4
+              }
+              step={
+                0.01
+              }
+              value={
+                zoom
+              }
               onChange={(
                 event
               ) =>
@@ -177,30 +235,9 @@ export default function ImageCropModal({
             />
 
             <Plus
-              size={18}
-              className="text-zinc-500"
+              size={17}
+              className="text-zinc-600"
             />
-          </div>
-
-          <div className="mt-5 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900"
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              onClick={applyCrop}
-              disabled={!croppedAreaPercentages}
-              className="flex items-center gap-2 rounded-xl bg-fuchsia-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
-            >
-              <Check size={16} />
-
-              Aplicar recorte
-            </button>
           </div>
         </div>
       </div>

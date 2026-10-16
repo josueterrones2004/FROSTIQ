@@ -1,6 +1,5 @@
 "use client";
 
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
 import Image from "next/image";
 
 import {
@@ -10,10 +9,18 @@ import {
   ShieldAlert,
   X,
 } from "lucide-react";
-import { useState } from "react";
+
+import {
+  useState,
+} from "react";
+
+import {
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
 
 type Review = {
-  id: string;
+  id:
+    string;
 
   media_type:
     | "MOVIE"
@@ -21,13 +28,17 @@ type Review = {
     | "GAME"
     | "BOOK";
 
-  external_id: string;
+  external_id:
+    string;
 
-  title: string;
+  title:
+    string;
 
-  review_text: string;
+  review_text:
+    string;
 
-  liked: boolean;
+  liked:
+    boolean;
 
   experience:
     | "FIRST_TIME"
@@ -35,28 +46,53 @@ type Review = {
     | "REPLAY"
     | "REREAD";
 
-  contains_spoilers: boolean;
+  contains_spoilers:
+    boolean;
 
-  show_consumed_date: boolean;
+  show_consumed_date:
+    boolean;
 
-  consumed_at: string;
+  consumed_at:
+    string;
 
-  cover_url: string | null;
+  cover_url:
+    | string
+    | null;
 
-  release_year: number | null;
+  poster_position_x?:
+    number;
+
+  poster_position_y?:
+    number;
+
+  poster_zoom?:
+    number;
+
+  release_year:
+    | number
+    | null;
 };
 
 interface SocialReviewModalProps {
-  review: Review;
+  review:
+    Review;
 }
 
-function formatDate(date: string) {
+function formatDate(
+  date:
+    string
+) {
   return new Intl.DateTimeFormat(
     "es-MX",
     {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      year:
+        "numeric",
     }
   ).format(
     new Date(
@@ -66,7 +102,8 @@ function formatDate(date: string) {
 }
 
 function getExperienceLabel(
-  review: Review
+  review:
+    Review
 ) {
   if (
     review.experience ===
@@ -111,13 +148,15 @@ function getDateLabel(
     Review["media_type"]
 ) {
   if (
-    mediaType === "BOOK"
+    mediaType ===
+    "BOOK"
   ) {
     return "Leído el";
   }
 
   if (
-    mediaType === "GAME"
+    mediaType ===
+    "GAME"
   ) {
     return "Completado el";
   }
@@ -128,45 +167,78 @@ function getDateLabel(
 export default function SocialReviewModal({
   review,
 }: SocialReviewModalProps) {
-  const [open, setOpen] =
-    useState(false);
+  const [
+    open,
+    setOpen,
+  ] =
+    useState(
+      false
+    );
 
   const [
     spoilerRevealed,
     setSpoilerRevealed,
-  ] = useState(
-    !review.contains_spoilers
-  );
+  ] =
+    useState(
+      !review.contains_spoilers
+    );
+
+  const positionX =
+    review.poster_position_x ??
+    50;
+
+  const positionY =
+    review.poster_position_y ??
+    50;
+
+  const zoom =
+    review.poster_zoom ??
+    1;
 
   function openModal() {
     setSpoilerRevealed(
       !review.contains_spoilers
     );
 
-    setOpen(true);
+    setOpen(
+      true
+    );
   }
 
   return (
     <>
-      {/* TARJETA CLICABLE */}
       <button
         type="button"
-        onClick={openModal}
+        onClick={
+          openModal
+        }
         className="mt-4 flex w-full gap-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900/70"
       >
         {review.cover_url ? (
-          <div className="w-16 shrink-0 overflow-hidden rounded-lg">
+          <div className="relative aspect-[2/3] w-16 shrink-0 overflow-hidden rounded-lg bg-zinc-900">
             <Image
               src={
                 review.cover_url
               }
-              alt={review.title}
-              className="aspect-[2/3] w-full object-cover"
-            
-          width={500}
-          height={750}
-          unoptimized={shouldUseOriginalImage(review.cover_url)}
-        />
+              alt={
+                review.title
+              }
+              fill
+              sizes="64px"
+              unoptimized={
+                shouldUseOriginalImage(
+                  review.cover_url
+                )
+              }
+              className="object-cover"
+              style={{
+                objectPosition:
+                  `${positionX}% ${positionY}%`,
+
+                transform:
+                  `scale(${zoom})`,
+              }}
+            />
           </div>
         ) : (
           <div className="flex aspect-[2/3] w-16 shrink-0 items-center justify-center rounded-lg bg-zinc-800 px-2 text-center text-[10px] text-zinc-500">
@@ -177,7 +249,9 @@ export default function SocialReviewModal({
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <div className="flex items-center gap-2">
             <p className="line-clamp-1 font-medium text-zinc-100">
-              {review.title}
+              {
+                review.title
+              }
             </p>
 
             {review.release_year && (
@@ -192,25 +266,33 @@ export default function SocialReviewModal({
           <div className="mt-2 flex items-center gap-3 text-zinc-500">
             {review.liked ? (
               <Heart
-                size={16}
+                size={
+                  16
+                }
                 fill="currentColor"
               />
             ) : (
               <HeartCrack
-                size={16}
+                size={
+                  16
+                }
               />
             )}
 
             {review.experience !==
               "FIRST_TIME" && (
               <RotateCcw
-                size={16}
+                size={
+                  16
+                }
               />
             )}
 
             {review.contains_spoilers && (
               <ShieldAlert
-                size={16}
+                size={
+                  16
+                }
               />
             )}
           </div>
@@ -221,12 +303,13 @@ export default function SocialReviewModal({
         </div>
       </button>
 
-      {/* MODAL */}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
           onClick={() =>
-            setOpen(false)
+            setOpen(
+              false
+            )
           }
         >
           <div
@@ -240,30 +323,48 @@ export default function SocialReviewModal({
             <button
               type="button"
               onClick={() =>
-                setOpen(false)
+                setOpen(
+                  false
+                )
               }
               className="absolute right-5 top-5 z-10 rounded-full p-2 text-zinc-500 transition hover:bg-zinc-900 hover:text-white"
+              aria-label="Cerrar"
             >
-              <X size={20} />
+              <X
+                size={
+                  20
+                }
+              />
             </button>
 
             <div className="grid gap-7 md:grid-cols-[180px_minmax(0,1fr)]">
-              {/* PORTADA */}
               <div>
                 {review.cover_url ? (
-                  <Image
-                    src={
-                      review.cover_url
-                    }
-                    alt={
-                      review.title
-                    }
-                    className="w-full rounded-xl object-cover shadow-xl"
-                  
-          width={500}
-          height={750}
-          unoptimized={shouldUseOriginalImage(review.cover_url)}
-        />
+                  <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-zinc-900 shadow-xl">
+                    <Image
+                      src={
+                        review.cover_url
+                      }
+                      alt={
+                        review.title
+                      }
+                      fill
+                      sizes="180px"
+                      unoptimized={
+                        shouldUseOriginalImage(
+                          review.cover_url
+                        )
+                      }
+                      className="object-cover"
+                      style={{
+                        objectPosition:
+                          `${positionX}% ${positionY}%`,
+
+                        transform:
+                          `scale(${zoom})`,
+                      }}
+                    />
+                  </div>
                 ) : (
                   <div className="flex aspect-[2/3] w-full items-center justify-center rounded-xl bg-zinc-900 text-sm text-zinc-600">
                     Sin portada
@@ -271,7 +372,6 @@ export default function SocialReviewModal({
                 )}
               </div>
 
-              {/* REVIEW */}
               <div className="min-w-0 pt-1">
                 <div className="pr-10">
                   <div className="flex flex-wrap items-baseline gap-3">
@@ -294,13 +394,17 @@ export default function SocialReviewModal({
                     <span className="flex items-center gap-2">
                       {review.liked ? (
                         <Heart
-                          size={16}
+                          size={
+                            16
+                          }
                           fill="currentColor"
                           className="text-red-500"
                         />
                       ) : (
                         <HeartCrack
-                          size={16}
+                          size={
+                            16
+                          }
                         />
                       )}
 
@@ -313,7 +417,9 @@ export default function SocialReviewModal({
                       {review.experience !==
                         "FIRST_TIME" && (
                         <RotateCcw
-                          size={15}
+                          size={
+                            15
+                          }
                         />
                       )}
 
@@ -325,7 +431,9 @@ export default function SocialReviewModal({
                     {review.contains_spoilers && (
                       <span className="flex items-center gap-2">
                         <ShieldAlert
-                          size={15}
+                          size={
+                            15
+                          }
                         />
 
                         Spoilers
@@ -347,24 +455,22 @@ export default function SocialReviewModal({
                   )}
                 </div>
 
-                {/* SPOILER */}
                 {review.contains_spoilers &&
                 !spoilerRevealed ? (
                   <div className="mt-7 rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-center">
                     <ShieldAlert
-                      size={28}
+                      size={
+                        28
+                      }
                       className="mx-auto text-zinc-500"
                     />
 
                     <p className="mt-3 font-medium text-zinc-200">
-                      Esta review
-                      contiene spoilers
+                      Esta review contiene spoilers
                     </p>
 
                     <p className="mt-1 text-sm text-zinc-500">
-                      El texto está
-                      oculto hasta que
-                      decidas mostrarlo.
+                      El texto está oculto hasta que decidas mostrarlo.
                     </p>
 
                     <button

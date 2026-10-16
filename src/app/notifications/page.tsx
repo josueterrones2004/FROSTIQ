@@ -1,7 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import {
-  Bell,
+  ArrowLeft,
   Heart,
   MessageCircle,
   UserPlus,
@@ -12,7 +13,14 @@ import {
 } from "next/navigation";
 
 import NotificationsReadMarker from "@/components/NotificationsReadMarker";
-import { createClient } from "@/lib/supabase/server";
+
+import {
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
+
+import {
+  createClient,
+} from "@/lib/supabase/server";
 
 type NotificationType =
   | "FOLLOW"
@@ -21,22 +29,48 @@ type NotificationType =
 
 type Notification = {
   id: string;
-  actor_id: string;
-  type: NotificationType;
-  activity_id: string | null;
-  comment_id: string | null;
-  is_read: boolean;
-  created_at: string;
+
+  actor_id:
+    string;
+
+  type:
+    NotificationType;
+
+  activity_id:
+    | string
+    | null;
+
+  comment_id:
+    | string
+    | null;
+
+  is_read:
+    boolean;
+
+  created_at:
+    string;
 };
 
 type Profile = {
-  id: string;
-  username: string | null;
-  display_name: string | null;
+  id:
+    string;
+
+  username:
+    | string
+    | null;
+
+  display_name:
+    | string
+    | null;
+
+  avatar_url:
+    | string
+    | null;
 };
 
 type Activity = {
-  id: string;
+  id:
+    string;
 
   media_type:
     | "MOVIE"
@@ -44,31 +78,44 @@ type Activity = {
     | "BOOK"
     | "GAME";
 
-  external_id: string;
-  title: string;
+  external_id:
+    string;
+
+  title:
+    string;
 };
 
 type ActivityComment = {
-  id: string;
-  content: string;
+  id:
+    string;
+
+  content:
+    string;
 };
 
 function formatDate(
-  date: string
+  date:
+    string
 ) {
   return new Intl.DateTimeFormat(
     "es-MX",
     {
-      dateStyle: "medium",
-      timeStyle: "short",
+      dateStyle:
+        "medium",
+
+      timeStyle:
+        "short",
     }
   ).format(
-    new Date(date)
+    new Date(
+      date
+    )
   );
 }
 
 function getMediaHref(
-  activity: Activity
+  activity:
+    Activity
 ) {
   if (
     activity.media_type ===
@@ -94,27 +141,62 @@ function getMediaHref(
   return `/games/${activity.external_id}`;
 }
 
+function getProfileName(
+  profile:
+    | Profile
+    | undefined
+) {
+  return (
+    profile?.display_name ||
+    profile?.username ||
+    "Usuario"
+  );
+}
+
+function getInitial(
+  profile:
+    | Profile
+    | undefined
+) {
+  return getProfileName(
+    profile
+  )
+    .slice(
+      0,
+      1
+    )
+    .toUpperCase();
+}
+
 export default async function NotificationsPage() {
   const supabase =
     await createClient();
 
   const {
-    data: { user },
+    data: {
+      user,
+    },
   } =
     await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth");
+    redirect(
+      "/auth"
+    );
   }
 
-  /* NOTIFICATIONS */
+  /*
+   * NOTIFICATIONS
+   */
 
   const {
     data,
     error,
   } =
     await supabase
-      .from("notifications")
+      .from(
+        "notifications"
+      )
       .select(`
         id,
         actor_id,
@@ -131,12 +213,17 @@ export default async function NotificationsPage() {
       .order(
         "created_at",
         {
-          ascending: false,
+          ascending:
+            false,
         }
       )
-      .limit(50);
+      .limit(
+        50
+      );
 
-  if (error) {
+  if (
+    error
+  ) {
     console.error(
       "Error loading notifications:",
       error
@@ -144,42 +231,59 @@ export default async function NotificationsPage() {
   }
 
   const notifications =
-    (data ?? []) as Notification[];
+    (
+      data ??
+      []
+    ) as Notification[];
 
-  /* ACTORS */
+  /*
+   * ACTORS
+   */
 
   const actorIds = [
     ...new Set(
       notifications.map(
-        (notification) =>
+        (
+          notification
+        ) =>
           notification.actor_id
       )
     ),
   ];
 
   let profiles:
-    Profile[] = [];
+    Profile[] =
+    [];
 
-  if (actorIds.length > 0) {
+  if (
+    actorIds.length >
+    0
+  ) {
     const {
       data:
         profileData,
+
       error:
         profileError,
     } =
       await supabase
-        .from("profiles")
+        .from(
+          "profiles"
+        )
         .select(`
           id,
           username,
-          display_name
+          display_name,
+          avatar_url
         `)
         .in(
           "id",
           actorIds
         );
 
-    if (profileError) {
+    if (
+      profileError
+    ) {
       console.error(
         "Error loading notification profiles:",
         profileError
@@ -187,51 +291,66 @@ export default async function NotificationsPage() {
     }
 
     profiles =
-      (profileData ??
-        []) as Profile[];
+      (
+        profileData ??
+        []
+      ) as Profile[];
   }
 
   const profilesById =
     new Map(
       profiles.map(
-        (profile) => [
+        (
+          profile
+        ) => [
           profile.id,
           profile,
         ]
       )
     );
 
-  /* ACTIVITIES */
+  /*
+   * ACTIVITIES
+   */
 
   const activityIds = [
     ...new Set(
       notifications
         .filter(
-          (notification) =>
+          (
+            notification
+          ) =>
             notification.activity_id !==
             null
         )
         .map(
-          (notification) =>
+          (
+            notification
+          ) =>
             notification.activity_id as string
         )
     ),
   ];
 
   let activities:
-    Activity[] = [];
+    Activity[] =
+    [];
 
   if (
-    activityIds.length > 0
+    activityIds.length >
+    0
   ) {
     const {
       data:
         activityData,
+
       error:
         activityError,
     } =
       await supabase
-        .from("activity_events")
+        .from(
+          "activity_events"
+        )
         .select(`
           id,
           media_type,
@@ -243,7 +362,9 @@ export default async function NotificationsPage() {
           activityIds
         );
 
-    if (activityError) {
+    if (
+      activityError
+    ) {
       console.error(
         "Error loading notification activities:",
         activityError
@@ -251,51 +372,66 @@ export default async function NotificationsPage() {
     }
 
     activities =
-      (activityData ??
-        []) as Activity[];
+      (
+        activityData ??
+        []
+      ) as Activity[];
   }
 
   const activitiesById =
     new Map(
       activities.map(
-        (activity) => [
+        (
+          activity
+        ) => [
           activity.id,
           activity,
         ]
       )
     );
 
-  /* COMMENTS */
+  /*
+   * COMMENTS
+   */
 
   const commentIds = [
     ...new Set(
       notifications
         .filter(
-          (notification) =>
+          (
+            notification
+          ) =>
             notification.comment_id !==
             null
         )
         .map(
-          (notification) =>
+          (
+            notification
+          ) =>
             notification.comment_id as string
         )
     ),
   ];
 
   let comments:
-    ActivityComment[] = [];
+    ActivityComment[] =
+    [];
 
   if (
-    commentIds.length > 0
+    commentIds.length >
+    0
   ) {
     const {
       data:
         commentData,
+
       error:
         commentError,
     } =
       await supabase
-        .from("activity_comments")
+        .from(
+          "activity_comments"
+        )
         .select(`
           id,
           content
@@ -305,7 +441,9 @@ export default async function NotificationsPage() {
           commentIds
         );
 
-    if (commentError) {
+    if (
+      commentError
+    ) {
       console.error(
         "Error loading notification comments:",
         commentError
@@ -313,14 +451,18 @@ export default async function NotificationsPage() {
     }
 
     comments =
-      (commentData ??
-        []) as ActivityComment[];
+      (
+        commentData ??
+        []
+      ) as ActivityComment[];
   }
 
   const commentsById =
     new Map(
       comments.map(
-        (comment) => [
+        (
+          comment
+        ) => [
           comment.id,
           comment,
         ]
@@ -332,33 +474,35 @@ export default async function NotificationsPage() {
       <NotificationsReadMarker />
 
       {/* HEADER */}
-      <div>
-        <div className="flex items-center gap-3">
-          <Bell
-            size={26}
-            className="text-fuchsia-400"
-          />
 
-          <h1 className="text-3xl font-bold">
+      <div className="flex items-start justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-zinc-100">
             Notificaciones
           </h1>
+
+          <p className="mt-2 text-zinc-500">
+            Aquí aparecerán las novedades relacionadas con tu cuenta.
+          </p>
         </div>
 
-        <p className="mt-2 text-zinc-500">
-          Aquí aparecerán las novedades relacionadas con tu cuenta.
-        </p>
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 rounded-xl border border-zinc-800 px-3 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+        >
+          <ArrowLeft size={16} />
+          <span className="hidden sm:inline">
+            Volver
+          </span>
+        </Link>
       </div>
 
       {/* NOTIFICATIONS */}
+
       {notifications.length ===
       0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-zinc-800 px-6 py-14 text-center">
-          <Bell
-            size={32}
-            className="mx-auto text-zinc-700"
-          />
-
-          <p className="mt-4 text-zinc-500">
+          <p className="text-zinc-500">
             Todavía no tienes notificaciones.
           </p>
         </div>
@@ -375,9 +519,9 @@ export default async function NotificationsPage() {
                 );
 
               const actorName =
-                actor?.display_name ??
-                actor?.username ??
-                "Usuario";
+                getProfileName(
+                  actor
+                );
 
               const profileHref =
                 actor?.username
@@ -424,27 +568,100 @@ export default async function NotificationsPage() {
                       : "bg-fuchsia-500/[0.04]"
                   }`}
                 >
-                  {/* ICON */}
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/10 text-fuchsia-300">
-                    {notification.type ===
-                    "FOLLOW" ? (
-                      <UserPlus
-                        size={19}
-                      />
-                    ) : notification.type ===
-                      "ACTIVITY_LIKE" ? (
-                      <Heart
-                        size={19}
-                        fill="currentColor"
-                      />
+                  {/* ACTOR */}
+
+                  <div className="relative h-12 w-12 shrink-0">
+                    {profileHref ? (
+                      <Link
+                        href={
+                          profileHref
+                        }
+                        className="block h-12 w-12 overflow-hidden rounded-full bg-zinc-800"
+                      >
+                        {actor?.avatar_url ? (
+                          <Image
+                            src={
+                              actor.avatar_url
+                            }
+                            alt={
+                              actorName
+                            }
+                            width={
+                              128
+                            }
+                            height={
+                              128
+                            }
+                            unoptimized={
+                              shouldUseOriginalImage(
+                                actor.avatar_url
+                              )
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-400">
+                            {getInitial(
+                              actor
+                            )}
+                          </div>
+                        )}
+                      </Link>
                     ) : (
-                      <MessageCircle
-                        size={19}
-                      />
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-zinc-800 font-semibold text-zinc-400">
+                        {actor?.avatar_url ? (
+                          <Image
+                            src={
+                              actor.avatar_url
+                            }
+                            alt={
+                              actorName
+                            }
+                            width={
+                              128
+                            }
+                            height={
+                              128
+                            }
+                            unoptimized={
+                              shouldUseOriginalImage(
+                                actor.avatar_url
+                              )
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          getInitial(
+                            actor
+                          )
+                        )}
+                      </div>
                     )}
+
+                    {/* TYPE BADGE */}
+
+                    <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-950 bg-fuchsia-950 text-fuchsia-300">
+                      {notification.type ===
+                      "FOLLOW" ? (
+                        <UserPlus
+                          size={13}
+                        />
+                      ) : notification.type ===
+                        "ACTIVITY_LIKE" ? (
+                        <Heart
+                          size={12}
+                          fill="currentColor"
+                        />
+                      ) : (
+                        <MessageCircle
+                          size={12}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* CONTENT */}
+
                   <div className="min-w-0 flex-1">
                     <p className="leading-6 text-zinc-300">
                       {profileHref ? (
@@ -524,11 +741,17 @@ export default async function NotificationsPage() {
                       )}
                     </p>
 
+                    {/* COMMENT PREVIEW */}
+
                     {notification.type ===
                       "ACTIVITY_COMMENT" &&
                       comment && (
                         <p className="mt-2 line-clamp-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
-                          “{comment.content}”
+                          “
+                          {
+                            comment.content
+                          }
+                          ”
                         </p>
                       )}
 
@@ -540,6 +763,7 @@ export default async function NotificationsPage() {
                   </div>
 
                   {/* UNREAD */}
+
                   {!notification.is_read && (
                     <div
                       className="mt-2 h-2 w-2 shrink-0 rounded-full bg-fuchsia-400"

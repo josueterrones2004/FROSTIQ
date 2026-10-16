@@ -4,6 +4,12 @@ import {
 } from "next/server";
 
 import {
+  getIGDBImageUrl,
+  getIGDBReleaseYear,
+  searchIGDBGames,
+} from "@/lib/igdb";
+
+import {
   searchTMDB,
 } from "@/lib/tmdb";
 
@@ -16,68 +22,99 @@ import {
 type MediaType =
   | "MOVIE"
   | "SERIES"
-  | "BOOK";
+  | "BOOK"
+  | "GAME";
 
 type TMDBResult = {
-  id: number;
+  id:
+    number;
 
   media_type:
     | "movie"
     | "tv"
     | string;
 
-  title?: string;
-  name?: string;
+  title?:
+    string;
 
-  poster_path?: string | null;
+  name?:
+    string;
 
-  release_date?: string;
-  first_air_date?: string;
+  poster_path?:
+    string |
+    null;
+
+  release_date?:
+    string;
+
+  first_air_date?:
+    string;
 };
 
 type SearchResult = {
-  media_type: MediaType;
+  media_type:
+    MediaType;
 
-  external_id: string;
+  external_id:
+    string;
 
-  title: string;
+  title:
+    string;
 
-  cover_url: string | null;
+  cover_url:
+    string |
+    null;
 
-  year: string | null;
+  year:
+    string |
+    null;
 
-  subtitle: string | null;
+  subtitle:
+    string |
+    null;
 };
 
 export async function GET(
-  request: NextRequest
+  request:
+    NextRequest
 ) {
   const searchParams =
     request.nextUrl.searchParams;
 
   const query =
     searchParams
-      .get("q")
+      .get(
+        "q"
+      )
       ?.trim();
 
   const type =
     searchParams.get(
       "type"
-    ) as MediaType | null;
+    ) as
+      | MediaType
+      | null;
 
   if (
     !query ||
-    query.length < 2
+    query.length <
+      2
   ) {
     return NextResponse.json({
-      results: [],
+      results:
+        [],
     });
   }
 
   if (
-    type !== "MOVIE" &&
-    type !== "SERIES" &&
-    type !== "BOOK"
+    type !==
+      "MOVIE" &&
+    type !==
+      "SERIES" &&
+    type !==
+      "BOOK" &&
+    type !==
+      "GAME"
   ) {
     return NextResponse.json(
       {
@@ -85,18 +122,93 @@ export async function GET(
           "Tipo de contenido inválido.",
       },
       {
-        status: 400,
+        status:
+          400,
       }
     );
   }
 
   try {
     /*
-     * PELÍCULAS Y SERIES
+     * GAMES
      */
+
     if (
-      type === "MOVIE" ||
-      type === "SERIES"
+      type ===
+      "GAME"
+    ) {
+      const games =
+        await searchIGDBGames(
+          query
+        );
+
+      const results:
+        SearchResult[] =
+        games
+          .slice(
+            0,
+            20
+          )
+          .map(
+            (
+              game
+            ) => ({
+              media_type:
+                "GAME",
+
+              external_id:
+                String(
+                  game.id
+                ),
+
+              title:
+                game.name,
+
+              cover_url:
+                getIGDBImageUrl(
+                  game.cover?.image_id,
+                  "cover_big"
+                ),
+
+              year:
+                getIGDBReleaseYear(
+                  game.first_release_date
+                )?.toString() ??
+                null,
+
+              subtitle:
+                game.platforms
+                  ?.slice(
+                    0,
+                    2
+                  )
+                  .map(
+                    (
+                      platform
+                    ) =>
+                      platform.name
+                  )
+                  .join(
+                    ", "
+                  ) ??
+                "Juego",
+            })
+          );
+
+      return NextResponse.json({
+        results,
+      });
+    }
+
+    /*
+     * MOVIES + SERIES
+     */
+
+    if (
+      type ===
+        "MOVIE" ||
+      type ===
+        "SERIES"
     ) {
       const data =
         await searchTMDB(
@@ -108,23 +220,33 @@ export async function GET(
           data.results as
             | TMDBResult[]
             | undefined
-        ) ?? [];
+        ) ??
+        [];
 
       const wantedType =
-        type === "MOVIE"
+        type ===
+        "MOVIE"
           ? "movie"
           : "tv";
 
-      const results: SearchResult[] =
+      const results:
+        SearchResult[] =
         tmdbResults
           .filter(
-            (item) =>
+            (
+              item
+            ) =>
               item.media_type ===
               wantedType
           )
-          .slice(0, 20)
+          .slice(
+            0,
+            20
+          )
           .map(
-            (item) => {
+            (
+              item
+            ) => {
               const isMovie =
                 item.media_type ===
                 "movie";
@@ -179,24 +301,33 @@ export async function GET(
     }
 
     /*
-     * LIBROS
+     * BOOKS
      */
+
     const data =
       await searchBooks(
         query
       );
 
-    const results: SearchResult[] =
+    const results:
+      SearchResult[] =
       data.docs
         .filter(
-          (book) =>
+          (
+            book
+          ) =>
             book.key?.startsWith(
               "/works/"
             )
         )
-        .slice(0, 20)
+        .slice(
+          0,
+          20
+        )
         .map(
-          (book) => {
+          (
+            book
+          ) => {
             const workId =
               getWorkIdFromKey(
                 book.key
@@ -227,8 +358,13 @@ export async function GET(
 
               subtitle:
                 book.author_name
-                  ?.slice(0, 2)
-                  .join(", ") ??
+                  ?.slice(
+                    0,
+                    2
+                  )
+                  .join(
+                    ", "
+                  ) ??
                 "Libro",
             };
           }
@@ -237,7 +373,9 @@ export async function GET(
     return NextResponse.json({
       results,
     });
-  } catch (error) {
+  } catch (
+    error
+  ) {
     console.error(
       "Favorite search error:",
       error
@@ -249,7 +387,8 @@ export async function GET(
           "No se pudo realizar la búsqueda.",
       },
       {
-        status: 500,
+        status:
+          500,
       }
     );
   }

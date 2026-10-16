@@ -1,8 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Users,
 } from "lucide-react";
 
@@ -12,82 +13,148 @@ import {
 } from "next/navigation";
 
 import FollowButton from "@/app/social/FollowButton";
-import { createClient } from "@/lib/supabase/server";
+
+import {
+  createClient,
+} from "@/lib/supabase/server";
+
+import {
+  CroppedProfileImage,
+  type ProfileCrop,
+} from "../../ProfileMediaHeader";
 
 interface ConnectionsPageProps {
   params: Promise<{
-    username: string;
+    username:
+      string;
   }>;
 
   searchParams: Promise<{
-    tab?: string;
-    page?: string;
+    tab?:
+      string;
+
+    page?:
+      string;
   }>;
 }
 
+type SpecialRole =
+  | "OWNER"
+  | "BETA_TESTER"
+  | null;
+
 type Profile = {
-  id: string;
-  username: string | null;
-  display_name: string | null;
-  avatar_url: string | null;
+  id:
+    string;
+
+  username:
+    | string
+    | null;
+
+  display_name:
+    | string
+    | null;
+
+  avatar_url:
+    | string
+    | null;
+
+  avatar_crop:
+    | ProfileCrop
+    | null;
+
+  special_role:
+    SpecialRole;
 };
 
 type Connection = {
-  follower_id: string;
-  following_id: string;
+  follower_id:
+    string;
+
+  following_id:
+    string;
 };
 
 type ConnectionTab =
   | "followers"
   | "following";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE =
+  20;
 
 export default async function ConnectionsPage({
   params,
   searchParams,
 }: ConnectionsPageProps) {
-  const { username } = await params;
+  const {
+    username,
+  } =
+    await params;
 
-  const query = await searchParams;
+  const query =
+    await searchParams;
 
-  const activeTab: ConnectionTab =
-    query.tab === "following"
+  const activeTab:
+    ConnectionTab =
+    query.tab ===
+      "following"
       ? "following"
       : "followers";
 
-  const requestedPage = Number(
-    query.page ?? "1"
-  );
+  const requestedPage =
+    Number(
+      query.page ??
+        "1"
+    );
 
   const supabase =
     await createClient();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: {
+      user,
+    },
+  } =
+    await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth");
+    redirect(
+      "/auth"
+    );
   }
 
-  /* PROFILE */
+  /*
+   * PROFILE
+   */
 
   const {
-    data: profile,
-    error: profileError,
-  } = await supabase
-    .from("profiles")
-    .select(`
-      id,
-      username,
-      display_name,
-      avatar_url
-    `)
-    .eq("username", username)
-    .maybeSingle();
+    data:
+      profileData,
 
-  if (profileError) {
+    error:
+      profileError,
+  } =
+    await supabase
+      .from(
+        "profiles"
+      )
+      .select(`
+        id,
+        username,
+        display_name,
+        avatar_url,
+        avatar_crop,
+        special_role
+      `)
+      .eq(
+        "username",
+        username
+      )
+      .maybeSingle();
+
+  if (
+    profileError
+  ) {
     console.error(
       "Error loading profile:",
       profileError
@@ -98,85 +165,119 @@ export default async function ConnectionsPage({
     );
   }
 
-  if (!profile) {
+  if (
+    !profileData
+  ) {
     notFound();
   }
 
-  const selectedProfile =
-    profile as Profile;
+  const profile =
+    profileData as Profile;
 
   const displayName =
-    selectedProfile.display_name ??
-    selectedProfile.username ??
+    profile.display_name ??
+    profile.username ??
     "Usuario";
 
-  /* FOLLOW COUNTS */
+  /*
+   * FOLLOW COUNTS
+   */
 
   const [
     followersResult,
     followingResult,
-  ] = await Promise.all([
-    supabase
-      .from("profile_follows")
-      .select("follower_id", {
-        count: "exact",
-        head: true,
-      })
-      .eq(
-        "following_id",
-        selectedProfile.id
-      ),
+  ] =
+    await Promise.all([
+      supabase
+        .from(
+          "profile_follows"
+        )
+        .select(
+          "follower_id",
+          {
+            count:
+              "exact",
 
-    supabase
-      .from("profile_follows")
-      .select("following_id", {
-        count: "exact",
-        head: true,
-      })
-      .eq(
-        "follower_id",
-        selectedProfile.id
-      ),
-  ]);
+            head:
+              true,
+          }
+        )
+        .eq(
+          "following_id",
+          profile.id
+        ),
+
+      supabase
+        .from(
+          "profile_follows"
+        )
+        .select(
+          "following_id",
+          {
+            count:
+              "exact",
+
+            head:
+              true,
+          }
+        )
+        .eq(
+          "follower_id",
+          profile.id
+        ),
+    ]);
 
   if (
-    followersResult.error ||
+    followersResult.error
+  ) {
+    console.error(
+      "Error loading followers:",
+      followersResult.error
+    );
+  }
+
+  if (
     followingResult.error
   ) {
     console.error(
-      "Error loading follow counts:",
-      followersResult.error ??
-        followingResult.error
-    );
-
-    throw new Error(
-      "No se pudieron cargar los seguidores."
+      "Error loading following:",
+      followingResult.error
     );
   }
 
   const followersCount =
-    followersResult.count ?? 0;
+    followersResult.count ??
+    0;
 
   const followingCount =
-    followingResult.count ?? 0;
+    followingResult.count ??
+    0;
 
   const activeCount =
-    activeTab === "followers"
+    activeTab ===
+    "followers"
       ? followersCount
       : followingCount;
 
-  /* PAGINATION */
+  /*
+   * PAGINATION
+   */
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      activeCount / PAGE_SIZE
-    )
-  );
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        activeCount /
+          PAGE_SIZE
+      )
+    );
 
   const page =
-    Number.isSafeInteger(requestedPage) &&
-    requestedPage > 0
+    Number.isSafeInteger(
+      requestedPage
+    ) &&
+    requestedPage >
+      0
       ? Math.min(
           requestedPage,
           totalPages
@@ -184,37 +285,61 @@ export default async function ConnectionsPage({
       : 1;
 
   const start =
-    (page - 1) * PAGE_SIZE;
+    (
+      page -
+      1
+    ) *
+    PAGE_SIZE;
 
   const end =
-    start + PAGE_SIZE - 1;
+    start +
+    PAGE_SIZE -
+    1;
 
-  /* CONNECTIONS */
+  /*
+   * CONNECTIONS
+   */
 
-  const connectionColumn =
-    activeTab === "followers"
+  const filterColumn =
+    activeTab ===
+    "followers"
       ? "following_id"
       : "follower_id";
 
   const {
-    data: connectionsData,
-    error: connectionsError,
-  } = await supabase
-    .from("profile_follows")
-    .select(`
-      follower_id,
-      following_id
-    `)
-    .eq(
-      connectionColumn,
-      selectedProfile.id
-    )
-    .order("created_at", {
-      ascending: false,
-    })
-    .range(start, end);
+    data:
+      connectionsData,
 
-  if (connectionsError) {
+    error:
+      connectionsError,
+  } =
+    await supabase
+      .from(
+        "profile_follows"
+      )
+      .select(`
+        follower_id,
+        following_id
+      `)
+      .eq(
+        filterColumn,
+        profile.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:
+            false,
+        }
+      )
+      .range(
+        start,
+        end
+      );
+
+  if (
+    connectionsError
+  ) {
     console.error(
       "Error loading connections:",
       connectionsError
@@ -226,34 +351,58 @@ export default async function ConnectionsPage({
   }
 
   const connections =
-    (connectionsData ?? []) as Connection[];
+    (
+      connectionsData ??
+      []
+    ) as Connection[];
 
-  const profileIds = connections.map(
-    (connection) =>
-      activeTab === "followers"
-        ? connection.follower_id
-        : connection.following_id
-  );
+  const profileIds =
+    connections.map(
+      (
+        connection
+      ) =>
+        activeTab ===
+        "followers"
+          ? connection.follower_id
+          : connection.following_id
+    );
 
-  /* USER PROFILES */
+  /*
+   * CONNECTED PROFILES
+   */
 
-  let connectedProfiles: Profile[] = [];
+  let connectedProfiles:
+    Profile[] =
+    [];
 
-  if (profileIds.length > 0) {
+  if (
+    profileIds.length >
+    0
+  ) {
     const {
       data,
       error,
-    } = await supabase
-      .from("profiles")
-      .select(`
-        id,
-        username,
-        display_name,
-        avatar_url
-      `)
-      .in("id", profileIds);
+    } =
+      await supabase
+        .from(
+          "profiles"
+        )
+        .select(`
+          id,
+          username,
+          display_name,
+          avatar_url,
+          avatar_crop,
+          special_role
+        `)
+        .in(
+          "id",
+          profileIds
+        );
 
-    if (error) {
+    if (
+      error
+    ) {
       console.error(
         "Error loading connected profiles:",
         error
@@ -265,291 +414,457 @@ export default async function ConnectionsPage({
     }
 
     const profilesById =
-      new Map<string, Profile>(
-        ((data ?? []) as Profile[]).map(
-          (connectedProfile) => [
+      new Map<
+        string,
+        Profile
+      >(
+        (
+          (
+            data ??
+            []
+          ) as Profile[]
+        ).map(
+          (
+            connectedProfile
+          ) => [
             connectedProfile.id,
             connectedProfile,
           ]
         )
       );
 
-    connectedProfiles = profileIds
-      .map((id) =>
-        profilesById.get(id)
-      )
-      .filter(
-        (connectedProfile):
-          connectedProfile is Profile =>
-            connectedProfile !== undefined
-      );
+    /*
+     * Supabase .in() no garantiza
+     * conservar el orden de profileIds,
+     * así que lo restauramos.
+     */
+
+    connectedProfiles =
+      profileIds
+        .map(
+          (
+            id
+          ) =>
+            profilesById.get(
+              id
+            )
+        )
+        .filter(
+          (
+            connectedProfile
+          ):
+            connectedProfile is Profile =>
+              connectedProfile !==
+              undefined
+        );
   }
 
-  /* CURRENT USER'S FOLLOWING STATUS */
+  /*
+   * WHO CURRENT USER FOLLOWS
+   */
 
   const followingIds =
-    new Set<string>();
+    new Set<
+      string
+    >();
 
   const otherProfileIds =
     connectedProfiles
       .filter(
-        (connectedProfile) =>
-          connectedProfile.id !== user.id
+        (
+          connectedProfile
+        ) =>
+          connectedProfile.id !==
+          user.id
       )
       .map(
-        (connectedProfile) =>
+        (
+          connectedProfile
+        ) =>
           connectedProfile.id
       );
 
-  if (otherProfileIds.length > 0) {
+  if (
+    otherProfileIds.length >
+    0
+  ) {
     const {
       data,
       error,
-    } = await supabase
-      .from("profile_follows")
-      .select("following_id")
-      .eq("follower_id", user.id)
-      .in(
-        "following_id",
-        otherProfileIds
-      );
+    } =
+      await supabase
+        .from(
+          "profile_follows"
+        )
+        .select(
+          "following_id"
+        )
+        .eq(
+          "follower_id",
+          user.id
+        )
+        .in(
+          "following_id",
+          otherProfileIds
+        );
 
-    if (error) {
+    if (
+      error
+    ) {
       console.error(
         "Error loading current follow status:",
         error
       );
-
-      throw new Error(
-        "No se pudo comprobar a quién sigues."
-      );
-    }
-
-    for (const connection of data ?? []) {
-      followingIds.add(
-        connection.following_id
-      );
+    } else {
+      for (
+        const connection
+        of data ??
+        []
+      ) {
+        followingIds.add(
+          connection.following_id
+        );
+      }
     }
   }
 
+  /*
+   * PATHS
+   */
+
+  const safeUsername =
+    profile.username ??
+    username;
+
   const profilePath =
-    `/profile/${encodeURIComponent(username)}`;
+    `/profile/${encodeURIComponent(
+      safeUsername
+    )}`;
 
   const connectionsPath =
     `${profilePath}/connections`;
 
   return (
-    <main className="mx-auto max-w-4xl pb-20">
-      {/* BACK TO PROFILE */}
+    <main className="pb-20">
+      <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6 lg:py-8">
+        {/* HEADER */}
 
-      <Link
-        href={profilePath}
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-200"
-      >
-        <ArrowLeft size={16} />
+        <header>
+          <Link
+            href={
+              profilePath
+            }
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-100"
+            aria-label="Volver al perfil"
+          >
+            <ArrowLeft
+              size={20}
+            />
+          </Link>
 
-        Volver al perfil
-      </Link>
+          <div className="mt-5">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+              {
+                displayName
+              }
+            </h1>
 
-      {/* HEADER */}
+            {profile.username && (
+              <p className="mt-1 text-sm text-zinc-600">
+                @
+                {
+                  profile.username
+                }
+              </p>
+            )}
+          </div>
+        </header>
 
-      <div className="mt-7">
-        <h1 className="text-3xl font-bold text-zinc-100">
-          Conexiones
-        </h1>
+        {/* TABS */}
 
-        <p className="mt-2 text-zinc-500">
-          Seguidores y seguidos de{" "}
-          <span className="text-zinc-300">
-            {displayName}
-          </span>
-        </p>
-      </div>
+        <nav className="mt-7 grid grid-cols-2 border-b border-zinc-800">
+          <ConnectionTabLink
+            href={`${connectionsPath}?tab=followers`}
+            active={
+              activeTab ===
+              "followers"
+            }
+          >
+            Seguidores
 
-      {/* TABS */}
+            <span className="ml-1.5 text-zinc-600">
+              {
+                followersCount
+              }
+            </span>
+          </ConnectionTabLink>
 
-      <div className="mt-8 flex gap-2 border-b border-zinc-800">
-        <Link
-          href={`${connectionsPath}?tab=followers`}
-          aria-current={
-            activeTab === "followers"
-              ? "page"
-              : undefined
-          }
-          className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
-            activeTab === "followers"
-              ? "border-fuchsia-500 text-fuchsia-300"
-              : "border-transparent text-zinc-500 hover:text-zinc-200"
-          }`}
-        >
-          Seguidores{" "}
-          <span className="ml-1 text-zinc-500">
-            {followersCount}
-          </span>
-        </Link>
+          <ConnectionTabLink
+            href={`${connectionsPath}?tab=following`}
+            active={
+              activeTab ===
+              "following"
+            }
+          >
+            Siguiendo
 
-        <Link
-          href={`${connectionsPath}?tab=following`}
-          aria-current={
-            activeTab === "following"
-              ? "page"
-              : undefined
-          }
-          className={`border-b-2 px-4 py-3 text-sm font-medium transition ${
-            activeTab === "following"
-              ? "border-fuchsia-500 text-fuchsia-300"
-              : "border-transparent text-zinc-500 hover:text-zinc-200"
-          }`}
-        >
-          Siguiendo{" "}
-          <span className="ml-1 text-zinc-500">
-            {followingCount}
-          </span>
-        </Link>
-      </div>
+            <span className="ml-1.5 text-zinc-600">
+              {
+                followingCount
+              }
+            </span>
+          </ConnectionTabLink>
+        </nav>
 
-      {/* USERS */}
+        {/* USERS */}
 
-      {connectedProfiles.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-zinc-800 px-5 py-12 text-center">
-          <Users
-            size={30}
-            className="mx-auto text-zinc-600"
-          />
+        {connectedProfiles.length ===
+        0 ? (
+          <div className="py-16 text-center">
+            <Users
+              size={30}
+              className="mx-auto text-zinc-700"
+            />
 
-          <p className="mt-4 text-sm text-zinc-500">
-            {activeTab === "followers"
-              ? "Este usuario todavía no tiene seguidores."
-              : "Este usuario todavía no sigue a nadie."}
-          </p>
-        </div>
-      ) : (
-        <div className="mt-5 divide-y divide-zinc-800">
-          {connectedProfiles.map(
-            (connectedProfile) => {
-              const connectedName =
-                connectedProfile.display_name ??
-                connectedProfile.username ??
-                "Usuario";
+            <p className="mt-4 text-sm text-zinc-600">
+              {activeTab ===
+              "followers"
+                ? "Todavía no tiene seguidores."
+                : "Todavía no sigue a nadie."}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-900">
+            {connectedProfiles.map(
+              (
+                connectedProfile
+              ) => {
+                const connectedName =
+                  connectedProfile.display_name ??
+                  connectedProfile.username ??
+                  "Usuario";
 
-              const isCurrentUser =
-                connectedProfile.id === user.id;
+                const isCurrentUser =
+                  connectedProfile.id ===
+                  user.id;
 
-              return (
-                <div
-                  key={connectedProfile.id}
-                  className="flex items-center gap-4 py-4"
-                >
-                  {/* AVATAR */}
+                const connectedPath =
+                  connectedProfile.username
+                    ? `/profile/${encodeURIComponent(
+                        connectedProfile.username
+                      )}`
+                    : "/profile";
 
-                  <Link
-                    href={
-                      connectedProfile.username
-                        ? `/profile/${encodeURIComponent(
-                            connectedProfile.username
-                          )}`
-                        : "/profile"
+                return (
+                  <article
+                    key={
+                      connectedProfile.id
                     }
-                    className="shrink-0"
+                    className="flex min-w-0 items-center gap-3 py-4 sm:gap-4"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-zinc-800">
-                      {connectedProfile.avatar_url ? (
-                        <Image
-                          src={
-                            connectedProfile.avatar_url
-                          }
-                          alt={connectedName}
-                          width={48}
-                          height={48}
-                          unoptimized
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="font-semibold text-zinc-400">
-                          {connectedName
-                            .charAt(0)
-                            .toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
+                    {/* AVATAR */}
 
-                  {/* USER INFORMATION */}
-
-                  <div className="min-w-0 flex-1">
                     <Link
                       href={
-                        connectedProfile.username
-                          ? `/profile/${encodeURIComponent(
-                              connectedProfile.username
-                            )}`
-                          : "/profile"
+                        connectedPath
                       }
-                      className="block truncate font-medium text-zinc-100 hover:text-fuchsia-300"
+                      className="shrink-0"
                     >
-                      {connectedName}
+                      <div className="h-12 w-12 overflow-hidden rounded-full bg-zinc-900 sm:h-14 sm:w-14">
+                        {connectedProfile.avatar_url ? (
+                          <CroppedProfileImage
+                            src={
+                              connectedProfile.avatar_url
+                            }
+                            crop={
+                              connectedProfile.avatar_crop
+                            }
+                            alt={
+                              connectedName
+                            }
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-500">
+                            {connectedName
+                              .slice(
+                                0,
+                                1
+                              )
+                              .toUpperCase()}
+                          </div>
+                        )}
+                      </div>
                     </Link>
 
-                    {connectedProfile.username && (
-                      <p className="truncate text-sm text-zinc-500">
-                        @{connectedProfile.username}
-                      </p>
-                    )}
-                  </div>
+                    {/* INFO */}
 
-                  {/* FOLLOW BUTTON */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <Link
+                          href={
+                            connectedPath
+                          }
+                          className="min-w-0 truncate font-semibold text-zinc-200 transition hover:text-white"
+                        >
+                          {
+                            connectedName
+                          }
+                        </Link>
 
-                  {!isCurrentUser && (
-                    <FollowButton
-                      currentUserId={user.id}
-                      targetUserId={
-                        connectedProfile.id
-                      }
-                      initialFollowing={
-                        followingIds.has(
-                          connectedProfile.id
-                        )
-                      }
-                    />
-                  )}
-                </div>
-              );
-            }
-          )}
-        </div>
-      )}
+                        {connectedProfile.special_role ===
+                          "OWNER" && (
+                          <span className="shrink-0 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-medium text-fuchsia-300">
+                            Owner
+                          </span>
+                        )}
 
-      {/* PAGINATION */}
+                        {connectedProfile.special_role ===
+                          "BETA_TESTER" && (
+                          <span className="shrink-0 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                            Beta Tester
+                          </span>
+                        )}
+                      </div>
 
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-between gap-4">
-          {page > 1 ? (
-            <Link
-              href={`${connectionsPath}?tab=${activeTab}&page=${page - 1}`}
-              className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900"
-            >
-              Anterior
-            </Link>
-          ) : (
-            <span />
-          )}
+                      {connectedProfile.username && (
+                        <Link
+                          href={
+                            connectedPath
+                          }
+                          className="mt-0.5 block truncate text-sm text-zinc-600 transition hover:text-zinc-400"
+                        >
+                          @
+                          {
+                            connectedProfile.username
+                          }
+                        </Link>
+                      )}
+                    </div>
 
-          <span className="text-sm text-zinc-500">
-            Página {page} de {totalPages}
-          </span>
+                    {/* ACTION */}
 
-          {page < totalPages ? (
-            <Link
-              href={`${connectionsPath}?tab=${activeTab}&page=${page + 1}`}
-              className="rounded-xl border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900"
-            >
-              Siguiente
-            </Link>
-          ) : (
-            <span />
-          )}
-        </div>
-      )}
+                    <div className="shrink-0">
+                      {isCurrentUser ? (
+                        <span className="text-xs text-zinc-700">
+                          Tú
+                        </span>
+                      ) : (
+                        <FollowButton
+                          currentUserId={
+                            user.id
+                          }
+                          targetUserId={
+                            connectedProfile.id
+                          }
+                          initialFollowing={
+                            followingIds.has(
+                              connectedProfile.id
+                            )
+                          }
+                          compact
+                        />
+                      )}
+                    </div>
+                  </article>
+                );
+              }
+            )}
+          </div>
+        )}
+
+        {/* PAGINATION */}
+
+        {totalPages >
+          1 && (
+          <div className="mt-8 flex items-center justify-between border-t border-zinc-900 pt-5">
+            {page >
+            1 ? (
+              <Link
+                href={`${connectionsPath}?tab=${activeTab}&page=${page - 1}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3.5 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
+              >
+                <ChevronLeft
+                  size={16}
+                />
+
+                Anterior
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            <span className="text-xs tabular-nums text-zinc-600">
+              {
+                page
+              }
+              {" / "}
+              {
+                totalPages
+              }
+            </span>
+
+            {page <
+            totalPages ? (
+              <Link
+                href={`${connectionsPath}?tab=${activeTab}&page=${page + 1}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3.5 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
+              >
+                Siguiente
+
+                <ChevronRight
+                  size={16}
+                />
+              </Link>
+            ) : (
+              <div />
+            )}
+          </div>
+        )}
+      </div>
     </main>
+  );
+}
+
+function ConnectionTabLink({
+  href,
+  active,
+  children,
+}: {
+  href:
+    string;
+
+  active:
+    boolean;
+
+  children:
+    React.ReactNode;
+}) {
+  return (
+    <Link
+      href={
+        href
+      }
+      scroll={
+        false
+      }
+      aria-current={
+        active
+          ? "page"
+          : undefined
+      }
+      className={`relative flex min-h-[50px] items-center justify-center text-sm font-medium transition ${
+        active
+          ? "text-zinc-100"
+          : "text-zinc-600 hover:text-zinc-300"
+      }`}
+    >
+      {
+        children
+      }
+
+      {active && (
+        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-fuchsia-500" />
+      )}
+    </Link>
   );
 }

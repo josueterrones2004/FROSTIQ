@@ -1,44 +1,77 @@
 "use client";
 
 import {
+  Suspense,
   FormEvent,
   useState,
 } from "react";
 
 import {
+  AtSign,
   Eye,
   EyeOff,
   Film,
   Gamepad2,
   Library,
+  UserRound,
 } from "lucide-react";
 
 import {
   useRouter,
+  useSearchParams,
 } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/client";
+import {
+  createClient,
+} from "@/lib/supabase/client";
 
 type AuthMode =
   | "login"
   | "register";
 
 export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-zinc-950" />
+      }
+    >
+      <AuthContent />
+    </Suspense>
+  );
+}
+
+function AuthContent() {
   const router =
     useRouter();
+
+  const searchParams =
+    useSearchParams();
 
   const [supabase] =
     useState(() =>
       createClient()
     );
 
+  const mode:
+    AuthMode =
+    searchParams.get(
+      "mode"
+    ) === "register"
+      ? "register"
+      : "login";
+
   const [
-    mode,
-    setMode,
+    displayName,
+    setDisplayName,
   ] =
-    useState<AuthMode>(
-      "login"
-    );
+    useState("");
+
+  const [
+    username,
+    setUsername,
+  ] =
+    useState("");
 
   const [
     email,
@@ -83,16 +116,20 @@ export default function AuthPage() {
     useState("");
 
   function changeMode(
-    newMode: AuthMode
+    newMode:
+      AuthMode
   ) {
-    setMode(
-      newMode
-    );
-
     setErrorMessage("");
     setSuccessMessage("");
     setPassword("");
     setConfirmPassword("");
+
+    router.replace(
+      `/auth?mode=${newMode}`,
+      {
+        scroll: false,
+      }
+    );
   }
 
   async function handleSubmit(
@@ -108,8 +145,61 @@ export default function AuthPage() {
     const cleanEmail =
       email.trim();
 
+    const cleanDisplayName =
+      displayName.trim();
+
+    const cleanUsername =
+      username.trim();
+
     setErrorMessage("");
     setSuccessMessage("");
+
+    /*
+     * REGISTER VALIDATION
+     */
+
+    if (
+      mode ===
+      "register"
+    ) {
+      if (
+        cleanDisplayName.length <
+        2
+      ) {
+        setErrorMessage(
+          "El nick debe tener al menos 2 caracteres."
+        );
+
+        return;
+      }
+
+      if (
+        cleanDisplayName.length >
+        40
+      ) {
+        setErrorMessage(
+          "El nick no puede superar los 40 caracteres."
+        );
+
+        return;
+      }
+
+      if (
+        !/^[A-Za-z0-9_]{3,20}$/.test(
+          cleanUsername
+        )
+      ) {
+        setErrorMessage(
+          "El @ debe tener entre 3 y 20 caracteres y usar solo letras, números o guion bajo."
+        );
+
+        return;
+      }
+    }
+
+    /*
+     * COMMON VALIDATION
+     */
 
     if (!cleanEmail) {
       setErrorMessage(
@@ -120,7 +210,8 @@ export default function AuthPage() {
     }
 
     if (
-      password.length < 6
+      password.length <
+      6
     ) {
       setErrorMessage(
         "La contraseña debe tener al menos 6 caracteres."
@@ -144,8 +235,13 @@ export default function AuthPage() {
 
     setLoading(true);
 
+    /*
+     * LOGIN
+     */
+
     if (
-      mode === "login"
+      mode ===
+      "login"
     ) {
       const {
         error,
@@ -175,6 +271,53 @@ export default function AuthPage() {
       return;
     }
 
+    /*
+     * USERNAME AVAILABILITY
+     */
+
+    const {
+      data:
+        usernameAvailable,
+
+      error:
+        usernameCheckError,
+    } =
+      await supabase.rpc(
+        "is_username_available",
+        {
+          candidate:
+            cleanUsername,
+        }
+      );
+
+    if (
+      usernameCheckError
+    ) {
+      setErrorMessage(
+        "No se pudo comprobar la disponibilidad del @."
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    if (
+      !usernameAvailable
+    ) {
+      setErrorMessage(
+        `@${cleanUsername} ya está en uso.`
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    /*
+     * REGISTER
+     */
+
     const {
       data,
       error,
@@ -185,6 +328,16 @@ export default function AuthPage() {
             cleanEmail,
 
           password,
+
+          options: {
+            data: {
+              display_name:
+                cleanDisplayName,
+
+              username:
+                cleanUsername,
+            },
+          },
         }
       );
 
@@ -199,11 +352,13 @@ export default function AuthPage() {
     }
 
     /*
-     * IF EMAIL CONFIRMATION IS DISABLED,
-     * SUPABASE CREATES A SESSION IMMEDIATELY.
+     * EMAIL CONFIRMATION DISABLED:
+     * Supabase returns a session.
      */
 
-    if (data.session) {
+    if (
+      data.session
+    ) {
       router.replace("/");
       router.refresh();
 
@@ -211,8 +366,7 @@ export default function AuthPage() {
     }
 
     /*
-     * IF EMAIL CONFIRMATION IS ENABLED,
-     * THE USER MUST CONFIRM FIRST.
+     * EMAIL CONFIRMATION ENABLED:
      */
 
     setSuccessMessage(
@@ -309,7 +463,7 @@ export default function AuthPage() {
               {mode ===
               "login"
                 ? "Inicia sesión para continuar con tu biblioteca."
-                : "Empieza a construir tu biblioteca personal."}
+                : "Elige cómo quieres aparecer en Media Tracker."}
             </p>
           </div>
 
@@ -357,6 +511,98 @@ export default function AuthPage() {
             }
             className="mt-8 space-y-5"
           >
+            {/* REGISTER PROFILE */}
+
+            {mode ===
+              "register" && (
+              <>
+                {/* NICK */}
+
+                <div>
+                  <label
+                    htmlFor="display-name"
+                    className="mb-2 block text-sm font-medium text-zinc-300"
+                  >
+                    Nick
+                  </label>
+
+                  <div className="relative">
+                    <UserRound
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600"
+                    />
+
+                    <input
+                      id="display-name"
+                      type="text"
+                      value={
+                        displayName
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setDisplayName(
+                          event.target.value
+                        )
+                      }
+                      minLength={2}
+                      maxLength={40}
+                      required
+                      placeholder="Heather"
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-3 pl-11 pr-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
+                    />
+                  </div>
+
+                  <p className="mt-2 text-xs text-zinc-600">
+                    Este será el nombre que verán los demás.
+                  </p>
+                </div>
+
+                {/* USERNAME */}
+
+                <div>
+                  <label
+                    htmlFor="username"
+                    className="mb-2 block text-sm font-medium text-zinc-300"
+                  >
+                    @ de usuario
+                  </label>
+
+                  <div className="relative">
+                    <AtSign
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600"
+                    />
+
+                    <input
+                      id="username"
+                      type="text"
+                      value={
+                        username
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setUsername(
+                          event.target.value
+                        )
+                      }
+                      minLength={3}
+                      maxLength={20}
+                      pattern="[A-Za-z0-9_]{3,20}"
+                      required
+                      placeholder="Heather04"
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-3 pl-11 pr-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
+                    />
+                  </div>
+
+                  <p className="mt-2 text-xs text-zinc-600">
+                    Único. De 3 a 20 caracteres, usando letras, números o _.
+                  </p>
+                </div>
+              </>
+            )}
+
             {/* EMAIL */}
 
             <div>
@@ -371,7 +617,9 @@ export default function AuthPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                value={email}
+                value={
+                  email
+                }
                 onChange={(
                   event
                 ) =>
@@ -419,9 +667,7 @@ export default function AuthPage() {
                       event.target.value
                     )
                   }
-                  minLength={
-                    6
-                  }
+                  minLength={6}
                   required
                   placeholder="••••••••"
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 pr-12 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
@@ -431,7 +677,9 @@ export default function AuthPage() {
                   type="button"
                   onClick={() =>
                     setShowPassword(
-                      (current) =>
+                      (
+                        current
+                      ) =>
                         !current
                     )
                   }
@@ -455,7 +703,7 @@ export default function AuthPage() {
               </div>
             </div>
 
-            {/* CONFIRM PASSWORD */}
+            {/* CONFIRM */}
 
             {mode ===
               "register" && (
@@ -485,9 +733,7 @@ export default function AuthPage() {
                       event.target.value
                     )
                   }
-                  minLength={
-                    6
-                  }
+                  minLength={6}
                   required
                   placeholder="••••••••"
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"

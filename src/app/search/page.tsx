@@ -1,511 +1,889 @@
 import {
-  shouldUseOriginalImage,
-} from "@/lib/image-optimization";
+  ChevronRight,
+  ImageOff,
+} from "lucide-react";
 
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  getIGDBImageUrl,
-  getIGDBReleaseYear,
-  searchIGDBGames,
-  type IGDBGame,
-} from "@/lib/igdb";
+import SearchFilters, {
+  type MediaFilter,
+  type SortMode,
+} from "@/components/SearchFilters";
 
 import {
-  getOpenLibraryCoverUrl,
-  getWorkIdFromKey,
-  searchBooks,
-} from "@/lib/openlibrary";
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
 
 import {
-  searchTMDB,
-} from "@/lib/tmdb";
+  getMediaArtworkMapKey,
+  getMixedMediaArtworkOverrides,
+  type DatabaseMediaType,
+  type MediaArtworkOverride,
+} from "@/lib/media-artwork";
+
+import {
+  normalizeSearchText,
+  searchAllMedia,
+  type SearchKind,
+  type UnifiedSearchResult,
+} from "@/lib/search-engine";
 
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string;
+    type?: string;
+    sort?: string;
+    image?: string;
+    limit?: string;
   }>;
 }
 
-type TMDBResult = {
-  id: number;
+const DEFAULT_LIMIT =
+  20;
 
-  media_type:
-    | "movie"
-    | "tv"
-    | string;
+const MAX_LIMIT =
+  60;
 
-  title?: string;
-  name?: string;
+function toDatabaseMediaType(
+  kind:
+    SearchKind
+): DatabaseMediaType {
+  if (
+    kind ===
+    "movie"
+  ) {
+    return "MOVIE";
+  }
 
-  poster_path?:
-    | string
-    | null;
+  if (
+    kind ===
+    "series"
+  ) {
+    return "SERIES";
+  }
 
-  release_date?: string;
-  first_air_date?: string;
-};
+  if (
+    kind ===
+    "game"
+  ) {
+    return "GAME";
+  }
+
+  return "BOOK";
+}
+
+function getKindLabel(
+  kind:
+    SearchKind
+) {
+  if (
+    kind ===
+    "game"
+  ) {
+    return "Juego";
+  }
+
+  if (
+    kind ===
+    "movie"
+  ) {
+    return "Película";
+  }
+
+  if (
+    kind ===
+    "series"
+  ) {
+    return "Serie";
+  }
+
+  return "Libro";
+}
+
+function getTypeLabel(
+  result:
+    UnifiedSearchResult
+) {
+  const base =
+    getKindLabel(
+      result.kind
+    );
+
+  if (
+    !result.subtitle ||
+    result.subtitle ===
+      base
+  ) {
+    return base;
+  }
+
+  if (
+    result.kind ===
+    "game"
+  ) {
+    return result.subtitle;
+  }
+
+  return `${base} · ${result.subtitle}`;
+}
+
+function getUsefulAlias(
+  result:
+    UnifiedSearchResult,
+  query:
+    string
+) {
+  if (
+    result.aliases.length ===
+    0
+  ) {
+    return null;
+  }
+
+  const normalizedQuery =
+    normalizeSearchText(
+      query
+    );
+
+  const normalizedTitle =
+    normalizeSearchText(
+      result.title
+    );
+
+  for (
+    const alias of
+    result.aliases
+  ) {
+    const normalizedAlias =
+      normalizeSearchText(
+        alias
+      );
+
+    if (
+      !normalizedAlias ||
+      normalizedAlias ===
+        normalizedTitle
+    ) {
+      continue;
+    }
+
+    if (
+      normalizedAlias.includes(
+        normalizedQuery
+      ) ||
+      normalizedQuery.includes(
+        normalizedAlias
+      )
+    ) {
+      return alias;
+    }
+  }
+
+  return null;
+}
+
+function sortResults(
+  results:
+    UnifiedSearchResult[],
+  sort:
+    SortMode
+) {
+  const copy = [
+    ...results,
+  ];
+
+  if (
+    sort ===
+    "newest"
+  ) {
+    return copy.sort(
+      (
+        first,
+        second
+      ) => {
+        if (
+          first.year ===
+          null
+        ) {
+          return 1;
+        }
+
+        if (
+          second.year ===
+          null
+        ) {
+          return -1;
+        }
+
+        return (
+          second.year -
+          first.year
+        );
+      }
+    );
+  }
+
+  if (
+    sort ===
+    "oldest"
+  ) {
+    return copy.sort(
+      (
+        first,
+        second
+      ) => {
+        if (
+          first.year ===
+          null
+        ) {
+          return 1;
+        }
+
+        if (
+          second.year ===
+          null
+        ) {
+          return -1;
+        }
+
+        return (
+          first.year -
+          second.year
+        );
+      }
+    );
+  }
+
+  if (
+    sort ===
+    "az"
+  ) {
+    return copy.sort(
+      (
+        first,
+        second
+      ) =>
+        first.title.localeCompare(
+          second.title,
+          "es",
+          {
+            sensitivity:
+              "base",
+          }
+        )
+    );
+  }
+
+  return copy.sort(
+    (
+      first,
+      second
+    ) =>
+      second.score -
+      first.score
+  );
+}
+
+function buildSearchHref({
+  query,
+  type,
+  sort,
+  onlyWithImage,
+  limit,
+}: {
+  query: string;
+  type: MediaFilter;
+  sort: SortMode;
+  onlyWithImage: boolean;
+  limit: number;
+}) {
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "q",
+    query
+  );
+
+  if (
+    type !==
+    "all"
+  ) {
+    params.set(
+      "type",
+      type
+    );
+  }
+
+  if (
+    sort !==
+    "relevance"
+  ) {
+    params.set(
+      "sort",
+      sort
+    );
+  }
+
+  if (
+    onlyWithImage
+  ) {
+    params.set(
+      "image",
+      "with"
+    );
+  }
+
+  if (
+    limit >
+    DEFAULT_LIMIT
+  ) {
+    params.set(
+      "limit",
+      String(
+        limit
+      )
+    );
+  }
+
+  return `/search?${params.toString()}`;
+}
 
 export default async function SearchPage({
   searchParams,
 }: SearchPageProps) {
-  const { q } =
+  const params =
     await searchParams;
 
   const query =
-    q?.trim();
+    params.q
+      ?.trim();
 
-  if (!query) {
+  if (
+    !query
+  ) {
     return (
-      <main>
-        <h1 className="text-3xl font-bold">
-          Buscar
-        </h1>
+      <main className="mx-auto max-w-[1280px] pb-24">
+        <section className="border-b border-zinc-800 pb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-600">
+            Búsqueda
+          </p>
 
-        <p className="mt-2 text-zinc-400">
-          Escribe algo en el buscador.
-        </p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-100">
+            Busca algo
+          </h1>
+
+          <p className="mt-2 text-sm text-zinc-500">
+            Escribe una película, serie, juego o libro en la barra superior.
+          </p>
+        </section>
       </main>
     );
   }
 
-  /*
-   * SEARCH ALL MEDIA SOURCES
-   */
+  const type:
+    MediaFilter =
+    params.type ===
+      "game" ||
+    params.type ===
+      "movie" ||
+    params.type ===
+      "series" ||
+    params.type ===
+      "book"
+      ? params.type
+      : "all";
 
-  const [
-    tmdbResult,
-    bookResult,
-    gameResult,
-  ] =
-    await Promise.allSettled([
-      searchTMDB(query),
-      searchBooks(query),
-      searchIGDBGames(
-        query
-      ),
-    ]);
+  const sort:
+    SortMode =
+    params.sort ===
+      "newest" ||
+    params.sort ===
+      "oldest" ||
+    params.sort ===
+      "az"
+      ? params.sort
+      : "relevance";
 
-  /*
-   * MOVIES AND SERIES
-   */
+  const onlyWithImage =
+    params.image ===
+    "with";
 
-  let mediaResults:
-    TMDBResult[] = [];
-
-  if (
-    tmdbResult.status ===
-    "fulfilled"
-  ) {
-    mediaResults =
-      (
-        tmdbResult.value
-          .results as TMDBResult[]
-      ).filter(
-        (item) =>
-          item.media_type ===
-            "movie" ||
-          item.media_type ===
-            "tv"
-      );
-  } else {
-    console.error(
-      "TMDB search failed:",
-      tmdbResult.reason
+  const requestedLimit =
+    Number(
+      params.limit ??
+        DEFAULT_LIMIT
     );
-  }
 
-  /*
-   * BOOKS
-   */
-
-  let bookResults:
-    Awaited<
-      ReturnType<
-        typeof searchBooks
-      >
-    >["docs"] = [];
-
-  if (
-    bookResult.status ===
-    "fulfilled"
-  ) {
-    bookResults =
-      bookResult.value.docs.filter(
-        (book) =>
-          book.key?.startsWith(
-            "/works/"
+  const limit =
+    Number.isFinite(
+      requestedLimit
+    )
+      ? Math.min(
+          MAX_LIMIT,
+          Math.max(
+            DEFAULT_LIMIT,
+            requestedLimit
           )
-      );
-  } else {
-    console.error(
-      "Open Library search failed:",
-      bookResult.reason
+        )
+      : DEFAULT_LIMIT;
+
+  /*
+   * SEARCH
+   */
+
+  const allResults =
+    await searchAllMedia(
+      query
     );
+
+  /*
+   * GLOBAL ARTWORK OVERRIDES
+   */
+
+  const artworkOverrides =
+    await getMixedMediaArtworkOverrides(
+      allResults.map(
+        (
+          result
+        ) => ({
+          media_type:
+            toDatabaseMediaType(
+              result.kind
+            ),
+
+          external_id:
+            result.externalId,
+        })
+      )
+    );
+
+  /*
+   * COUNTS
+   */
+
+  const counts = {
+    all:
+      allResults.length,
+
+    game:
+      allResults.filter(
+        (
+          result
+        ) =>
+          result.kind ===
+          "game"
+      ).length,
+
+    movie:
+      allResults.filter(
+        (
+          result
+        ) =>
+          result.kind ===
+          "movie"
+      ).length,
+
+    series:
+      allResults.filter(
+        (
+          result
+        ) =>
+          result.kind ===
+          "series"
+      ).length,
+
+    book:
+      allResults.filter(
+        (
+          result
+        ) =>
+          result.kind ===
+          "book"
+      ).length,
+  };
+
+  /*
+   * FILTER
+   */
+
+  let filteredResults =
+    allResults.filter(
+      (
+        result
+      ) =>
+        type ===
+          "all" ||
+        result.kind ===
+          type
+    );
+
+  if (
+    onlyWithImage
+  ) {
+    filteredResults =
+      filteredResults.filter(
+        (
+          result
+        ) => {
+          const override =
+            artworkOverrides.get(
+              getMediaArtworkMapKey(
+                toDatabaseMediaType(
+                  result.kind
+                ),
+                result.externalId
+              )
+            );
+
+          return Boolean(
+            override
+              ?.poster_url ??
+              result.image
+          );
+        }
+      );
   }
 
   /*
-   * GAMES
+   * SORT
    */
 
-  let gameResults:
-    IGDBGame[] = [];
-
-  if (
-    gameResult.status ===
-    "fulfilled"
-  ) {
-    gameResults =
-      gameResult.value;
-  } else {
-    console.error(
-      "IGDB search failed:",
-      gameResult.reason
+  const sortedResults =
+    sortResults(
+      filteredResults,
+      sort
     );
-  }
 
-  const hasResults =
-    mediaResults.length >
-      0 ||
-    bookResults.length >
-      0 ||
-    gameResults.length >
-      0;
+  /*
+   * LIMIT
+   */
+
+  const visibleResults =
+    sortedResults.slice(
+      0,
+      limit
+    );
+
+  const hasMore =
+    sortedResults.length >
+    visibleResults.length;
+
+  const nextLimit =
+    Math.min(
+      MAX_LIMIT,
+      limit +
+        20
+    );
+
+  const moreHref =
+    buildSearchHref({
+      query,
+      type,
+      sort,
+      onlyWithImage,
+      limit:
+        nextLimit,
+    });
 
   return (
-    <main>
-      <h1 className="text-3xl font-bold">
-        Resultados para:{" "}
-        {query}
-      </h1>
+    <main className="mx-auto max-w-[1280px] pb-24">
+      {/* DISCREET HEADER */}
 
-      {!hasResults ? (
-        <p className="mt-6 text-zinc-400">
-          No se encontraron resultados.
+      <section className="border-b border-zinc-800 pb-5">
+        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+          Resultados para
         </p>
-      ) : (
-        <>
-          {/* MOVIES AND SERIES */}
 
-          {mediaResults.length >
-            0 && (
-            <section className="mt-8">
-              <h2 className="text-xl font-semibold text-zinc-100">
-                Películas y series
-              </h2>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-[28px]">
+            “{query}”
+          </h1>
 
-              <div className="mt-5 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {mediaResults.map(
-                  (item) => {
-                    const isMovie =
-                      item.media_type ===
-                      "movie";
+          <span className="text-sm text-zinc-600">
+            {filteredResults.length}{" "}
+            {filteredResults.length ===
+            1
+              ? "coincidencia"
+              : "coincidencias"}
+          </span>
+        </div>
+      </section>
 
-                    const title =
-                      isMovie
-                        ? item.title
-                        : item.name;
+      {/* CONTENT */}
 
-                    const image =
-                      item.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                        : null;
+      <div className="mt-6 grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_250px]">
+        {/* RESULTS */}
 
-                    const href =
-                      isMovie
-                        ? `/movies/${item.id}`
-                        : `/series/${item.id}`;
+        <div className="min-w-0">
+          {visibleResults.length ===
+          0 ? (
+            <div className="border-t border-zinc-800 py-14">
+              <p className="text-sm text-zinc-400">
+                No encontramos resultados con estos filtros.
+              </p>
 
-                    const year =
-                      isMovie
-                        ? item.release_date?.slice(
-                            0,
-                            4
-                          )
-                        : item.first_air_date?.slice(
-                            0,
-                            4
-                          );
+              <p className="mt-2 text-sm text-zinc-600">
+                Prueba otro tipo de contenido o permite resultados sin portada.
+              </p>
+            </div>
+          ) : (
+            <section>
+              <div className="border-t border-zinc-800">
+                {visibleResults.map(
+                  (
+                    result
+                  ) => {
+                    const artworkOverride =
+                      artworkOverrides.get(
+                        getMediaArtworkMapKey(
+                          toDatabaseMediaType(
+                            result.kind
+                          ),
+                          result.externalId
+                        )
+                      ) ??
+                      null;
 
                     return (
-                      <Link
-                        href={
-                          href
-                        }
-                        key={`${item.media_type}-${item.id}`}
-                        className="group block"
-                      >
-                        <SearchCover
-                          image={
-                            image
-                          }
-                          title={
-                            title ??
-                            "Sin título"
-                          }
-                        />
-
-                        <div className="mt-3">
-                          <h3 className="line-clamp-2 font-semibold text-zinc-100">
-                            {title ??
-                              "Sin título"}
-                          </h3>
-
-                          <div className="mt-1 flex flex-wrap gap-2 text-sm text-zinc-500">
-                            <span>
-                              {isMovie
-                                ? "Película"
-                                : "Serie"}
-                            </span>
-
-                            {year && (
-                              <>
-                                <span>
-                                  ·
-                                </span>
-
-                                <span>
-                                  {
-                                    year
-                                  }
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  }
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* GAMES */}
-
-          {gameResults.length >
-            0 && (
-            <section className="mt-14">
-              <h2 className="text-xl font-semibold text-zinc-100">
-                Juegos
-              </h2>
-
-              <div className="mt-5 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {gameResults.map(
-                  (game) => {
-                    const image =
-                      getIGDBImageUrl(
-                        game.cover
-                          ?.image_id,
-                        "cover_big"
-                      );
-
-                    const year =
-                      getIGDBReleaseYear(
-                        game.first_release_date
-                      );
-
-                    const platforms =
-                      game.platforms
-                        ?.slice(
-                          0,
-                          2
-                        )
-                        .map(
-                          (
-                            platform
-                          ) =>
-                            platform.name
-                        )
-                        .join(", ");
-
-                    return (
-                      <Link
-                        href={`/games/${game.id}`}
-                        key={`game-${game.id}`}
-                        className="group block"
-                      >
-                        <SearchCover
-                          image={
-                            image
-                          }
-                          title={
-                            game.name
-                          }
-                        />
-
-                        <div className="mt-3">
-                          <h3 className="line-clamp-2 font-semibold text-zinc-100">
-                            {
-                              game.name
-                            }
-                          </h3>
-
-                          {platforms && (
-                            <p className="mt-1 line-clamp-1 text-sm text-zinc-400">
-                              {
-                                platforms
-                              }
-                            </p>
-                          )}
-
-                          <div className="mt-1 flex flex-wrap gap-2 text-sm text-zinc-500">
-                            <span>
-                              Juego
-                            </span>
-
-                            {year && (
-                              <>
-                                <span>
-                                  ·
-                                </span>
-
-                                <span>
-                                  {
-                                    year
-                                  }
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  }
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* BOOKS */}
-
-          {bookResults.length >
-            0 && (
-            <section className="mt-14">
-              <h2 className="text-xl font-semibold text-zinc-100">
-                Libros
-              </h2>
-
-              <div className="mt-5 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {bookResults.map(
-                  (book) => {
-                    const workId =
-                      getWorkIdFromKey(
-                        book.key
-                      );
-
-                    const image =
-                      getOpenLibraryCoverUrl(
-                        book.cover_i,
-                        "L"
-                      );
-
-                    const authors =
-                      book.author_name
-                        ?.slice(
-                          0,
-                          2
-                        )
-                        .join(", ");
-
-                    return (
-                      <Link
-                        href={`/books/${workId}`}
+                      <ResultRow
                         key={
-                          book.key
+                          result.key
                         }
-                        className="group block"
-                      >
-                        <SearchCover
-                          image={
-                            image
-                          }
-                          title={
-                            book.title
-                          }
-                        />
-
-                        <div className="mt-3">
-                          <h3 className="line-clamp-2 font-semibold text-zinc-100">
-                            {
-                              book.title
-                            }
-                          </h3>
-
-                          {authors && (
-                            <p className="mt-1 line-clamp-1 text-sm text-zinc-400">
-                              {
-                                authors
-                              }
-                            </p>
-                          )}
-
-                          <div className="mt-1 flex flex-wrap gap-2 text-sm text-zinc-500">
-                            <span>
-                              Libro
-                            </span>
-
-                            {book.first_publish_year && (
-                              <>
-                                <span>
-                                  ·
-                                </span>
-
-                                <span>
-                                  {
-                                    book.first_publish_year
-                                  }
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
+                        result={
+                          result
+                        }
+                        query={
+                          query
+                        }
+                        artworkOverride={
+                          artworkOverride
+                        }
+                      />
                     );
                   }
                 )}
               </div>
+
+              {/* LOAD MORE */}
+
+              {hasMore && (
+                <div className="pt-7">
+                  <Link
+                    href={
+                      moreHref
+                    }
+                    className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-500 transition hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-200"
+                  >
+                    Mostrar más resultados
+
+                    <ChevronRight
+                      size={15}
+                    />
+                  </Link>
+                </div>
+              )}
             </section>
           )}
-        </>
-      )}
+        </div>
+
+        {/* FILTERS */}
+
+        <SearchFilters
+          query={
+            query
+          }
+          type={
+            type
+          }
+          sort={
+            sort
+          }
+          onlyWithImage={
+            onlyWithImage
+          }
+          counts={
+            counts
+          }
+        />
+      </div>
     </main>
   );
 }
 
-function SearchCover({
-  image,
-  title,
-}: {
-  image:
-    | string
-    | null;
+/*
+ * RESULT ROW
+ */
 
-  title: string;
+function ResultRow({
+  result,
+  query,
+  artworkOverride,
+}: {
+  result:
+    UnifiedSearchResult;
+
+  query:
+    string;
+
+  artworkOverride:
+    | MediaArtworkOverride
+    | null;
 }) {
+  const alias =
+    getUsefulAlias(
+      result,
+      query
+    );
+
   return (
-    <div className="overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition-colors duration-200 group-hover:border-zinc-400">
+    <Link
+      href={
+        result.href
+      }
+      className="group flex gap-4 border-b border-zinc-800 py-4 transition hover:bg-zinc-900/20 sm:gap-5 sm:py-5"
+    >
+      <ResultCover
+        result={
+          result
+        }
+        artworkOverride={
+          artworkOverride
+        }
+      />
+
+      {/* INFORMATION */}
+
+      <div className="min-w-0 flex-1 py-0.5">
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          <h2 className="text-base font-semibold leading-snug text-zinc-200 transition group-hover:text-fuchsia-300 sm:text-lg">
+            {
+              result.title
+            }
+          </h2>
+
+          {result.year && (
+            <span className="text-sm font-normal text-zinc-600">
+              {
+                result.year
+              }
+            </span>
+          )}
+        </div>
+
+        {/* TYPE */}
+
+        <p className="mt-1 text-sm text-zinc-500">
+          {getTypeLabel(
+            result
+          )}
+        </p>
+
+        {/* META */}
+
+        {result.meta && (
+          <p className="mt-2 line-clamp-2 text-sm leading-5 text-zinc-600">
+            {
+              result.meta
+            }
+          </p>
+        )}
+
+        {/* ALTERNATIVE NAME */}
+
+        {alias && (
+          <p className="mt-2 line-clamp-1 text-xs text-zinc-700">
+            Título alternativo:{" "}
+            <span className="text-zinc-600">
+              {
+                alias
+              }
+            </span>
+          </p>
+        )}
+      </div>
+
+      {/* ARROW */}
+
+      <div className="hidden shrink-0 self-center text-zinc-800 transition group-hover:translate-x-0.5 group-hover:text-zinc-500 sm:block">
+        <ChevronRight
+          size={17}
+        />
+      </div>
+    </Link>
+  );
+}
+
+/*
+ * RESULT COVER
+ */
+
+function ResultCover({
+  result,
+  artworkOverride,
+}: {
+  result:
+    UnifiedSearchResult;
+
+  artworkOverride:
+    | MediaArtworkOverride
+    | null;
+}) {
+  const image =
+    artworkOverride
+      ?.poster_url ??
+    result.image;
+
+  const positionX =
+    artworkOverride
+      ?.poster_position_x ??
+    50;
+
+  const positionY =
+    artworkOverride
+      ?.poster_position_y ??
+    50;
+
+  const zoom =
+    artworkOverride
+      ?.poster_zoom ??
+    1;
+
+  return (
+    <div className="relative h-24 w-16 shrink-0 overflow-hidden rounded-md bg-zinc-900 sm:h-[108px] sm:w-[72px]">
       {image ? (
         <Image
           src={
             image
           }
           alt={
-            title
+            result.title
           }
-          width={500}
-          height={750}
+          fill
+          sizes="72px"
           unoptimized={
             shouldUseOriginalImage(
               image
             )
           }
-          className="aspect-[2/3] w-full object-cover"
+          className="object-cover"
+          style={{
+            objectPosition:
+              `${positionX}% ${positionY}%`,
+            transform:
+              `scale(${zoom})`,
+          }}
         />
       ) : (
-        <div className="flex aspect-[2/3] items-center justify-center px-4 text-center text-sm text-zinc-600">
-          Sin imagen
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-2 text-center text-zinc-700">
+          <ImageOff
+            size={16}
+          />
+
+          <span className="text-[8px]">
+            Sin portada
+          </span>
         </div>
       )}
     </div>
