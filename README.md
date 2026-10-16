@@ -261,16 +261,16 @@ The first major update expanded and refined the application with:
 
 ### v0.3.0 — October 8, 2026
 
-This release focused on a broader product and architecture refresh across the application:
+This release focused on a broader product and architecture refresh:
 
-- Reworked media detail pages with shared layouts, action bars, ratings and review components.
-- Added a new unified search and discovery layer across TMDB, Open Library and IGDB.
-- Introduced dedicated mobile discovery, bottom navigation and improved mobile search flows.
-- Added owner-protected administration tools for media artwork management.
-- Added an in-app bug reporting flow and an admin reports area.
-- Expanded PWA support with a manifest, install prompts and updated application icons.
-- Redesigned authentication, profiles, notifications and several core media pages.
-- Refactored shared media and activity logic to make the codebase easier to extend.
+- Reworked media detail pages and shared review components.
+- Added unified search and discovery across all media providers.
+- Added dedicated mobile discovery, navigation and search flows.
+- Added owner-only media artwork administration tools.
+- Added in-app bug reporting and an admin reports area.
+- Expanded PWA support with install prompts and new app icons.
+- Redesigned authentication, profiles and notifications.
+- Refactored shared media and activity logic for easier expansion.
 
 ---
 
