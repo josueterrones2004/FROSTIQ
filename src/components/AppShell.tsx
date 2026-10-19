@@ -302,43 +302,26 @@ export default function AppShell({
       true
     );
 
-    const {
-      error,
-    } =
-      await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
 
-    if (
-      error
-    ) {
-      console.error(
-        "Error signing out:",
-        error
-      );
+      if (error) {
+        console.error("Error signing out:", error);
+        return;
+      }
 
-      setLoggingOut(
-        false
-      );
+      setProfileMenuOpen(false);
+      setDesktopLibraryOpen(false);
 
-      return;
+      // AppShell persiste entre navegaciones: nunca dejar el botón
+      // bloqueado después de cerrar sesión y volver a entrar.
+      router.replace("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Unexpected error signing out:", error);
+    } finally {
+      setLoggingOut(false);
     }
-
-    setProfileMenuOpen(
-      false
-    );
-
-    setDesktopLibraryOpen(
-      false
-    );
-
-    /*
-     * IMPORTANTE:
-     * cerrar sesión vuelve a la Home pública.
-     */
-    router.replace(
-      "/"
-    );
-
-    router.refresh();
   }
 
   /*
