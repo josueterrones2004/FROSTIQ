@@ -272,6 +272,21 @@ This release focused on a broader product and architecture refresh:
 - Redesigned authentication, profiles and notifications.
 - Refactored shared media and activity logic for easier expansion.
 
+### v0.3.1 — October 19, 2026
+
+A small hotfix focused on stability, consistency and the review experience:
+
+- Unified review creation across movies, series, games and books using a shared component.
+- Improved review layouts for desktop, portrait mobile and landscape mobile.
+- Added drag-to-rate interactions with half-star precision on touchscreens and desktop.
+- Made review dates non-editable, with an option to hide them from published reviews.
+- Added custom confirmation dialogs to prevent accidentally discarding unfinished reviews.
+- Improved review controls with animated icons and smoother transitions.
+- Fixed the logout button becoming stuck in its loading state.
+- Corrected the public homepage layout for visitors without an account.
+- Fixed pointer interaction errors in the star-rating component.
+- Removed outdated review forms and improved visual consistency.
+
 ---
 
 ## 🧪 Early-stage software
