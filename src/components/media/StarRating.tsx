@@ -1,7 +1,13 @@
+
 "use client";
 
-import { Star, X } from "lucide-react";
-import { useState } from "react";
+import { Star } from "lucide-react";
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  useRef,
+  useState,
+} from "react";
 
 type StarRatingProps = {
   value: number | null;
@@ -18,145 +24,173 @@ export default function StarRating({
   size = 34,
   showLabel = true,
 }: StarRatingProps) {
-  const [hoverValue, setHoverValue] =
-    useState<number | null>(null);
+  const [preview, setPreview] = useState<number | null>(null);
+  const dragging = useRef(false);
+  const editable = !readonly && Boolean(onChange);
+  const savedValue = Math.max(0, Math.min(5, value ?? 0));
+  const displayed = editable ? (preview ?? savedValue) : savedValue;
 
-  const displayValue =
-    hoverValue ?? value ?? 0;
+  function fromPointer(event: PointerEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = Math.max(
+      0,
+      Math.min(rect.width, event.clientX - rect.left),
+    );
 
-  function selectRating(nextValue: number) {
-    if (readonly || !onChange) {
+    if (x <= 8) return 0;
+
+    return Math.min(
+      5,
+      Math.ceil(
+        ((x - 8) / Math.max(1, rect.width - 8)) * 10,
+      ) / 2,
+    );
+  }
+
+  function commit(next: number) {
+    if (editable) onChange?.(next === 0 ? null : next);
+  }
+
+  function onStart(event: PointerEvent<HTMLDivElement>) {
+    if (!editable) return;
+
+    event.preventDefault();
+    dragging.current = true;
+
+    // El navegador libera la captura automáticamente al terminar.
+    // No es necesario llamar releasePointerCapture.
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // El gesto continúa sin captura explícita.
+    }
+
+    const next = fromPointer(event);
+    setPreview(next);
+    commit(next);
+  }
+
+  function onMove(event: PointerEvent<HTMLDivElement>) {
+    if (!editable) return;
+
+    if (!dragging.current && event.pointerType !== "mouse") {
       return;
     }
 
-    onChange(nextValue);
+    const next = fromPointer(event);
+    setPreview(next);
+
+    if (dragging.current) commit(next);
   }
 
-  function clearRating() {
-    if (readonly || !onChange) {
-      return;
+  function onEnd(event: PointerEvent<HTMLDivElement>) {
+    if (!editable || !dragging.current) return;
+
+    commit(fromPointer(event));
+    dragging.current = false;
+    setPreview(null);
+  }
+
+  function onKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (!editable) return;
+
+    let next: number | undefined;
+
+    if (["ArrowRight", "ArrowUp"].includes(event.key)) {
+      next = Math.min(5, savedValue + 0.5);
     }
 
-    onChange(null);
-    setHoverValue(null);
+    if (["ArrowLeft", "ArrowDown"].includes(event.key)) {
+      next = Math.max(0, savedValue - 0.5);
+    }
+
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = 5;
+
+    if (next !== undefined) {
+      event.preventDefault();
+      commit(next);
+      setPreview(null);
+    }
   }
+
+  // Una review sin puntuación no muestra estrellas.
+  if (readonly && savedValue === 0) return null;
 
   return (
     <div className="inline-flex flex-col">
       {showLabel && (
         <span className="mb-2 text-sm text-zinc-500">
-          {value === null ? "Rate" : "Rated"}
+          {savedValue ? "Rated" : "Rate"}
         </span>
       )}
 
-      <div className="flex items-center gap-2">
-        {!readonly && value !== null && (
-          <button
-            type="button"
-            onClick={clearRating}
-            className="mr-1 flex h-7 w-7 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-200"
-            aria-label="Quitar puntuación"
-            title="Quitar puntuación"
-          >
-            <X size={18} />
-          </button>
-        )}
+      <div
+        role={editable ? "slider" : undefined}
+        tabIndex={editable ? 0 : undefined}
+        aria-label={editable ? "Tu puntuación" : undefined}
+        aria-valuemin={editable ? 0 : undefined}
+        aria-valuemax={editable ? 5 : undefined}
+        aria-valuenow={editable ? savedValue : undefined}
+        aria-valuetext={
+          editable ? `${savedValue} de 5 estrellas` : undefined
+        }
+        onPointerDown={onStart}
+        onPointerMove={onMove}
+        onPointerUp={onEnd}
+        onPointerCancel={() => {
+          dragging.current = false;
+          setPreview(null);
+        }}
+        onLostPointerCapture={() => {
+          dragging.current = false;
+          setPreview(null);
+        }}
+        onPointerLeave={() => {
+          if (!dragging.current) setPreview(null);
+        }}
+        onKeyDown={onKey}
+        className={`inline-flex select-none items-center rounded outline-none ${
+          editable
+            ? "cursor-pointer touch-none focus-visible:ring-2 focus-visible:ring-fuchsia-500"
+            : ""
+        }`}
+        style={{ width: size * 5, height: size }}
+      >
+        {Array.from({ length: 5 }, (_, index) => {
+          const filled = Math.max(
+            0,
+            Math.min(1, displayed - index),
+          );
 
-        <div
-          className="flex items-center"
-          onMouseLeave={() =>
-            setHoverValue(null)
-          }
-        >
-          {[0, 1, 2, 3, 4].map((index) => {
-            const halfValue = index + 0.5;
-            const fullValue = index + 1;
+          return (
+            <div
+              key={index}
+              className="relative shrink-0"
+              style={{ width: size, height: size }}
+              aria-hidden="true"
+            >
+              <Star
+                size={size}
+                strokeWidth={0}
+                fill="currentColor"
+                className="absolute inset-0 text-zinc-800"
+              />
 
-            const fillAmount = Math.max(
-              0,
-              Math.min(
-                1,
-                displayValue - index
-              )
-            );
-
-            return (
               <div
-                key={index}
-                className="relative shrink-0"
-                style={{
-                  width: size,
-                  height: size,
-                }}
+                className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden transition-[width] duration-75"
+                style={{ width: `${filled * 100}%` }}
               >
-                {/* ESTRELLA VACÍA */}
-
                 <Star
                   size={size}
                   strokeWidth={0}
                   fill="currentColor"
-                  className="absolute inset-0 text-zinc-800"
+                  className="text-emerald-400"
                 />
-
-                {/* RELLENO */}
-
-                <div
-                  className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden"
-                  style={{
-                    width: `${fillAmount * 100}%`,
-                  }}
-                >
-                  <Star
-                    size={size}
-                    strokeWidth={0}
-                    fill="currentColor"
-                    className="text-emerald-400"
-                  />
-                </div>
-
-                {!readonly && (
-                  <>
-                    {/* IZQUIERDA = MEDIA ESTRELLA */}
-
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 left-0 z-20 w-1/2 cursor-pointer"
-                      onMouseEnter={() =>
-                        setHoverValue(halfValue)
-                      }
-                      onFocus={() =>
-                        setHoverValue(halfValue)
-                      }
-                      onClick={() =>
-                        selectRating(halfValue)
-                      }
-                      aria-label={`${halfValue} de 5`}
-                      title={`${halfValue}/5`}
-                    />
-
-                    {/* DERECHA = ESTRELLA COMPLETA */}
-
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 z-20 w-1/2 cursor-pointer"
-                      onMouseEnter={() =>
-                        setHoverValue(fullValue)
-                      }
-                      onFocus={() =>
-                        setHoverValue(fullValue)
-                      }
-                      onClick={() =>
-                        selectRating(fullValue)
-                      }
-                      aria-label={`${fullValue} de 5`}
-                      title={`${fullValue}/5`}
-                    />
-                  </>
-                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

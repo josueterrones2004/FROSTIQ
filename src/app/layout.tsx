@@ -4,6 +4,7 @@ import type {
 
 import AppShell from "@/components/AppShell";
 import ChangelogModal from "@/components/ChangelogModal";
+import { Analytics } from "@vercel/analytics/next";
 
 import {
   createClient,
@@ -127,6 +128,15 @@ export default async function RootLayout({
         {user && (
           <ChangelogModal />
         )}
+
+        <AppShell
+            authenticated={Boolean(user)}
+            profile={profile}
+          >
+            {children}
+          </AppShell>
+          {user && <ChangelogModal />}
+          <Analytics />
       </body>
     </html>
   );
