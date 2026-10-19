@@ -11,7 +11,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 
-**[🌐 Live app](https://frostiq.app)** · **[📦 Repository](https://github.com/josueterrones2004/media-tracker)**
+**[🌐 Live app](https://frostiq.app)** 
 
 </div>
 
