@@ -20,12 +20,12 @@ export default async function PublicLanding() {
     );
 
   return (
-    <div className="min-w-0">
+    <main className="mx-auto w-full min-w-0 max-w-[1440px] overflow-x-hidden pb-14">
       <DiscoverSection
         items={
           discoverItems
         }
       />
-    </div>
+    </main>
   );
 }
