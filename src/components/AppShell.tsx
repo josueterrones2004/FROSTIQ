@@ -292,71 +292,25 @@ export default function AppShell({
     "/";
 
   async function handleLogout() {
-    if (
-      loggingOut
-    ) {
-      return;
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        return;
+      }
+
+      setProfileMenuOpen(false);
+      setDesktopLibraryOpen(false);
+
+      router.replace("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Unexpected error signing out:", error);
+    } finally {
+      setLoggingOut(false);
     }
-
-    setLoggingOut(
-      true
-    );
-
-    const {
-      error,
-    } =
-      await supabase.auth.signOut();
-
-    if (
-      error
-    ) {
-      console.error(
-        "Error signing out:",
-        error
-      );
-
-      setLoggingOut(
-        false
-      );
-
-      return;
-    }
-
-    setProfileMenuOpen(
-      false
-    );
-
-    setDesktopLibraryOpen(
-      false
-    );
-
-    /*
-     * IMPORTANTE:
-     * cerrar sesión vuelve a la Home pública.
-     */
-    router.replace(
-      "/"
-    );
-
-    router.refresh();
-  }
-
-  /*
-   * /auth sí sigue siendo una pantalla
-   * independiente.
-   */
-  if (
-    pathname.startsWith(
-      "/auth"
-    )
-  ) {
-    return (
-      <main className="min-h-screen">
-        {
-          children
-        }
-      </main>
-    );
   }
 
   return (
