@@ -1,142 +1,81 @@
-import type {
-  Metadata,
-} from "next";
+
+import type { Metadata } from "next";
 
 import AppShell from "@/components/AppShell";
 import ChangelogModal from "@/components/ChangelogModal";
 import { Analytics } from "@vercel/analytics/next";
 
-import {
-  createClient,
-} from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 import "./globals.css";
 
-export const metadata:
-  Metadata = {
-  title:
-    "Media Tracker",
+export const metadata: Metadata = {
+  title: "FROSTIQ",
 
   description:
     "Tu biblioteca personal de películas, series, libros y juegos",
 
-  applicationName:
-    "Media Tracker",
+  applicationName: "FROSTIQ",
 
   appleWebApp: {
-    capable:
-      true,
-
-    title:
-      "Media Tracker",
-
-    statusBarStyle:
-      "black-translucent",
+    capable: true,
+    title: "FROSTIQ",
+    statusBarStyle: "black-translucent",
   },
 
   formatDetection: {
-    telephone:
-      false,
+    telephone: false,
   },
 };
 
 type ShellProfile = {
-  username:
-    | string
-    | null;
-
-  display_name:
-    | string
-    | null;
-
-  avatar_url:
-    | string
-    | null;
-
-  special_role:
-    | "OWNER"
-    | "BETA_TESTER"
-    | null;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  special_role: "OWNER" | "BETA_TESTER" | null;
 };
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children:
-    React.ReactNode;
+  children: React.ReactNode;
 }>) {
-  const supabase =
-    await createClient();
+  const supabase = await createClient();
 
   const {
-    data: {
-      user,
-    },
-  } =
-    await supabase.auth.getUser();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  let profile:
-    | ShellProfile
-    | null =
-    null;
+  let profile: ShellProfile | null = null;
 
   if (user) {
-    const {
-      data,
-    } =
-      await supabase
-        .from(
-          "profiles"
-        )
-        .select(`
-          username,
-          display_name,
-          avatar_url,
-          special_role
-        `)
-        .eq(
-          "id",
-          user.id
-        )
-        .maybeSingle();
+    const { data } = await supabase
+      .from("profiles")
+      .select(`
+        username,
+        display_name,
+        avatar_url,
+        special_role
+      `)
+      .eq("id", user.id)
+      .maybeSingle();
 
-    profile =
-      data as
-        | ShellProfile
-        | null;
+    profile = data as ShellProfile | null;
   }
 
   return (
-    <html
-      lang="es"
-      suppressHydrationWarning
-    >
+    <html lang="es" suppressHydrationWarning>
       <body className="bg-zinc-950 text-zinc-100">
         <AppShell
-          authenticated={
-            Boolean(
-              user
-            )
-          }
-          profile={
-            profile
-          }
+          authenticated={Boolean(user)}
+          profile={profile}
         >
           {children}
         </AppShell>
 
-        {user && (
-          <ChangelogModal />
-        )}
+        {user && <ChangelogModal />}
 
-        <AppShell
-            authenticated={Boolean(user)}
-            profile={profile}
-          >
-            {children}
-          </AppShell>
-          {user && <ChangelogModal />}
-          <Analytics />
+        <Analytics />
       </body>
     </html>
   );

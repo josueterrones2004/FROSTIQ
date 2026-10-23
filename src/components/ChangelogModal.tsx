@@ -95,7 +95,7 @@ export default function ChangelogModal() {
             </div>
 
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-zinc-100">
-              Media Tracker {CHANGELOG_VERSION}
+              FROSTIQ {CHANGELOG_VERSION}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
@@ -105,7 +105,7 @@ export default function ChangelogModal() {
             <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-400">
               Esta pequeña actualización se centra en corregir
               errores, mejorar la estabilidad y unificar la
-              experiencia de uso de Media Tracker, especialmente
+              experiencia de uso de FROSTIQ, especialmente
               al registrar reviews desde teléfonos y computadoras.
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function ChangelogModal() {
 
           <div className="mt-7 rounded-xl bg-white/[0.025] p-4">
             <p className="text-xs leading-5 text-zinc-600">
-              Media Tracker continúa en una etapa temprana de
+              FROSTIQ continúa en una etapa temprana de
               desarrollo. Algunas funciones pueden cambiar o
               contener errores.
             </p>

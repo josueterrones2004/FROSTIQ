@@ -1439,7 +1439,7 @@ export default function MediaAdminClient({
               </h3>
 
               <p className="mt-1 text-xs leading-5 text-zinc-600">
-                Se muestra el banner que está usando actualmente Media Tracker.
+                Se muestra el banner que está usando actualmente FROSTIQ.
               </p>
             </div>
 
@@ -1708,7 +1708,7 @@ export default function MediaAdminClient({
               </h3>
 
               <p className="mt-1 text-xs leading-5 text-zinc-600">
-                Se muestra la portada que está usando actualmente Media Tracker.
+                Se muestra la portada que está usando actualmente FROSTIQ.
               </p>
             </div>
 

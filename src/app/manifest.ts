@@ -7,10 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
 
     name:
-      "Media Tracker",
+      "FROSTIQ",
 
     short_name:
-      "Media Tracker",
+      "FROSTIQ",
 
     description:
       "Lleva un registro de tus películas, series, libros y juegos.",

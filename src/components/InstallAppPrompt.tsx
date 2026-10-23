@@ -400,7 +400,7 @@ export default function InstallAppPrompt() {
             </p>
 
             <h2 className="mt-2 text-lg font-semibold text-zinc-100">
-              Añade Media Tracker a tu inicio
+              Añade FROSTIQ a tu inicio
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-zinc-500">
@@ -457,7 +457,7 @@ export default function InstallAppPrompt() {
               <strong className="font-medium text-zinc-200">
                 Añadir
               </strong>
-              . Media Tracker aparecerá junto a tus apps.
+              . FROSTIQ aparecerá junto a tus apps.
             </GuideStep>
           </div>
 
@@ -516,7 +516,7 @@ export default function InstallAppPrompt() {
             </p>
 
             <h2 className="mt-1 text-lg font-semibold text-zinc-100">
-              Instala Media Tracker
+              Instala FROSTIQ
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-zinc-500">

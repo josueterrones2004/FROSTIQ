@@ -1,48 +1,50 @@
 import { NextResponse } from "next/server";
+
 import { getSeasonDetails } from "@/lib/tmdb";
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
+  const seriesId = searchParams.get("seriesId");
+  const seasonNumber = searchParams.get("seasonNumber");
+
+  if (
+    !seriesId ||
+    !seasonNumber ||
+    !/^\d+$/.test(seriesId) ||
+    !/^\d+$/.test(seasonNumber) ||
+    Number(seriesId) <= 0
+  ) {
+    return NextResponse.json(
+      {
+        error: "Identificador de serie o temporada inválido.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-
-    const seriesId =
-      searchParams.get("seriesId");
-
-    const seasonNumber =
-      searchParams.get("seasonNumber");
-
-    if (!seriesId || !seasonNumber) {
-      return NextResponse.json(
-        {
-          error:
-            "Faltan seriesId o seasonNumber.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
     const data = await getSeasonDetails(
       seriesId,
-      seasonNumber
+      seasonNumber,
     );
 
     return NextResponse.json(data);
   } catch (error) {
     console.error(
-      "Error loading season:",
-      error
+      `Error al cargar la temporada ${seasonNumber} de la serie ${seriesId}:`,
+      error,
     );
 
     return NextResponse.json(
       {
-        error:
-          "No se pudo cargar la temporada.",
+        error: "No se pudo cargar la temporada desde TMDB.",
       },
       {
-        status: 500,
-      }
+        status: 502,
+      },
     );
   }
 }

@@ -2348,7 +2348,7 @@ export default function ProfileCustomizeEditor({
           </h2>
 
           <p className="mt-1 text-sm text-zinc-600">
-            Cambia cómo te ven los demás en Media Tracker.
+            Cambia cómo te ven los demás en FROSTIQ.
           </p>
         </div>
 

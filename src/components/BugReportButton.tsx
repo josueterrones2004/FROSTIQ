@@ -306,7 +306,7 @@ export default function BugReportButton() {
                 </h3>
 
                 <p className="mt-2 text-sm text-zinc-500">
-                  Gracias por ayudar a mejorar Media Tracker.
+                  Gracias por ayudar a mejorar FROSTIQ.
                 </p>
               </div>
             ) : (

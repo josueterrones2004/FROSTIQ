@@ -390,7 +390,7 @@ function AuthContent() {
 
         <div className="relative">
           <h1 className="text-2xl font-bold text-fuchsia-400">
-            Media Tracker
+            FROSTIQ
           </h1>
         </div>
 
@@ -435,7 +435,7 @@ function AuthContent() {
         </div>
 
         <p className="relative text-sm text-zinc-700">
-          Media Tracker
+          FROSTIQ
         </p>
       </section>
 
@@ -447,7 +447,7 @@ function AuthContent() {
 
           <div className="mb-10 lg:hidden">
             <h1 className="text-xl font-bold text-fuchsia-400">
-              Media Tracker
+              FROSTIQ
             </h1>
           </div>
 
@@ -463,7 +463,7 @@ function AuthContent() {
               {mode ===
               "login"
                 ? "Inicia sesión para continuar con tu biblioteca."
-                : "Elige cómo quieres aparecer en Media Tracker."}
+                : "Elige cómo quieres aparecer en FROSTIQ."}
             </p>
           </div>
 

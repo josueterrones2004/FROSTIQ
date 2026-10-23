@@ -1,48 +1,33 @@
 "use client";
 
-import {
-  CircleCheck,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
 import Image from "next/image";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useRouter } from "next/navigation";
+import { CircleCheck, RotateCcw, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { createClient } from "@/lib/supabase/client";
+import { announceLibraryProgress } from "@/lib/library-progress-events";
 import {
-  createClient,
-} from "@/lib/supabase/client";
+  findNextUnwatchedEpisode,
+  formatNextEpisode,
+} from "@/lib/series-progress";
 
-type SeasonSummary = {
+export type SeasonSummary = {
   id: number;
   name: string;
   season_number: number;
   episode_count: number;
-
-  poster_path?:
-    | string
-    | null;
+  poster_path?: string | null;
 };
 
 type Episode = {
   id: number;
   name: string;
-
   overview?: string;
-
   episode_number: number;
   season_number: number;
-
-  air_date?:
-    | string
-    | null;
-
-  still_path?:
-    | string
-    | null;
+  air_date?: string | null;
+  still_path?: string | null;
 };
 
 type SeasonDetails = {
@@ -59,72 +44,102 @@ type EpisodeWatch = {
   is_rewatch: boolean;
   watched_at: string;
   created_at: string;
+  episode_title?: string | null;
+  episode_still_url?: string | null;
 };
 
-interface SeasonsProps {
+export type SeasonsProps = {
   seriesId: number;
   seriesTitle: string;
-
-  posterUrl:
-    | string
-    | null;
-
+  posterUrl: string | null;
   seasons: SeasonSummary[];
-}
+  embedded?: boolean;
+};
 
-function getToday() {
-  const now =
-    new Date();
+const keyOf = (season: number, episode: number) =>
+  `${season}:${episode}`;
 
-  const local =
-    new Date(
-      now.getTime() -
-        now.getTimezoneOffset() *
-          60_000,
-    );
+const today = () => {
+  const now = new Date();
 
-  return local
+  return new Date(
+    now.getTime() - now.getTimezoneOffset() * 60_000,
+  )
     .toISOString()
-    .slice(
-      0,
-      10,
-    );
+    .slice(0, 10);
+};
+
+function dateLabel(date?: string | null) {
+  if (!date) return null;
+
+  const parsed = new Date(`${date}T00:00:00Z`);
+
+  return Number.isNaN(parsed.getTime())
+    ? date
+    : new Intl.DateTimeFormat("es-MX", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(parsed);
 }
 
-function formatDate(
-  value:
-    | string
-    | null
-    | undefined,
-) {
-  if (!value) {
-    return null;
-  }
+function Progress({
+  value,
+  max,
+  label,
+}: {
+  value: number;
+  max: number;
+  label: string;
+}) {
+  const percent =
+    max > 0 ? Math.min(100, (value / max) * 100) : 0;
 
-  try {
-    return new Intl.DateTimeFormat(
-      "es-MX",
-      {
-        day:
-          "numeric",
+  return (
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={Math.min(value, max)}
+      className="flex min-w-0 items-center gap-3"
+    >
+      <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-fuchsia-400 transition-[width] duration-500"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
 
-        month:
-          "short",
+      <span className="shrink-0 text-xs tabular-nums text-zinc-400">
+        {Math.round(percent)}%
+      </span>
+    </div>
+  );
+}
 
-        year:
-          "numeric",
+function LoadingIndicator({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[165px] flex-col items-center justify-center gap-4 py-8"
+    >
+      <span
+        aria-hidden="true"
+        className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-fuchsia-400 motion-reduce:animate-none"
+      />
 
-        timeZone:
-          "UTC",
-      },
-    ).format(
-      new Date(
-        `${value}T00:00:00Z`,
-      ),
-    );
-  } catch {
-    return value;
-  }
+      <p className="text-xs font-medium text-zinc-500">
+        {label}
+      </p>
+    </div>
+  );
 }
 
 export default function Seasons({
@@ -132,315 +147,423 @@ export default function Seasons({
   seriesTitle,
   posterUrl,
   seasons,
+  embedded = false,
 }: SeasonsProps) {
-  const [
-    supabase,
-  ] =
-    useState(
-      () =>
-        createClient(),
-    );
+  const router = useRouter();
 
-  const visibleSeasons =
-    useMemo(
-      () =>
-        seasons
-          .filter(
-            (
-              season,
-            ) =>
-              season.season_number >
-                0 &&
-              season.episode_count >
-                0,
-          )
-          .sort(
-            (
-              first,
-              second,
-            ) =>
-              first.season_number -
-              second.season_number,
-          ),
-      [
-        seasons,
-      ],
-    );
+  const [supabase] = useState(() => createClient());
 
-  const totalEpisodes =
-    useMemo(
-      () =>
-        visibleSeasons.reduce(
-          (
-            total,
-            season,
-          ) =>
-            total +
-            season.episode_count,
-          0,
+  /* =========================================
+     TEMPORADAS DISPONIBLES
+  ========================================= */
+
+  const available = useMemo(
+    () =>
+      seasons
+        .filter(
+          (season) =>
+            season.season_number > 0 &&
+            season.episode_count > 0,
+        )
+        .sort(
+          (a, b) =>
+            a.season_number - b.season_number,
         ),
-      [
-        visibleSeasons,
-      ],
+    [seasons],
+  );
+
+  const seasonNumbers = useMemo(
+    () =>
+      new Set(
+        available.map(
+          (season) => season.season_number,
+        ),
+      ),
+    [available],
+  );
+
+  const total = useMemo(
+    () =>
+      available.reduce(
+        (count, season) =>
+          count + season.episode_count,
+        0,
+      ),
+    [available],
+  );
+
+  /* =========================================
+     ESTADOS
+  ========================================= */
+
+  const [ready, setReady] = useState(false);
+
+  const [selected, setSelected] =
+    useState<number | null>(null);
+
+  const [details, setDetails] = useState<
+    Record<number, SeasonDetails>
+  >({});
+
+  const [loading, setLoading] =
+    useState<number | null>(null);
+
+  const [watches, setWatches] =
+    useState<EpisodeWatch[]>([]);
+
+  const [expanded, setExpanded] =
+    useState<string | null>(null);
+
+  const [busy, setBusy] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const progressRequestRef = useRef(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const initialScrollDone = useRef(false);
+
+
+  const active = ready
+    ? selected !== null &&
+      seasonNumbers.has(selected)
+      ? selected
+      : available[0]?.season_number ?? null
+    : null;
+
+  const season = available.find(
+    (item) => item.season_number === active,
+  );
+
+  const current =
+    active === null
+      ? undefined
+      : details[active];
+
+  // El modal se abre en la primera temporada con pendientes.
+  // Si el pendiente es el E1, conservamos una vista previa del último
+  // episodio de la temporada anterior.
+  const nextToWatch = useMemo(
+    () => findNextUnwatchedEpisode(available, watches),
+    [available, watches],
+  );
+
+  const previousSeason =
+    nextToWatch?.episodeNumber === 1
+      ? available.filter(
+          (s) => s.season_number < nextToWatch.seasonNumber,
+        ).at(-1)
+      : undefined;
+
+  const previousSeasonLastWatch = previousSeason
+    ? watches.find(
+        (w) =>
+          w.season_number === previousSeason.season_number &&
+          w.episode_number === previousSeason.episode_count,
+      )
+    : undefined;
+
+  const showPreviousPreview =
+    embedded &&
+    nextToWatch?.seasonNumber === active &&
+    nextToWatch.episodeNumber === 1 &&
+    Boolean(previousSeasonLastWatch);
+
+  const initialEpisodeNumber =
+    nextToWatch?.seasonNumber === active
+      ? Math.max(1, nextToWatch.episodeNumber - 1)
+      : current?.episodes.at(-1)?.episode_number ?? 1;
+
+  /* =========================================
+     EPISODIOS VISTOS
+  ========================================= */
+
+  const seen = useMemo(
+    () =>
+      new Set(
+        watches
+          .filter(
+            (watch) =>
+              seasonNumbers.has(
+                watch.season_number,
+              ) &&
+              watch.episode_number > 0,
+          )
+          .map((watch) =>
+            keyOf(
+              watch.season_number,
+              watch.episode_number,
+            ),
+          ),
+      ),
+    [watches, seasonNumbers],
+  );
+
+  const seasonSeen =
+    active === null
+      ? 0
+      : [...seen].filter((id) =>
+          id.startsWith(`${active}:`),
+        ).length;
+
+  const seasonDone =
+    !!season &&
+    seasonSeen >= season.episode_count;
+
+  function seriesDone(
+    history: EpisodeWatch[],
+  ) {
+    return (
+      total > 0 &&
+      new Set(
+        history
+          .filter(
+            (watch) =>
+              seasonNumbers.has(
+                watch.season_number,
+              ) &&
+              watch.episode_number > 0,
+          )
+          .map((watch) =>
+            keyOf(
+              watch.season_number,
+              watch.episode_number,
+            ),
+          ),
+      ).size >= total
     );
+  }
 
-  const [
-    selectedSeason,
-    setSelectedSeason,
-  ] =
-    useState<
-      number |
-      null
-    >(null);
+  function watchesFor(
+    episode: Episode,
+  ) {
+    return watches.filter(
+      (watch) =>
+        watch.season_number ===
+          episode.season_number &&
+        watch.episode_number ===
+          episode.episode_number,
+    );
+  }
 
-  const activeSeason =
-    selectedSeason !==
-      null &&
-    visibleSeasons.some(
-      (
-        season,
-      ) =>
-        season.season_number ===
-        selectedSeason,
-    )
-      ? selectedSeason
-      : visibleSeasons[0]
-          ?.season_number ??
-        null;
+  /* =========================================
+     SIGUIENTE EPISODIO PENDIENTE
+  ========================================= */
 
-  const [
-    seasonData,
-    setSeasonData,
-  ] =
-    useState<
-      Record<
-        number,
-        SeasonDetails
-      >
-    >({});
+  /* =========================================
+     AVISAR AL CARRUSEL CON EL TÍTULO REAL
+  ========================================= */
 
-  const [
-    loadingSeason,
-    setLoadingSeason,
-  ] =
-    useState(false);
+  function announceChange(
+    history: EpisodeWatch[],
+    updatedAt: string,
+  ) {
+    const requestId = ++progressRequestRef.current;
+    const next = findNextUnwatchedEpisode(available, history);
+    const knownTitle = next
+      ? details[next.seasonNumber]?.episodes.find(
+          (episode) => episode.episode_number === next.episodeNumber,
+        )?.name ?? null
+      : null;
 
-  const [
-    watches,
-    setWatches,
-  ] =
-    useState<
-      EpisodeWatch[]
-    >([]);
+    announceLibraryProgress({
+      mediaType: "SERIES",
+      externalId: String(seriesId),
+      updatedAt,
+      nextEpisode: next ? formatNextEpisode(next, knownTitle) : null,
+    });
 
-  const [
-    expandedEpisode,
-    setExpandedEpisode,
-  ] =
-    useState<
-      string |
-      null
-    >(null);
+    router.refresh();
 
-  const [
-    message,
-    setMessage,
-  ] =
-    useState("");
+    if (!next || knownTitle) return;
 
-  /* =======================================================
-     WATCH HISTORY
-  ======================================================= */
+    // La temporada siguiente puede no estar en memoria. Reutilizamos
+    // la ruta existente /api/season y actualizamos el mismo carrusel.
+    const params = new URLSearchParams({
+      seriesId: String(seriesId),
+      seasonNumber: String(next.seasonNumber),
+    });
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/season?${params}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const seasonDetails = (await response.json()) as SeasonDetails;
+        if (progressRequestRef.current !== requestId) return;
+
+        const title = seasonDetails.episodes.find(
+          (episode) => episode.episode_number === next.episodeNumber,
+        )?.name ?? null;
+
+        setDetails((currentDetails) => ({
+          ...currentDetails,
+          [next.seasonNumber]:
+            currentDetails[next.seasonNumber] ?? seasonDetails,
+        }));
+
+        if (title) {
+          announceLibraryProgress({
+            mediaType: "SERIES",
+            externalId: String(seriesId),
+            updatedAt,
+            nextEpisode: formatNextEpisode(next, title),
+          });
+        }
+      } catch (error) {
+        console.error("Error loading next episode title:", error);
+      }
+    })();
+  }
+
+  /* =========================================
+     CARGAR HISTORIAL
+  ========================================= */
 
   useEffect(() => {
-    let cancelled =
-      false;
+    let cancelled = false;
 
-    async function loadWatches() {
-      const {
-        data: {
-          user,
-        },
-      } =
-        await supabase.auth.getUser();
+    async function loadHistory() {
+      setReady(false);
+      setSelected(null);
+      setWatches([]);
+      setDetails({});
 
-      if (
-        !user ||
-        cancelled
-      ) {
-        return;
-      }
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
 
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from(
-            "episode_watches",
+        if (authError) {
+          throw authError;
+        }
+
+        if (!user) {
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("episode_watches")
+          .select(
+            "id,season_number,episode_number,episode_title,episode_still_url,is_rewatch,watched_at,created_at",
           )
-          .select(`
-            id,
-            season_number,
-            episode_number,
-            is_rewatch,
-            watched_at,
-            created_at
-          `)
-          .eq(
-            "user_id",
-            user.id,
-          )
+          .eq("user_id", user.id)
           .eq(
             "series_id",
-            String(
-              seriesId,
-            ),
+            String(seriesId),
           )
-          .order(
-            "created_at",
-            {
-              ascending:
-                false,
-            },
+          .order("created_at", {
+            ascending: false,
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const history =
+          (data ?? []) as EpisodeWatch[];
+
+        setWatches(history);
+
+        // Primera temporada con episodios pendientes.
+        // No dependemos del último registro insertado.
+
+        const next =
+          findNextUnwatchedEpisode(
+            available,
+            history,
           );
 
-      if (
-        cancelled
-      ) {
-        return;
-      }
-
-      if (error) {
-        console.error(
-          "Error loading episode watches:",
-          error,
+        setSelected(
+          next?.seasonNumber ??
+            available.at(-1)
+              ?.season_number ??
+            null,
         );
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Error loading episode history",
+            error,
+          );
 
-        return;
+          setMessage(
+            "No se pudo consultar el historial de episodios.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setReady(true);
+        }
       }
-
-      setWatches(
-        data ?? [],
-      );
     }
 
-    void loadWatches();
+    void loadHistory();
 
     return () => {
-      cancelled =
-        true;
+      cancelled = true;
     };
-  }, [
-    seriesId,
-    supabase,
-  ]);
+  }, [seriesId, supabase, available]);
 
-  /* =======================================================
-     LOAD SEASON
-  ======================================================= */
+  /* =========================================
+     CARGAR EPISODIOS DE TEMPORADA
+  ========================================= */
 
   useEffect(() => {
+    // No consultar si no existe una temporada
+    // activa o si ya está en memoria.
+
     if (
-      activeSeason ===
-        null ||
-      seasonData[
-        activeSeason
-      ]
+      active === null ||
+      details[active]
     ) {
       return;
     }
 
-    const seasonNumber =
-      activeSeason;
-
-    let cancelled =
-      false;
+    let cancelled = false;
+    const number = active;
 
     async function loadSeason() {
-      setLoadingSeason(
-        true,
-      );
-
-      setMessage("");
+      setLoading(number);
 
       try {
-        const params =
-          new URLSearchParams({
-            seriesId:
-              String(
-                seriesId,
-              ),
+        const params = new URLSearchParams({
+          seriesId: String(seriesId),
+          seasonNumber: String(number),
+        });
 
-            seasonNumber:
-              String(
-                seasonNumber,
-              ),
-          });
+        const response = await fetch(
+          `/api/season?${params.toString()}`,
+        );
 
-        const response =
-          await fetch(
-            `/api/season?${params.toString()}`,
-          );
-
-        if (
-          !response.ok
-        ) {
-          const errorText =
-            await response.text();
-
-          console.error(
-            "Season API error:",
-            response.status,
-            errorText,
-          );
-
+        if (!response.ok) {
           throw new Error(
-            "No se pudo cargar la temporada.",
+            `No se pudo cargar la temporada ${number} (HTTP ${response.status}).`,
           );
         }
 
         const data =
           (await response.json()) as SeasonDetails;
 
-        if (
-          cancelled
-        ) {
-          return;
+        if (!cancelled) {
+          setDetails((old) => ({
+            ...old,
+            [number]: data,
+          }));
         }
-
-        setSeasonData(
-          (
-            current,
-          ) => ({
-            ...current,
-
-            [seasonNumber]:
-              data,
-          }),
-        );
       } catch (error) {
-        if (
-          cancelled
-        ) {
-          return;
-        }
-
-        console.error(
-          "Error loading season:",
-          error,
-        );
-
-        setMessage(
-          "No se pudo cargar la temporada.",
-        );
-      } finally {
-        if (
-          !cancelled
-        ) {
-          setLoadingSeason(
-            false,
+        if (!cancelled) {
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "No se pudo cargar la temporada.",
           );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(null);
         }
       }
     }
@@ -448,346 +571,110 @@ export default function Seasons({
     void loadSeason();
 
     return () => {
-      cancelled =
-        true;
+      cancelled = true;
     };
-  }, [
-    activeSeason,
-    seasonData,
-    seriesId,
-  ]);
+  }, [active, details, seriesId]);
 
-  /* =======================================================
-     WATCH HELPERS
-  ======================================================= */
+  // Al abrir el modal, dejar el episodio visto precedente y el siguiente
+  // en el área visible. Desplazamos solo el scroll interno del modal.
+  useEffect(() => {
+    if (!embedded || !ready || !current || initialScrollDone.current) return;
 
-  function getEpisodeWatches(
-    seasonNumber: number,
-    episodeNumber: number,
-  ) {
-    return watches.filter(
-      (
-        watch,
-      ) =>
-        watch.season_number ===
-          seasonNumber &&
-        watch.episode_number ===
-          episodeNumber,
-    );
-  }
+    const frame = window.requestAnimationFrame(() => {
+      const target = sectionRef.current?.querySelector<HTMLElement>(
+        '[data-progress-focus="true"]',
+      );
+      const scroller = target?.closest<HTMLElement>(".overflow-y-auto");
+      if (!target || !scroller) return;
 
-  function getUniqueEpisodeCount(
-    episodeWatches:
-      EpisodeWatch[],
-  ) {
-    return new Set(
-      episodeWatches
-        .filter(
-          (
-            watch,
-          ) =>
-            watch.season_number >
-            0,
-        )
-        .map(
-          (
-            watch,
-          ) =>
-            `${watch.season_number}-${watch.episode_number}`,
-        ),
-    ).size;
-  }
+      const top = target.getBoundingClientRect().top;
+      const containerTop = scroller.getBoundingClientRect().top;
+      scroller.scrollTop += top - containerTop - 12;
+      initialScrollDone.current = true;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [embedded, ready, current]);
 
-  function hasCompletedSeries(
-    episodeWatches:
-      EpisodeWatch[],
-  ) {
-    return (
-      totalEpisodes >
-        0 &&
-      getUniqueEpisodeCount(
-        episodeWatches,
-      ) >=
-        totalEpisodes
-    );
-  }
+  /* =========================================
+     ACTUALIZAR ESTADO Y FECHA
+  ========================================= */
 
-  const watchedEpisodes =
-    getUniqueEpisodeCount(
-      watches,
-    );
-
-  const activeSeasonSummary =
-    visibleSeasons.find(
-      (
-        season,
-      ) =>
-        season.season_number ===
-        activeSeason,
-    );
-
-  const watchedInSeason =
-    activeSeason ===
-    null
-      ? 0
-      : new Set(
-          watches
-            .filter(
-              (
-                watch,
-              ) =>
-                watch.season_number ===
-                activeSeason,
-            )
-            .map(
-              (
-                watch,
-              ) =>
-                watch.episode_number,
-            ),
-        ).size;
-
-  /* =======================================================
-     LIBRARY
-  ======================================================= */
-
-  async function markSeriesAsWatching(
+  async function setWatching(
     userId: string,
+    updatedAt: string,
   ) {
-    const {
-      error,
-    } =
-      await supabase
-        .from(
-          "library_items",
-        )
-        .upsert(
-          {
-            user_id:
-              userId,
-
-            media_type:
-              "SERIES",
-
-            external_id:
-              String(
-                seriesId,
-              ),
-
-            title:
-              seriesTitle,
-
-            cover_url:
-              posterUrl,
-
-            status:
-              "IN_PROGRESS",
-          },
-          {
-            onConflict:
-              "user_id,media_type,external_id",
-          },
-        );
+    const { error } = await supabase
+      .from("library_items")
+      .upsert(
+        {
+          user_id: userId,
+          media_type: "SERIES",
+          external_id: String(seriesId),
+          title: seriesTitle,
+          cover_url: posterUrl,
+          status: "IN_PROGRESS",
+          updated_at: updatedAt,
+        },
+        {
+          onConflict:
+            "user_id,media_type,external_id",
+        },
+      );
 
     if (error) {
       console.error(
-        "Error marking series as watching:",
+        "Error setting series status",
         error,
       );
     }
   }
 
-  /* =======================================================
-     ACTIVITY
-  ======================================================= */
+  /* =========================================
+     ACTIVIDAD SOCIAL
+  ========================================= */
 
-  async function createEpisodeActivity(
+  async function activity(
     userId: string,
     episode: Episode,
-    episodeWatchId: string,
+    watchId: string,
   ) {
-    const {
-      error,
-    } =
-      await supabase
-        .from(
-          "activity_events",
-        )
-        .insert({
-          user_id:
-            userId,
-
-          activity_type:
-            "EPISODE_WATCHED",
-
-          media_type:
-            "SERIES",
-
-          external_id:
-            String(
-              seriesId,
-            ),
-
-          title:
-            seriesTitle,
-
-          cover_url:
-            posterUrl,
-
-          episode_watch_id:
-            episodeWatchId,
-
-          season_number:
-            episode.season_number,
-
-          episode_number:
-            episode.episode_number,
-
-          episode_title:
-            episode.name,
-        });
+    const { error } = await supabase
+      .from("activity_events")
+      .insert({
+        user_id: userId,
+        activity_type:
+          "EPISODE_WATCHED",
+        media_type: "SERIES",
+        external_id: String(seriesId),
+        title: seriesTitle,
+        cover_url: posterUrl,
+        episode_watch_id: watchId,
+        season_number:
+          episode.season_number,
+        episode_number:
+          episode.episode_number,
+        episode_title: episode.name,
+      });
 
     if (error) {
       console.error(
-        "Error creating episode activity:",
+        "Error creating episode activity",
         error,
       );
     }
   }
 
-  /* =======================================================
-     MARK WATCHED
-  ======================================================= */
+  /* =========================================
+     SERIE COMPLETADA
+  ========================================= */
 
-  async function markEpisodeWatched(
-    episode: Episode,
-    isRewatch: boolean,
+  function completed(
+    updated: EpisodeWatch[],
+    previouslyCompleted: boolean,
   ) {
-    setMessage("");
-
-    const {
-      data: {
-        user,
-      },
-    } =
-      await supabase.auth.getUser();
-
-    if (!user) {
-      setMessage(
-        "Debes iniciar sesión.",
-      );
-
-      return;
-    }
-
-    const wasCompleted =
-      hasCompletedSeries(
-        watches,
-      );
-
-    const stillUrl =
-      episode.still_path
-        ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
-        : null;
-
-    const {
-      data,
-      error,
-    } =
-      await supabase
-        .from(
-          "episode_watches",
-        )
-        .insert({
-          user_id:
-            user.id,
-
-          series_id:
-            String(
-              seriesId,
-            ),
-
-          series_title:
-            seriesTitle,
-
-          season_number:
-            episode.season_number,
-
-          episode_number:
-            episode.episode_number,
-
-          episode_id:
-            String(
-              episode.id,
-            ),
-
-          episode_title:
-            episode.name,
-
-          series_cover_url:
-            posterUrl,
-
-          episode_still_url:
-            stillUrl,
-
-          is_rewatch:
-            isRewatch,
-
-          watched_at:
-            getToday(),
-        })
-        .select(`
-          id,
-          season_number,
-          episode_number,
-          is_rewatch,
-          watched_at,
-          created_at
-        `)
-        .single();
-
-    if (error) {
-      setMessage(
-        error.message,
-      );
-
-      return;
-    }
-
-    if (!data) {
-      return;
-    }
-
-    await createEpisodeActivity(
-      user.id,
-      episode,
-      data.id,
-    );
-
-    const updatedWatches =
-      [
-        data,
-        ...watches,
-      ];
-
-    setWatches(
-      updatedWatches,
-    );
-
-    await markSeriesAsWatching(
-      user.id,
-    );
-
-    setExpandedEpisode(
-      null,
-    );
-
     if (
-      !wasCompleted &&
-      hasCompletedSeries(
-        updatedWatches,
-      ) &&
-      !isRewatch
+      !previouslyCompleted &&
+      seriesDone(updated)
     ) {
       setMessage(
         "Has visto todos los episodios.",
@@ -797,118 +684,417 @@ export default function Seasons({
         new CustomEvent(
           "series-completed",
           {
-            detail: {
-              seriesId,
-            },
+            detail: { seriesId },
           },
         ),
       );
 
-      return;
+      return true;
     }
 
-    setMessage(
-      isRewatch
-        ? "Rewatch del episodio guardado."
-        : "Episodio marcado como visto.",
-    );
+    return false;
   }
 
-  /* =======================================================
-     REMOVE WATCH
-  ======================================================= */
+  /* =========================================
+     MARCAR EPISODIO VISTO
+  ========================================= */
 
-  async function removeLatestWatch(
+  async function addWatch(
+    episode: Episode,
+    repeat: boolean,
+  ) {
+    if (busy) return;
+
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error(
+          "Debes iniciar sesión.",
+        );
+      }
+
+      const previousComplete =
+        seriesDone(watches);
+
+      const { data, error } = await supabase
+        .from("episode_watches")
+        .insert({
+          user_id: user.id,
+          series_id: String(seriesId),
+          series_title: seriesTitle,
+          season_number:
+            episode.season_number,
+          episode_number:
+            episode.episode_number,
+          episode_id: String(episode.id),
+          episode_title: episode.name,
+          series_cover_url: posterUrl,
+          episode_still_url:
+            episode.still_path
+              ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
+              : null,
+          is_rewatch: repeat,
+          watched_at: today(),
+        })
+        .select(
+          "id,season_number,episode_number,episode_title,episode_still_url,is_rewatch,watched_at,created_at",
+        )
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error(
+          "No se confirmó el registro.",
+        );
+      }
+
+      await activity(
+        user.id,
+        episode,
+        data.id,
+      );
+
+      const updated: EpisodeWatch[] = [
+        data as EpisodeWatch,
+        ...watches,
+      ];
+
+      setWatches(updated);
+      setExpanded(null);
+
+      const updatedAt =
+        new Date().toISOString();
+
+      await setWatching(
+        user.id,
+        updatedAt,
+      );
+
+      announceChange(
+        updated,
+        updatedAt,
+      );
+
+      if (
+        !completed(
+          updated,
+          previousComplete,
+        )
+      ) {
+        setMessage(
+          repeat
+            ? "Rewatch del episodio guardado."
+            : "Episodio marcado como visto.",
+        );
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo registrar el episodio.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /* =========================================
+     QUITAR ÚLTIMA VISUALIZACIÓN
+  ========================================= */
+
+  async function removeWatch(
     episode: Episode,
   ) {
-    const episodeWatches =
-      getEpisodeWatches(
-        episode.season_number,
-        episode.episode_number,
-      );
+    if (busy) return;
 
-    if (
-      episodeWatches.length ===
-      0
-    ) {
-      return;
-    }
+    const last = watchesFor(episode)[0];
 
-    const latest =
-      episodeWatches[0];
+    if (!last) return;
 
-    const {
-      error,
-    } =
-      await supabase
-        .from(
-          "episode_watches",
-        )
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("episode_watches")
         .delete()
-        .eq(
-          "id",
-          latest.id,
+        .eq("id", last.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const updated =
+        watches.filter(
+          (watch) =>
+            watch.id !== last.id,
         );
 
-    if (error) {
+      setWatches(updated);
+      setExpanded(null);
+
+      const updatedAt =
+        new Date().toISOString();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const {
+          error: timestampError,
+        } = await supabase
+          .from("library_items")
+          .update({
+            updated_at: updatedAt,
+          })
+          .eq("user_id", user.id)
+          .eq("media_type", "SERIES")
+          .eq(
+            "external_id",
+            String(seriesId),
+          );
+
+        if (timestampError) {
+          console.error(
+            "Error updating series activity date",
+            timestampError,
+          );
+        }
+      }
+
+      announceChange(
+        updated,
+        updatedAt,
+      );
+
       setMessage(
-        error.message,
+        "Última visualización eliminada.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo quitar la visualización.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /* =========================================
+     MARCAR TODA LA TEMPORADA COMO VISTA
+  ========================================= */
+
+  async function markSeason() {
+    if (busy || !current) return;
+
+    const missing =
+      current.episodes.filter(
+        (episode) =>
+          episode.episode_number > 0 &&
+          !seen.has(
+            keyOf(
+              episode.season_number,
+              episode.episode_number,
+            ),
+          ),
+      );
+
+    if (!missing.length) {
+      setMessage(
+        "Ya has visto todos los episodios de esta temporada.",
       );
 
       return;
     }
 
-    setWatches(
-      (
-        current,
-      ) =>
-        current.filter(
-          (
-            watch,
-          ) =>
-            watch.id !==
-            latest.id,
-        ),
-    );
+    setBusy(true);
+    setMessage("");
 
-    setExpandedEpisode(
-      null,
-    );
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    setMessage(
-      "Última visualización eliminada.",
-    );
+      if (!user) {
+        throw new Error(
+          "Debes iniciar sesión.",
+        );
+      }
+
+      const previousComplete =
+        seriesDone(watches);
+
+      const rows = missing.map(
+        (episode) => ({
+          user_id: user.id,
+          series_id: String(seriesId),
+          series_title: seriesTitle,
+          season_number:
+            episode.season_number,
+          episode_number:
+            episode.episode_number,
+          episode_id:
+            String(episode.id),
+          episode_title:
+            episode.name,
+          series_cover_url: posterUrl,
+          episode_still_url:
+            episode.still_path
+              ? `https://image.tmdb.org/t/p/w500${episode.still_path}`
+              : null,
+          is_rewatch: false,
+          watched_at: today(),
+        }),
+      );
+
+      const { data, error } =
+        await supabase
+          .from("episode_watches")
+          .insert(rows)
+          .select(
+            "id,season_number,episode_number,episode_title,episode_still_url,is_rewatch,watched_at,created_at",
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      const added =
+        (data ?? []) as EpisodeWatch[];
+
+      if (
+        added.length !== missing.length
+      ) {
+        throw new Error(
+          "No se pudo confirmar toda la temporada.",
+        );
+      }
+
+      const episodeMap = new Map(
+        missing.map((episode) => [
+          keyOf(
+            episode.season_number,
+            episode.episode_number,
+          ),
+          episode,
+        ]),
+      );
+
+      const events = added.flatMap(
+        (watch) => {
+          const episode =
+            episodeMap.get(
+              keyOf(
+                watch.season_number,
+                watch.episode_number,
+              ),
+            );
+
+          return episode
+            ? [
+                {
+                  user_id: user.id,
+                  activity_type:
+                    "EPISODE_WATCHED",
+                  media_type: "SERIES",
+                  external_id:
+                    String(seriesId),
+                  title: seriesTitle,
+                  cover_url: posterUrl,
+                  episode_watch_id:
+                    watch.id,
+                  season_number:
+                    episode.season_number,
+                  episode_number:
+                    episode.episode_number,
+                  episode_title:
+                    episode.name,
+                },
+              ]
+            : [];
+        },
+      );
+
+      if (events.length) {
+        const {
+          error: activityError,
+        } = await supabase
+          .from("activity_events")
+          .insert(events);
+
+        if (activityError) {
+          console.error(
+            "Error creating episode activities",
+            activityError,
+          );
+        }
+      }
+
+      const updated: EpisodeWatch[] = [
+        ...added,
+        ...watches,
+      ];
+
+      setWatches(updated);
+      setExpanded(null);
+
+      const updatedAt =
+        new Date().toISOString();
+
+      await setWatching(
+        user.id,
+        updatedAt,
+      );
+
+      announceChange(
+        updated,
+        updatedAt,
+      );
+
+      if (
+        !completed(
+          updated,
+          previousComplete,
+        )
+      ) {
+        setMessage(
+          `Se marcaron ${added.length} episodios como vistos.`,
+        );
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo completar la temporada.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
-  /* =======================================================
-     CURRENT SEASON
-  ======================================================= */
+  /* =========================================
+     INTERFAZ
+  ========================================= */
 
-  const currentSeason =
-    activeSeason !==
-    null
-      ? seasonData[
-          activeSeason
-        ]
-      : undefined;
-
-  if (
-    visibleSeasons.length ===
-    0
-  ) {
-    return null;
-  }
-
-  /* =======================================================
-     UI
-  ======================================================= */
+  if (!available.length) return null;
 
   return (
-    <section className="mt-12">
-      {/* HEADER */}
+    <section ref={sectionRef} className={embedded ? "" : "mt-12"}>
+      {/* ENCABEZADO */}
 
-      <div className="flex items-end justify-between gap-4 border-b border-white/[0.09] pb-4">
-        <div>
+      <div className="flex items-center justify-between gap-5 border-b border-white/[0.09] pb-4">
+        <div className="shrink-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
             Episodios
           </p>
@@ -918,358 +1104,351 @@ export default function Seasons({
           </h2>
         </div>
 
-        <div className="text-right">
-          <p className="text-xs text-zinc-500">
-            <span className="font-medium text-zinc-200">
-              {
-                watchedEpisodes
-              }
-            </span>
-
-            {" / "}
-
-            {totalEpisodes}
-          </p>
-
-          <p className="mt-0.5 text-[10px] text-zinc-700">
-            episodios vistos
-          </p>
-        </div>
+        {ready && seen.size > 0 && (
+          <div className="w-[38%] min-w-[110px] max-w-[250px]">
+            <Progress
+              value={seen.size}
+              max={total}
+              label={`${seen.size} de ${total} episodios vistos`}
+            />
+          </div>
+        )}
       </div>
 
-      {/* SEASONS */}
+      {!ready ? (
+        <LoadingIndicator
+          label="Cargando historial..."
+        />
+      ) : (
+        <>
+          {/* SELECTOR DE TEMPORADAS */}
 
-      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-7 border-b border-white/[0.07]">
-          {visibleSeasons.map(
-            (
-              season,
-            ) => {
-              const active =
-                activeSeason ===
-                season.season_number;
-
-              return (
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max gap-7 border-b border-white/[0.07]">
+              {available.map((item) => (
                 <button
-                  key={
-                    season.id
-                  }
+                  key={item.id}
                   type="button"
                   onClick={() => {
-                    setExpandedEpisode(
-                      null,
+                    initialScrollDone.current = true;
+                    setSelected(
+                      item.season_number,
                     );
-
-                    setSelectedSeason(
-                      season.season_number,
-                    );
+                    setExpanded(null);
+                    setMessage("");
                   }}
                   className={`relative py-4 text-sm font-medium transition ${
-                    active
+                    active === item.season_number
                       ? "text-zinc-100"
                       : "text-zinc-600 hover:text-zinc-300"
                   }`}
                 >
                   <span className="sm:hidden">
-                    T
-                    {
-                      season.season_number
-                    }
+                    T{item.season_number}
                   </span>
 
                   <span className="hidden sm:inline">
                     Temporada{" "}
-                    {
-                      season.season_number
-                    }
+                    {item.season_number}
                   </span>
 
-                  {active ? (
+                  {active === item.season_number && (
                     <span className="absolute inset-x-0 bottom-[-1px] h-[2px] rounded-full bg-fuchsia-400" />
-                  ) : null}
+                  )}
                 </button>
-              );
-            },
-          )}
-        </div>
-      </div>
-
-      {/* PROGRESS */}
-
-      {activeSeasonSummary ? (
-        <div className="mt-5 flex items-center justify-between gap-3 text-xs">
-          <p className="text-zinc-500">
-            Temporada{" "}
-            {
-              activeSeasonSummary.season_number
-            }
-          </p>
-
-          <p className="text-zinc-600">
-            {watchedInSeason}
-            {" / "}
-            {
-              activeSeasonSummary.episode_count
-            }{" "}
-            vistos
-          </p>
-        </div>
-      ) : null}
-
-      {/* EPISODES */}
-
-      <div className="mt-4">
-        {loadingSeason ? (
-          <div className="space-y-3">
-            {[0, 1, 2].map(
-              (
-                item,
-              ) => (
-                <div
-                  key={
-                    item
-                  }
-                  className="h-[220px] animate-pulse rounded-xl bg-white/[0.025] sm:h-[145px]"
-                />
-              ),
-            )}
+              ))}
+            </div>
           </div>
-        ) : !currentSeason ? (
-          <p className="py-12 text-center text-sm text-zinc-600">
-            No se pudieron cargar los episodios.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {currentSeason.episodes.map(
-              (
-                episode,
-              ) => {
-                const episodeWatches =
-                  getEpisodeWatches(
+
+          {/* PROGRESO DE TEMPORADA */}
+
+          {season && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                {seasonSeen > 0 && (
+                  <Progress
+                    value={seasonSeen}
+                    max={season.episode_count}
+                    label={`Temporada ${active}: ${seasonSeen} de ${season.episode_count} vistos`}
+                  />
+                )}
+              </div>
+
+              <button
+                type="button"
+                disabled={
+                  busy ||
+                  !current ||
+                  loading !== null ||
+                  seasonDone
+                }
+                onClick={() => void markSeason()}
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.035] px-3.5 py-2 text-xs font-medium text-zinc-300 transition hover:border-fuchsia-400/30 hover:bg-fuchsia-400/[0.06] hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <CircleCheck size={15} />
+                Marcar toda como vista
+              </button>
+            </div>
+          )}
+
+          {/* LISTADO DE EPISODIOS */}
+
+          <div className="mt-4">
+            {!current ? (
+              loading === active ||
+              (loading === null && !message) ? (
+                <LoadingIndicator
+                  label="Cargando episodios..."
+                />
+              ) : (
+                <p className="py-12 text-center text-sm text-zinc-600">
+                  No se pudieron cargar los episodios.
+                </p>
+              )
+            ) : (
+              <div className="space-y-3">
+                {showPreviousPreview && previousSeasonLastWatch && (
+                  <article
+                    data-progress-focus="true"
+                    className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-400/[0.025]"
+                  >
+                    <div className="sm:grid sm:grid-cols-[210px_minmax(0,1fr)]">
+                      <div className="relative aspect-video overflow-hidden bg-zinc-950 sm:aspect-auto sm:min-h-[138px]">
+                        {previousSeasonLastWatch.episode_still_url ? (
+                          <Image
+                            src={previousSeasonLastWatch.episode_still_url}
+                            alt={previousSeasonLastWatch.episode_title ?? "Último episodio visto"}
+                            fill
+                            unoptimized
+                            sizes="(max-width:639px) 100vw, 210px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full min-h-[138px] items-center justify-center text-xs text-zinc-600">
+                            Último episodio visto
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-col justify-between p-4 sm:p-5">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/70">
+                            Último episodio visto
+                          </p>
+                          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600">
+                            T{previousSeasonLastWatch.season_number} · E{previousSeasonLastWatch.episode_number}
+                          </p>
+                          <h3 className="mt-1.5 text-base font-medium text-zinc-100">
+                            {previousSeasonLastWatch.episode_title ?? "Último episodio de la temporada anterior"}
+                          </h3>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3.5 py-2 text-sm text-emerald-300">
+                            <CircleCheck size={15} /> Visto
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                )}
+                {current.episodes.map((episode) => {
+                  const history =
+                    watchesFor(episode);
+
+                  const watched =
+                    history.length > 0;
+
+                  const key = keyOf(
                     episode.season_number,
                     episode.episode_number,
                   );
 
-                const watched =
-                  episodeWatches.length >
-                  0;
+                  const isExpanded =
+                    expanded === key;
 
-                const key =
-                  `${episode.season_number}-${episode.episode_number}`;
+                  return (
+                    <article
+                      key={episode.id}
+                      data-progress-focus={
+                        !showPreviousPreview &&
+                        episode.episode_number === initialEpisodeNumber
+                          ? "true"
+                          : undefined
+                      }
+                      className={`overflow-hidden rounded-xl border transition ${
+                        watched
+                          ? "border-emerald-400/[0.15] bg-emerald-400/[0.025]"
+                          : "border-white/[0.075] bg-white/[0.018]"
+                      }`}
+                    >
+                      <div className="sm:grid sm:grid-cols-[210px_minmax(0,1fr)]">
+                        {/* IMAGEN */}
 
-                const expanded =
-                  expandedEpisode ===
-                  key;
-
-                const date =
-                  formatDate(
-                    episode.air_date,
-                  );
-
-                return (
-                  <article
-                    key={
-                      episode.id
-                    }
-                    className={`overflow-hidden rounded-xl border transition ${
-                      watched
-                        ? "border-emerald-400/[0.15] bg-emerald-400/[0.025]"
-                        : "border-white/[0.075] bg-white/[0.018]"
-                    }`}
-                  >
-                    <div className="sm:grid sm:grid-cols-[210px_minmax(0,1fr)]">
-                      {/* STILL */}
-
-                      <div className="relative aspect-video w-full overflow-hidden bg-zinc-950 sm:aspect-auto sm:min-h-[138px]">
-                        {episode.still_path ? (
-                          <Image
-                            src={`https://image.tmdb.org/t/p/w500${episode.still_path}`}
-                            alt={
-                              episode.name
-                            }
-                            fill
-                            sizes="(max-width: 639px) 100vw, 210px"
-                            unoptimized
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full min-h-[138px] items-center justify-center text-xs text-zinc-700">
-                            Sin imagen
-                          </div>
-                        )}
-
-                        {watched ? (
-                          <div className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/75 text-emerald-400 backdrop-blur-sm">
-                            <CircleCheck
-                              size={
-                                16
-                              }
+                        <div className="relative aspect-video w-full overflow-hidden bg-zinc-950 sm:aspect-auto sm:min-h-[138px]">
+                          {episode.still_path ? (
+                            <Image
+                              src={`https://image.tmdb.org/t/p/w500${episode.still_path}`}
+                              alt={episode.name}
+                              fill
+                              sizes="(max-width:639px) 100vw, 210px"
+                              unoptimized
+                              className="object-cover"
                             />
-                          </div>
-                        ) : null}
-                      </div>
+                          ) : (
+                            <div className="flex h-full min-h-[138px] items-center justify-center text-xs text-zinc-700">
+                              Sin imagen
+                            </div>
+                          )}
 
-                      {/* CONTENT */}
+                          {watched && (
+                            <div className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/75 text-emerald-400 backdrop-blur-sm">
+                              <CircleCheck
+                                size={16}
+                              />
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="flex min-w-0 flex-col p-4 sm:min-h-[138px] sm:p-5">
-                        <div className="flex min-w-0 items-start justify-between gap-4">
+                        {/* INFORMACIÓN */}
+
+                        <div className="flex min-w-0 flex-col p-4 sm:min-h-[138px] sm:p-5">
                           <div className="min-w-0">
                             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
                               T
                               {
                                 episode.season_number
-                              }
-
-                              {" · "}
-
-                              E
+                              }{" "}
+                              · E
                               {
                                 episode.episode_number
                               }
                             </p>
 
                             <h3 className="mt-1.5 text-[16px] font-medium leading-5 text-zinc-100">
-                              {
-                                episode.name
-                              }
+                              {episode.name}
                             </h3>
 
-                            {date ? (
+                            {episode.air_date && (
                               <p className="mt-1.5 text-xs text-zinc-600">
-                                {
-                                  date
-                                }
+                                {dateLabel(
+                                  episode.air_date,
+                                )}
                               </p>
-                            ) : null}
+                            )}
                           </div>
-                        </div>
 
-                        {episode.overview ? (
-                          <p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-400 sm:line-clamp-2">
-                            {
+                          <p
+                            className={`mt-3 text-sm leading-6 ${
                               episode.overview
-                            }
+                                ? "line-clamp-3 text-zinc-400 sm:line-clamp-2"
+                                : "text-zinc-600"
+                            }`}
+                          >
+                            {episode.overview ||
+                              "Sin descripción disponible."}
                           </p>
-                        ) : (
-                          <p className="mt-3 text-sm text-zinc-600">
-                            Sin descripción disponible.
-                          </p>
-                        )}
 
-                        {/* ACTION */}
+                          {/* MARCAR VISTO */}
 
-                        <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-auto sm:justify-end sm:pt-4">
-                          {!watched ? (
+                          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-auto sm:justify-end sm:pt-4">
                             <button
                               type="button"
+                              disabled={busy}
                               onClick={() =>
-                                void markEpisodeWatched(
-                                  episode,
-                                  false,
-                                )
+                                watched
+                                  ? setExpanded(
+                                      isExpanded
+                                        ? null
+                                        : key,
+                                    )
+                                  : void addWatch(
+                                      episode,
+                                      false,
+                                    )
                               }
-                              className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.025] px-3.5 text-sm font-medium text-zinc-400 transition hover:border-fuchsia-400/30 hover:bg-fuchsia-400/[0.05] hover:text-zinc-100"
+                              className={`inline-flex h-9 items-center justify-center gap-2 rounded-full border px-3.5 text-sm font-medium transition disabled:opacity-40 ${
+                                watched
+                                  ? "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300 hover:bg-emerald-400/[0.11]"
+                                  : "border-white/[0.10] bg-white/[0.025] text-zinc-400 hover:border-fuchsia-400/30 hover:text-zinc-100"
+                              }`}
                             >
                               <CircleCheck
-                                size={
-                                  15
-                                }
+                                size={15}
                               />
 
-                              Marcar visto
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedEpisode(
-                                  expanded
-                                    ? null
-                                    : key,
-                                )
-                              }
-                              className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-400/[0.11]"
-                            >
-                              <CircleCheck
-                                size={
-                                  15
-                                }
-                                fill="currentColor"
-                                className="text-emerald-400"
-                              />
-
-                              Visto
-                            </button>
-                          )}
-
-                          {episodeWatches.length >
-                          1 ? (
-                            <span className="text-xs text-zinc-600">
-                              {
-                                episodeWatches.length
-                              }{" "}
-                              visualizaciones
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* EXTRA OPTIONS */}
-
-                        {expanded ? (
-                          <div className="mt-3 flex flex-wrap justify-start gap-1 border-t border-white/[0.06] pt-3 sm:justify-end">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void markEpisodeWatched(
-                                  episode,
-                                  true,
-                                )
-                              }
-                              className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"
-                            >
-                              <RotateCcw
-                                size={
-                                  14
-                                }
-                              />
-
-                              Marcar rewatch
+                              {watched
+                                ? "Visto"
+                                : "Marcar visto"}
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void removeLatestWatch(
-                                  episode,
-                                )
-                              }
-                              className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-red-400/70 transition hover:bg-red-500/[0.06] hover:text-red-300"
-                            >
-                              <Trash2
-                                size={
-                                  14
-                                }
-                              />
-
-                              Quitar último visto
-                            </button>
+                            {history.length > 1 && (
+                              <span className="text-xs text-zinc-600">
+                                {
+                                  history.length
+                                }{" "}
+                                visualizaciones
+                              </span>
+                            )}
                           </div>
-                        ) : null}
+
+                          {/* REWATCH Y QUITAR VISTO */}
+
+                          {isExpanded && (
+                            <div className="mt-3 flex flex-wrap justify-start gap-1 border-t border-white/[0.06] pt-3 sm:justify-end">
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  void addWatch(
+                                    episode,
+                                    true,
+                                  )
+                                }
+                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-200 disabled:opacity-40"
+                              >
+                                <RotateCcw
+                                  size={14}
+                                />
+                                Marcar rewatch
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  void removeWatch(
+                                    episode,
+                                  )
+                                }
+                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-red-400/70 hover:bg-red-500/[0.06] hover:text-red-300 disabled:opacity-40"
+                              >
+                                <Trash2
+                                  size={14}
+                                />
+                                Quitar último visto
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                );
-              },
+                    </article>
+                  );
+                })}
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
 
-      {message ? (
-        <p className="mt-4 text-sm text-zinc-500">
+      {/* MENSAJES */}
+
+      {message && (
+        <p
+          role="status"
+          className="mt-4 text-sm text-zinc-500"
+        >
           {message}
         </p>
-      ) : null}
+      )}
     </section>
   );
 }
