@@ -287,6 +287,25 @@ A small hotfix focused on stability, consistency and the review experience:
 - Fixed pointer interaction errors in the star-rating component.
 - Removed outdated review forms and improved visual consistency.
 
+### v0.4.0 — October 23, 2026 (In Development)
+
+**Status: Pre-release — Not yet deployed to production.**
+
+A major update focused on rebuilding the personal library experience, improving media tracking, refining navigation and simplifying interactions across the application.
+
+- **Unified personal library:** Replaced separate movie, series, book and game library pages with a centralized library experience.
+- **Redesigned library interface:** Introduced new media cards, recent activity carousels, filtering controls and dedicated desktop and mobile layouts.
+- **Quick media registration:** Added a shared search and registration flow for quickly finding and recording movies, series, books and games.
+- **Improved review integration:** Introduced reusable registration and review components to provide a more consistent experience across media types.
+- **Expanded series tracking:** Reworked season and episode management, with improved progress information and next-episode tracking.
+- **Book reading progress:** Added page-based reading progress functionality and integration with Open Library for reference page counts.
+- **Search improvements:** Refactored global search, search suggestions and filtering, with a dedicated mobile search interface.
+- **Mobile experience overhaul:** Reworked mobile navigation and adapted library interactions for smaller screens.
+- **Architecture improvements:** Reorganized library components, shared utilities and data-handling logic to improve maintainability and support future development.
+- **General refinements:** Updated application layout components, media actions and supporting API routes.
+
+> **Development notice:** Version 0.4.0 is currently available in the `release/0.4.0` development branch. These changes are not yet available on the production website. Features and implementation details may change before the stable release.
+
 ---
 
 ## 🧪 Early-stage software
