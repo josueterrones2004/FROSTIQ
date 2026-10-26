@@ -11,7 +11,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 
-**[🌐 FROSTIQ website](https://frostiq.app)**
+**[🌐 FROSTIQ website](https://frostiq.app)** · **Latest production version: v0.4.1**
 
 </div>
 
@@ -23,7 +23,7 @@ The project combines a personal media library with social features such as publi
 
 > **Language:** the interface is currently available only in **Spanish**. English support and broader localization are planned for a future update.
 >
-> **Project status:** FROSTIQ is currently in **pre-alpha** and under active development. It is not a finished product. **v0.4.1 is being prepared for production; v0.3.1 remains the latest production version.**
+> **Project status:** FROSTIQ is currently in **pre-alpha** and under active development. It is not a finished product. **v0.4.1 is the latest production version.**
 
 ## ✨ What it includes
 
@@ -230,7 +230,7 @@ English support is planned for a future version, with the goal of making the int
 
 ## 🗓️ Development history
 
-> **Latest development version:** `v0.4.1` (release candidate). **Latest production version:** `v0.3.1`.
+> **Latest release:** `v0.4.1`. **Latest production version:** `v0.4.1`.
 
 
 ### v0.1.0 — September 25, 2026
@@ -300,9 +300,9 @@ A small hotfix focused on stability, consistency and the review experience:
 - Improved media registration, review forms, search and mobile navigation.
 - Continued the transition from the Media Tracker name to FROSTIQ.
 
-### v0.4.1 — October 26, 2026 (Release candidate)
+### v0.4.1 — October 26, 2026 (Released)
 
-**Status: Pending production deployment.**
+**Status: Released to production.**
 
 This release combines the internal 0.4.0 changes with the latest FROSTIQ design refinements.
 
