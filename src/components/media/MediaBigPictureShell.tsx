@@ -126,18 +126,18 @@ export default function MediaBigPictureShell({
 
   const mobilePosterClass =
     posterSize === "large"
-      ? "w-[104px] sm:w-[116px]"
-      : "w-[88px] sm:w-[96px]";
+      ? "w-26 sm:w-29"
+      : "w-22 sm:w-24";
 
   const mobileInfoPadding =
     posterSize === "large"
-      ? "pt-[84px]"
+      ? "pt-21"
       : "pt-16";
 
   const desktopPosterClass =
     posterSize === "large"
-      ? "w-[154px]"
-      : "w-[136px]";
+      ? "frost-picture-poster-large"
+      : "w-34";
 
   function goPrevious() {
     if (
@@ -172,14 +172,45 @@ export default function MediaBigPictureShell({
   }
 
   return (
-    <main className="min-h-screen bg-[#050507] pb-[72px] text-zinc-100 lg:pb-24">
+    <main className="min-h-screen bg-frost-bg pb-18 text-frost-text lg:pb-24">
+      <style>{`
+        /* frost-picture-css-v1 */
+        .frost-picture-width-1420 { max-width: 1420px; }
+        .frost-picture-width-1320 { max-width: 1320px; }
+        .frost-picture-width-950 { max-width: 950px; }
+        .frost-picture-width-820 { max-width: 820px; }
+        .frost-picture-poster-large { width: 154px; }
+        .frost-picture-aspect-desktop { aspect-ratio: 16 / 5.8; }
+        .frost-picture-side-width { width: 14%; }
+        .frost-picture-bottom-height { height: 34%; }
+        .frost-picture-saturate-mobile { filter: saturate(1.08); }
+        .frost-picture-saturate-desktop { filter: saturate(1.1) contrast(1.02); }
+        .frost-picture-shadow-mobile { box-shadow: 0 18px 48px rgba(0,0,0,.6); }
+        .frost-picture-shadow-desktop { box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+        .frost-picture-text-9 { font-size: 9px; }
+        .frost-picture-text-11 { font-size: 11px; }
+        .frost-picture-text-15 { font-size: 15px; }
+        .frost-picture-text-27 { font-size: 27px; }
+        .frost-picture-track-023 { letter-spacing: .23em; }
+        .frost-picture-track-neg025 { letter-spacing: -.025em; }
+        .frost-picture-leading-105 { line-height: 1.05; }
+        .frost-picture-leading-102 { line-height: 1.02; }
+        .frost-picture-balanced { text-wrap: balance; }
+        @media (min-width: 640px) {
+          .frost-picture-sm-text-34 { font-size: 34px; }
+          .frost-picture-text-15 { font-size: 16px; }
+        }
+        @media (min-width: 1024px) {
+          .frost-picture-grid { grid-template-columns: minmax(0,1fr) 300px; }
+        }
+      `}</style>
       {/* ==================================================
           MOBILE HERO
       ================================================== */}
 
       <section className="lg:hidden">
         <div className="relative">
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
+          <div className="relative aspect-8/5 w-full overflow-hidden bg-frost-surface">
             {backdropUrl ? (
               <Image
                 src={
@@ -194,7 +225,7 @@ export default function MediaBigPictureShell({
                     backdropUrl,
                   )
                 }
-                className="object-cover saturate-[1.08]"
+                className="object-cover frost-picture-saturate-mobile"
                 style={{
                   objectPosition:
                     `${backdropPositionX}% ${backdropPositionY}%`,
@@ -207,7 +238,7 @@ export default function MediaBigPictureShell({
                 }}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-zinc-700">
+              <div className="absolute inset-0 flex items-center justify-center bg-frost-surface text-frost-muted">
                 <ImageOff
                   size={32}
                 />
@@ -216,13 +247,13 @@ export default function MediaBigPictureShell({
 
             {/* SIDE GRADIENTS */}
 
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-[14%] bg-gradient-to-r from-[#050507]/42 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 frost-picture-side-width bg-gradient-to-r from-frost-bg/42 to-transparent" />
 
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-[14%] bg-gradient-to-l from-[#050507]/42 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 frost-picture-side-width bg-gradient-to-l from-frost-bg/42 to-transparent" />
 
             {/* BOTTOM GRADIENT */}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#050507] via-[#050507]/72 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 frost-picture-bottom-height bg-gradient-to-t from-frost-bg via-frost-bg/72 to-transparent" />
 
             {developerAction ? (
               <div className="absolute right-3 top-3 z-30">
@@ -237,7 +268,7 @@ export default function MediaBigPictureShell({
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex translate-y-1/2 justify-center">
             <div
-              className={`pointer-events-auto relative aspect-[2/3] ${mobilePosterClass} overflow-hidden rounded-xl bg-zinc-900 shadow-[0_18px_48px_rgba(0,0,0,0.6)]`}
+              className={`pointer-events-auto relative aspect-2/3 ${mobilePosterClass} overflow-hidden rounded-xl bg-frost-surface frost-picture-shadow-mobile`}
             >
               {posterUrl ? (
                 <Image
@@ -265,7 +296,7 @@ export default function MediaBigPictureShell({
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-zinc-700">
+                <div className="flex h-full items-center justify-center text-frost-muted">
                   <ImageOff
                     size={20}
                   />
@@ -280,11 +311,11 @@ export default function MediaBigPictureShell({
         <div
           className={`px-4 pb-1 sm:px-6 ${mobileInfoPadding}`}
         >
-          <p className="text-[9px] font-semibold uppercase tracking-[0.23em] text-fuchsia-300">
+          <p className="frost-picture-text-9 font-semibold uppercase frost-picture-track-023 text-frost-accent">
             {eyebrow}
           </p>
 
-          <h1 className="mt-1.5 break-words text-[27px] font-bold leading-[1.05] tracking-[-0.025em] text-white [text-wrap:balance] sm:text-[34px]">
+          <h1 className="mt-1.5 break-words frost-picture-text-27 font-bold frost-picture-leading-105 frost-picture-track-neg025 text-frost-text frost-picture-balanced frost-picture-sm-text-34">
             {title}
           </h1>
 
@@ -301,8 +332,8 @@ export default function MediaBigPictureShell({
       ================================================== */}
 
       <section className="hidden lg:block">
-        <div className="mx-auto w-full max-w-[1420px]">
-          <div className="relative aspect-[16/5.8] overflow-hidden bg-zinc-900">
+        <div className="mx-auto w-full frost-picture-width-1420">
+          <div className="relative frost-picture-aspect-desktop overflow-hidden bg-frost-surface">
             {backdropUrl ? (
               <Image
                 src={
@@ -317,7 +348,7 @@ export default function MediaBigPictureShell({
                     backdropUrl,
                   )
                 }
-                className="object-cover saturate-[1.1] contrast-[1.02]"
+                className="object-cover frost-picture-saturate-desktop "
                 style={{
                   objectPosition:
                     `${backdropPositionX}% ${backdropPositionY}%`,
@@ -327,18 +358,18 @@ export default function MediaBigPictureShell({
                 }}
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-zinc-700">
+              <div className="absolute inset-0 flex items-center justify-center bg-frost-surface text-frost-muted">
                 <ImageOff
                   size={38}
                 />
               </div>
             )}
 
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-[25%] bg-gradient-to-r from-[#050507]/78 via-[#050507]/24 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-frost-bg/78 via-frost-bg/24 to-transparent" />
 
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-[25%] bg-gradient-to-l from-[#050507]/72 via-[#050507]/20 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-frost-bg/72 via-frost-bg/20 to-transparent" />
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#050507] via-[#050507]/72 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 frost-picture-bottom-height bg-gradient-to-t from-frost-bg via-frost-bg/72 to-transparent" />
 
             {developerAction ? (
               <div className="absolute right-6 top-6 z-20">
@@ -351,12 +382,12 @@ export default function MediaBigPictureShell({
             {/* DESKTOP TITLE */}
 
             <div className="absolute inset-x-0 bottom-0 z-10">
-              <div className="mx-auto max-w-[1320px] px-8 pb-8">
+              <div className="mx-auto frost-picture-width-1320 px-8 pb-8">
                 <div className="flex items-end gap-7">
                   <div
                     className={`${desktopPosterClass} shrink-0`}
                   >
-                    <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900 shadow-[0_18px_50px_rgba(0,0,0,0.5)]">
+                    <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-frost-surface frost-picture-shadow-desktop">
                       {posterUrl ? (
                         <Image
                           src={
@@ -383,7 +414,7 @@ export default function MediaBigPictureShell({
                           }}
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-zinc-700">
+                        <div className="flex h-full items-center justify-center text-frost-muted">
                           <ImageOff
                             size={
                               20
@@ -395,13 +426,13 @@ export default function MediaBigPictureShell({
                   </div>
 
                   <div className="min-w-0 flex-1 pb-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.23em] text-fuchsia-300">
+                    <p className="frost-picture-text-11 font-semibold uppercase frost-picture-track-023 text-frost-accent">
                       {
                         eyebrow
                       }
                     </p>
 
-                    <h1 className="mt-1.5 max-w-[950px] break-words text-5xl font-bold leading-[1.02] tracking-[-0.025em] text-white [text-wrap:balance]">
+                    <h1 className="mt-1.5 frost-picture-width-950 break-words text-5xl font-bold frost-picture-leading-102 frost-picture-track-neg025 text-frost-text frost-picture-balanced">
                       {title}
                     </h1>
 
@@ -423,7 +454,7 @@ export default function MediaBigPictureShell({
       ================================================== */}
 
       {actions ? (
-        <section className="mx-auto mt-5 max-w-[1320px] px-4 sm:px-6 lg:mt-4 lg:px-8">
+        <section className="mx-auto mt-5 frost-picture-width-1320 px-4 sm:px-6 lg:mt-4 lg:px-8">
           {actions}
         </section>
       ) : null}
@@ -435,7 +466,7 @@ export default function MediaBigPictureShell({
           así no espera a que termine el sidebar.
       ================================================== */}
 
-      <div className="mx-auto mt-9 grid max-w-[1320px] gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12 lg:px-8">
+      <div className="mx-auto mt-9 grid frost-picture-width-1320 gap-10 px-4 sm:px-6 frost-picture-grid lg:gap-12 lg:px-8">
         {/* MAIN COLUMN */}
 
         <div className="min-w-0">
@@ -448,7 +479,7 @@ export default function MediaBigPictureShell({
               }
             </SectionTitle>
 
-            <p className="mt-5 max-w-[820px] whitespace-pre-line text-[15px] leading-8 text-zinc-400 sm:text-base">
+            <p className="mt-5 frost-picture-width-820 whitespace-pre-line frost-picture-text-15 leading-8 text-frost-muted sm:text-base">
               {description ??
                 "No hay una descripción disponible."}
             </p>
@@ -471,7 +502,7 @@ export default function MediaBigPictureShell({
               </SectionTitle>
 
               <div className="mt-5">
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-zinc-900">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-frost-surface">
                   <Image
                     key={
                       activeGalleryItem.id
@@ -501,7 +532,7 @@ export default function MediaBigPictureShell({
                           goPrevious
                         }
                         aria-label="Captura anterior"
-                        className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl bg-black/55 text-zinc-200 backdrop-blur-sm transition hover:bg-black/80 hover:text-white sm:left-4 sm:h-11 sm:w-11"
+                        className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl bg-black/55 text-frost-text backdrop-blur-sm transition hover:bg-black/80 hover:text-frost-text sm:left-4 sm:h-11 sm:w-11"
                       >
                         <ChevronLeft
                           size={
@@ -516,7 +547,7 @@ export default function MediaBigPictureShell({
                           goNext
                         }
                         aria-label="Captura siguiente"
-                        className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl bg-black/55 text-zinc-200 backdrop-blur-sm transition hover:bg-black/80 hover:text-white sm:right-4 sm:h-11 sm:w-11"
+                        className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl bg-black/55 text-frost-text backdrop-blur-sm transition hover:bg-black/80 hover:text-frost-text sm:right-4 sm:h-11 sm:w-11"
                       >
                         <ChevronRight
                           size={
@@ -557,8 +588,8 @@ export default function MediaBigPictureShell({
                             }`}
                             className={`h-1.5 rounded-full transition-all ${
                               active
-                                ? "w-6 bg-fuchsia-400"
-                                : "w-1.5 bg-zinc-600 hover:bg-zinc-400"
+                                ? "w-6 bg-frost-accent"
+                                : "w-1.5 bg-frost-raised hover:bg-frost-muted"
                             }`}
                           />
                         );
@@ -585,7 +616,7 @@ export default function MediaBigPictureShell({
       ================================================== */}
 
       {bottomContent ? (
-        <div className="mx-auto mt-7 max-w-[1320px] px-4 sm:px-6 lg:mt-10 lg:px-8">
+        <div className="mx-auto mt-7 frost-picture-width-1320 px-4 sm:px-6 lg:mt-10 lg:px-8">
           {bottomContent}
         </div>
       ) : null}
@@ -599,8 +630,8 @@ export function SectionTitle({
   children: ReactNode;
 }) {
   return (
-    <div className="border-b border-white/10 pb-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.21em] text-zinc-500">
+    <div className="border-b border-frost-border/60 pb-3">
+      <h2 className="font-semibold uppercase text-frost-muted" style={{ fontSize: 11, letterSpacing: "0.21em" }}>
         {children}
       </h2>
     </div>

@@ -2095,14 +2095,26 @@ export default function ProfileCustomizeEditor({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] bg-zinc-950 lg:border-x lg:border-zinc-900">
+    <div className="mx-auto w-full frost-customize-editor-width bg-frost-bg lg:border-x lg:border-frost-border">
+      <style>{`
+        .frost-customize-editor-width { max-width: 1100px; }
+        .frost-customize-toolbar-top { top: 70px; }
+        .frost-customize-toolbar-z { z-index: 90; }
+        .frost-customize-dialog-z { z-index: 220; }
+        .frost-customize-cover-width { width: 108px; }
+        .frost-customize-leading-18 { line-height: 18px; }
+        .frost-customize-text-11 { font-size: 11px; }
+        @media (min-width: 640px) {
+          .frost-customize-cover-width { width: 120px; }
+        }
+      `}</style>
       {/* STICKY EDITOR HEADER */}
 
-      <div className="sticky top-[70px] z-[90] flex min-h-16 items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/95 px-3 py-2 backdrop-blur-xl sm:px-4 lg:px-6">
+      <div className="sticky frost-customize-toolbar-top frost-customize-toolbar-z flex min-h-16 items-center justify-between gap-3 border-b border-frost-border bg-frost-bg/95 px-3 py-2 backdrop-blur-xl sm:px-4 lg:px-6">
         <div className="flex min-w-0 items-center">
           <Link
             href="/profile"
-            className="mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-900 hover:text-white sm:mr-3"
+            className="mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-frost-muted transition hover:bg-frost-surface hover:text-white sm:mr-3"
             aria-label="Volver al perfil"
           >
             <ArrowLeft
@@ -2113,7 +2125,7 @@ export default function ProfileCustomizeEditor({
           </Link>
 
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-zinc-100 sm:text-xl">
+            <h1 className="truncate text-lg font-semibold text-frost-text sm:text-xl">
               Editar perfil
             </h1>
 
@@ -2128,7 +2140,7 @@ export default function ProfileCustomizeEditor({
                   )
                     ? "text-red-400"
                     : saving
-                      ? "text-zinc-500"
+                      ? "text-frost-muted"
                       : dirty
                         ? "text-amber-400/80"
                         : "text-emerald-400/80"
@@ -2157,7 +2169,7 @@ export default function ProfileCustomizeEditor({
           onClick={() => {
             void saveAll();
           }}
-          className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-3 text-sm font-semibold text-white transition hover:bg-fuchsia-400 disabled:cursor-not-allowed disabled:bg-zinc-900 disabled:text-zinc-600 sm:px-4"
+          className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-frost-accent px-3 text-sm font-semibold text-frost-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-frost-surface disabled:text-frost-muted sm:px-4"
         >
           {saving ? (
             <Loader2
@@ -2198,7 +2210,7 @@ export default function ProfileCustomizeEditor({
                 alt="Banner"
               />
             ) : (
-              <div className="h-full w-full bg-zinc-900" />
+              <div className="h-full w-full bg-frost-surface" />
             )}
 
             <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/15">
@@ -2249,7 +2261,7 @@ export default function ProfileCustomizeEditor({
                 alt="Foto de perfil"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-2xl font-bold text-zinc-500">
+              <div className="flex h-full items-center justify-center text-2xl font-bold text-frost-muted">
                 {(displayName ||
                   savedUsername ||
                   "?")
@@ -2281,20 +2293,20 @@ export default function ProfileCustomizeEditor({
         }
       >
         <div className="max-w-2xl text-left">
-          <h2 className="text-2xl font-bold text-zinc-100">
+          <h2 className="text-2xl font-bold text-frost-text">
             {displayName ||
               savedUsername ||
               "Usuario"}
           </h2>
 
           {username && (
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-frost-muted">
               @{username}
             </p>
           )}
 
           {bio.trim() && (
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-frost-muted">
               {
                 bio
               }
@@ -2341,14 +2353,14 @@ export default function ProfileCustomizeEditor({
 
       {/* PROFILE FIELDS */}
 
-      <section className="border-t border-zinc-900 px-4 py-7 sm:px-5 lg:px-8 lg:py-9">
+      <section className="border-t border-frost-border px-4 py-7 sm:px-5 lg:px-8 lg:py-9">
         <div className="mb-5">
-          <h2 className="text-base font-semibold text-zinc-200">
+          <h2 className="text-base font-semibold text-frost-text">
             Información del perfil
           </h2>
 
-          <p className="mt-1 text-sm text-zinc-600">
-            Cambia cómo te ven los demás en Media Tracker.
+          <p className="mt-1 text-sm text-frost-muted">
+            Cambia cómo te ven los demás en FROSTIQ.
           </p>
         </div>
 
@@ -2372,7 +2384,7 @@ export default function ProfileCustomizeEditor({
 
                 markDirty();
               }}
-              className="w-full bg-transparent py-1 text-base text-zinc-100 outline-none"
+              className="w-full bg-transparent py-1 text-base text-frost-text outline-none"
             />
           </EditorField>
 
@@ -2380,7 +2392,7 @@ export default function ProfileCustomizeEditor({
             label="Nombre de usuario"
           >
             <div className="flex">
-              <span className="py-1 text-zinc-600">
+              <span className="py-1 text-frost-muted">
                 @
               </span>
 
@@ -2397,7 +2409,7 @@ export default function ProfileCustomizeEditor({
 
                   markDirty();
                 }}
-                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-base text-zinc-100 outline-none"
+                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-base text-frost-text outline-none"
               />
             </div>
           </EditorField>
@@ -2426,10 +2438,10 @@ export default function ProfileCustomizeEditor({
 
                   markDirty();
                 }}
-                className="w-full resize-none bg-transparent py-1 text-base leading-6 text-zinc-100 outline-none placeholder:text-zinc-700"
+                className="w-full resize-none bg-transparent py-1 text-base leading-6 text-frost-text outline-none placeholder:text-frost-muted"
               />
 
-              <p className="text-right text-xs text-zinc-700">
+              <p className="text-right text-xs text-frost-muted">
                 {
                   bio.length
                 }
@@ -2442,13 +2454,13 @@ export default function ProfileCustomizeEditor({
 
       {/* SECTIONS */}
 
-      <section className="border-t border-zinc-800">
+      <section className="border-t border-frost-border">
         <div className="px-4 pb-3 pt-7 sm:px-5 lg:px-8 lg:pt-9">
-          <h2 className="text-base font-semibold text-zinc-200">
+          <h2 className="text-base font-semibold text-frost-text">
             Secciones del perfil
           </h2>
 
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-frost-muted">
             Elige qué mostrar y en qué orden aparece.
           </p>
         </div>
@@ -2543,18 +2555,18 @@ export default function ProfileCustomizeEditor({
 
       {showLeaveConfirm && (
         <div
-          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          className="fixed inset-0 frost-customize-dialog-z flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="leave-profile-title"
         >
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-frost-border bg-frost-bg shadow-2xl shadow-black/60">
             <button
               type="button"
               onClick={
                 cancelLeave
               }
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
               aria-label="Cerrar"
             >
               <X
@@ -2575,24 +2587,24 @@ export default function ProfileCustomizeEditor({
 
               <h2
                 id="leave-profile-title"
-                className="mt-5 pr-10 text-xl font-semibold text-zinc-100"
+                className="mt-5 pr-10 text-xl font-semibold text-frost-text"
               >
                 ¿Salir sin guardar?
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
+              <p className="mt-2 text-sm leading-6 text-frost-muted">
                 Tienes cambios en tu perfil que todavía no se han guardado.
                 Si sales ahora, esos cambios se perderán.
               </p>
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-zinc-800 bg-zinc-950/80 p-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-frost-border bg-frost-bg/80 p-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={
                   cancelLeave
                 }
-                className="rounded-xl border border-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                className="rounded-xl border border-frost-border px-4 py-2.5 text-sm font-medium text-frost-text transition hover:bg-frost-surface hover:text-white"
               >
                 Seguir editando
               </button>
@@ -2643,8 +2655,8 @@ function EditorField({
     React.ReactNode;
 }) {
   return (
-    <label className="block rounded-xl border border-zinc-800 px-4 py-2 transition focus-within:border-fuchsia-500">
-      <span className="text-xs text-zinc-500">
+    <label className="block rounded-xl border border-frost-border px-4 py-2 transition focus-within:border-frost-accent">
+      <span className="text-xs text-frost-muted">
         {
           label
         }
@@ -2785,7 +2797,7 @@ function ProfileSectionEditor({
 
   return (
     <section
-      className={`border-b border-zinc-800 px-4 py-7 transition lg:px-6 ${
+      className={`border-b border-frost-border px-4 py-7 transition lg:px-6 ${
         section.visible
           ? ""
           : "opacity-50"
@@ -2793,13 +2805,13 @@ function ProfileSectionEditor({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-semibold text-zinc-100">
+          <h2 className="font-semibold text-frost-text">
             {
               data.title
             }
           </h2>
 
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-frost-muted">
             {
               data.description
             }
@@ -2910,7 +2922,7 @@ function ProfileSectionEditor({
                 section.section_key
               )
             }
-            className="inline-flex items-center gap-2 text-sm font-medium text-fuchsia-400 transition hover:text-fuchsia-300 disabled:cursor-not-allowed disabled:text-zinc-700"
+            className="inline-flex items-center gap-2 text-sm font-medium text-frost-accent transition hover:text-frost-accent disabled:cursor-not-allowed disabled:text-frost-muted"
           >
             {searchOpen ? (
               <X
@@ -2939,14 +2951,14 @@ function ProfileSectionEditor({
                     size={
                       17
                     }
-                    className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-zinc-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 animate-spin text-frost-muted"
                   />
                 ) : (
                   <Search
                     size={
                       17
                     }
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-frost-muted"
                   />
                 )}
 
@@ -2962,7 +2974,7 @@ function ProfileSectionEditor({
                     )
                   }
                   placeholder={`Buscar ${data.title.toLowerCase()}...`}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-zinc-200 outline-none transition placeholder:text-zinc-700 focus:border-fuchsia-500"
+                  className="w-full rounded-xl border border-frost-border bg-frost-bg py-3 pl-10 pr-4 text-sm text-frost-text outline-none transition placeholder:text-frost-muted focus:border-frost-accent"
                 />
               </div>
 
@@ -3040,7 +3052,7 @@ function SectionIconButton({
       onClick={
         onClick
       }
-      className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-25"
+      className="rounded-lg p-2 text-frost-muted transition hover:bg-frost-surface hover:text-frost-text disabled:cursor-not-allowed disabled:opacity-25"
     >
       {
         children
@@ -3070,7 +3082,7 @@ function FavoritePreview({
     0
   ) {
     return (
-      <div className="border-y border-dashed border-zinc-900 py-7 text-center text-sm text-zinc-700">
+      <div className="border-y border-dashed border-frost-border py-7 text-center text-sm text-frost-muted">
         Todavía no hay favoritos.
       </div>
     );
@@ -3084,9 +3096,9 @@ function FavoritePreview({
         ) => (
           <div
             key={`${item.media_type}-${item.external_id}`}
-            className="w-[108px] shrink-0 sm:w-[120px]"
+            className="frost-customize-cover-width shrink-0 "
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900">
+            <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-frost-surface">
               {item.cover_url ? (
                 <Image
                   src={
@@ -3116,7 +3128,7 @@ function FavoritePreview({
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-600">
+                <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
                   Sin portada
                 </div>
               )}
@@ -3140,7 +3152,7 @@ function FavoritePreview({
               </button>
             </div>
 
-            <p className="mt-2 h-9 line-clamp-2 text-xs font-medium leading-[18px] text-zinc-300">
+            <p className="mt-2 h-9 line-clamp-2 text-xs font-medium frost-customize-leading-18 text-frost-text">
               {
                 item.title
               }
@@ -3163,7 +3175,7 @@ function ActivityPreview({
     0
   ) {
     return (
-      <div className="border-y border-dashed border-zinc-900 py-7 text-center text-sm text-zinc-700">
+      <div className="border-y border-dashed border-frost-border py-7 text-center text-sm text-frost-muted">
         Tu actividad reciente aparecerá aquí.
       </div>
     );
@@ -3179,9 +3191,9 @@ function ActivityPreview({
             key={
               item.id
             }
-            className="w-[108px] shrink-0 sm:w-[120px]"
+            className="frost-customize-cover-width shrink-0 "
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900">
+            <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-frost-surface">
               {item.cover_url ? (
                 <Image
                   src={
@@ -3207,13 +3219,13 @@ function ActivityPreview({
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-600">
+                <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
                   Sin portada
                 </div>
               )}
             </div>
 
-            <p className="mt-2 h-9 line-clamp-2 text-xs font-medium leading-[18px] text-zinc-400">
+            <p className="mt-2 h-9 line-clamp-2 text-xs font-medium frost-customize-leading-18 text-frost-muted">
               {
                 item.title
               }
@@ -3246,9 +3258,9 @@ function SearchResultCard({
           result
         )
       }
-      className="w-[108px] shrink-0 text-left sm:w-[120px]"
+      className="frost-customize-cover-width shrink-0 text-left "
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900">
+      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-frost-surface">
         {result.cover_url ? (
           <Image
             src={
@@ -3271,13 +3283,13 @@ function SearchResultCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-600">
+          <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
             Sin portada
           </div>
         )}
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition hover:bg-black/55 hover:opacity-100">
-          <span className="rounded-full bg-fuchsia-500 p-2 text-white">
+          <span className="rounded-full bg-frost-accent p-2 text-frost-bg">
             <Check
               size={
                 17
@@ -3287,7 +3299,7 @@ function SearchResultCard({
         </div>
       </div>
 
-      <p className="mt-2 h-9 line-clamp-2 text-xs font-medium leading-[18px] text-zinc-300">
+      <p className="mt-2 h-9 line-clamp-2 text-xs font-medium frost-customize-leading-18 text-frost-text">
         {
           result.title
         }
@@ -3295,7 +3307,7 @@ function SearchResultCard({
 
       {(result.year ||
         result.subtitle) && (
-        <p className="mt-1 truncate text-[11px] text-zinc-600">
+        <p className="mt-1 truncate frost-customize-text-11 text-frost-muted">
           {
             result.year ??
             result.subtitle

@@ -688,7 +688,21 @@ export default async function HomePage() {
     );
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[1440px] overflow-x-hidden pb-14">
+    <main className="mx-auto w-full min-w-0 frost-home-max-width overflow-x-hidden pb-14">
+      <style>{`
+        .frost-home-max-width { max-width: 1440px; }
+        .frost-home-text-11 { font-size: 11px; }
+        .frost-home-text-13 { font-size: 13px; }
+        .frost-home-text-15 { font-size: 15px; }
+        .frost-home-track-014 { letter-spacing: 0.14em; }
+        .frost-home-track-016 { letter-spacing: 0.16em; }
+        .frost-home-height-54 { height: 54px; }
+        @media (min-width: 640px) {
+          .frost-home-sm-text-13 { font-size: 13px; }
+          .frost-home-sm-text-15 { font-size: 15px; }
+          .frost-home-sm-height-58 { height: 58px; }
+        }
+      `}</style>
       {/* TENDENCIAS */}
 
       <DiscoverSection
@@ -766,7 +780,7 @@ export default async function HomePage() {
               Todavía no tienes actividad reciente.
             </EmptyState>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/30">
+            <div className="overflow-hidden rounded-xl border border-frost-border/80 bg-frost-bg/30">
               {ownActivity.map(
                 (
                   activity,
@@ -800,7 +814,7 @@ export default async function HomePage() {
           action={
             <Link
               href="/social"
-              className="shrink-0 text-xs font-medium uppercase tracking-[0.14em] text-zinc-600 transition hover:text-fuchsia-400"
+              className="shrink-0 text-xs font-medium uppercase frost-home-track-014 text-frost-muted transition hover:text-frost-accent"
             >
               Ver social
             </Link>
@@ -812,7 +826,7 @@ export default async function HomePage() {
               Cuando las personas que sigues tengan actividad, aparecerá aquí.
             </EmptyState>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/30">
+            <div className="overflow-hidden rounded-xl border border-frost-border/80 bg-frost-bg/30">
               {friendActivity.map(
                 (
                   item,
@@ -870,7 +884,7 @@ export default async function HomePage() {
         action={
           <Link
             href="/social"
-            className="shrink-0 text-xs font-medium uppercase tracking-[0.14em] text-zinc-600 transition hover:text-fuchsia-400"
+            className="shrink-0 text-xs font-medium uppercase frost-home-track-014 text-frost-muted transition hover:text-frost-accent"
           >
             Ver social
           </Link>
@@ -945,16 +959,16 @@ function HomeSection({
           : "mt-10 min-w-0 first:mt-0"
       }
     >
-      <div className="mb-4 flex min-w-0 flex-col gap-2 border-b border-zinc-800 pb-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+      <div className="mb-4 flex min-w-0 flex-col gap-2 border-b border-frost-border pb-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+          <h2 className="frost-home-text-15 font-semibold uppercase frost-home-track-016 text-frost-text">
             {
               title
             }
           </h2>
 
           {subtitle && (
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-frost-muted">
               {
                 subtitle
               }
@@ -1012,7 +1026,7 @@ function MediaPoster({
       }
       className="group block min-w-0"
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 transition group-hover:border-zinc-600">
+      <div className="relative aspect-2/3 overflow-hidden rounded-lg border border-frost-border bg-frost-surface transition group-hover:border-frost-accent/40">
         {image ? (
           <Image
             src={
@@ -1038,19 +1052,19 @@ function MediaPoster({
             }}
           />
         ) : (
-          <div className="flex h-full items-center justify-center px-3 text-center text-sm text-zinc-600">
+          <div className="flex h-full items-center justify-center px-3 text-center text-sm text-frost-muted">
             Sin imagen
           </div>
         )}
       </div>
 
-      <h3 className="mt-2 line-clamp-2 min-h-10 text-sm font-medium leading-5 text-zinc-300 transition group-hover:text-white sm:text-[15px]">
+      <h3 className="mt-2 line-clamp-2 min-h-10 text-sm font-medium leading-5 text-frost-text transition group-hover:text-frost-text frost-home-sm-text-15">
         {
           title
         }
       </h3>
 
-      <p className="mt-0.5 truncate text-xs text-zinc-600 sm:text-[13px]">
+      <p className="mt-0.5 truncate text-xs text-frost-muted frost-home-sm-text-13">
         {
           footer
         }
@@ -1075,9 +1089,9 @@ function RecentActivityRow({
         activity.media_type,
         activity.external_id
       )}
-      className={`group flex min-w-0 items-center gap-3 px-3 py-3.5 transition hover:bg-zinc-900/45 sm:px-4 ${
+      className={`group flex min-w-0 items-center gap-3 px-3 py-3.5 transition hover:bg-frost-surface/45 sm:px-4 ${
         border
-          ? "border-b border-zinc-900"
+          ? "border-b border-frost-border"
           : ""
       }`}
     >
@@ -1104,13 +1118,13 @@ function RecentActivityRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm leading-5">
-          <span className="text-zinc-600">
+          <span className="text-frost-muted">
             {getOwnActivityText(
               activity
             )}{" "}
           </span>
 
-          <span className="font-medium text-zinc-300 transition group-hover:text-white">
+          <span className="font-medium text-frost-text transition group-hover:text-frost-text">
             {
               activity.title
             }
@@ -1120,7 +1134,7 @@ function RecentActivityRow({
         {activity.activity_type ===
           "EPISODE_WATCHED" &&
           activity.episode_title && (
-            <p className="mt-0.5 truncate text-xs text-zinc-600">
+            <p className="mt-0.5 truncate text-xs text-frost-muted">
               {
                 activity.episode_title
               }
@@ -1128,7 +1142,7 @@ function RecentActivityRow({
           )}
       </div>
 
-      <time className="shrink-0 text-[11px] text-zinc-700 sm:text-xs">
+      <time className="shrink-0 frost-home-text-11 text-frost-muted sm:text-xs">
         {formatDate(
           activity.created_at
         )}
@@ -1243,7 +1257,7 @@ function FriendActivityRow({
     <div
       className={`flex min-w-0 items-center gap-3 px-3 py-3.5 sm:px-4 ${
         border
-          ? "border-b border-zinc-900"
+          ? "border-b border-frost-border"
           : ""
       }`}
     >
@@ -1281,14 +1295,14 @@ function FriendActivityRow({
               href={
                 profileHref
               }
-              className="truncate text-sm font-semibold text-zinc-300 transition hover:text-fuchsia-300"
+              className="truncate text-sm font-semibold text-frost-text transition hover:text-frost-accent"
             >
               {
                 name
               }
             </Link>
           ) : (
-            <span className="truncate text-sm font-semibold text-zinc-300">
+            <span className="truncate text-sm font-semibold text-frost-text">
               {
                 name
               }
@@ -1297,7 +1311,7 @@ function FriendActivityRow({
         </div>
 
         <p className="mt-1 min-w-0 truncate text-sm">
-          <span className="text-zinc-600">
+          <span className="text-frost-muted">
             {
               actionText
             }{" "}
@@ -1307,7 +1321,7 @@ function FriendActivityRow({
             href={
               mediaHref
             }
-            className="font-medium text-zinc-300 transition hover:text-white"
+            className="font-medium text-frost-text transition hover:text-frost-text"
           >
             {
               title
@@ -1317,7 +1331,7 @@ function FriendActivityRow({
 
         {item.type ===
           "episode-group" && (
-          <p className="mt-0.5 truncate text-xs text-zinc-700">
+          <p className="mt-0.5 truncate text-xs text-frost-muted">
             {getEpisodeGroupLabel(
               item
             )}
@@ -1325,7 +1339,7 @@ function FriendActivityRow({
         )}
       </div>
 
-      <span className="shrink-0 text-[11px] text-zinc-700 sm:text-xs">
+      <span className="shrink-0 frost-home-text-11 text-frost-muted sm:text-xs">
         {formatRelativeDate(
           createdAt
         )}
@@ -1364,12 +1378,12 @@ function FriendReviewCard({
       : null;
 
   return (
-    <article className="flex min-w-0 gap-3 rounded-xl border border-zinc-800 bg-zinc-900/20 p-3.5 transition hover:border-zinc-700 sm:gap-4 sm:p-4">
+    <article className="flex min-w-0 gap-3 rounded-xl border border-frost-border bg-frost-surface/20 p-3.5 transition hover:border-frost-accent/40 sm:gap-4 sm:p-4">
       <Link
         href={
           mediaHref
         }
-        className="relative h-[112px] w-[76px] shrink-0 overflow-hidden rounded-md bg-zinc-900"
+        className="relative h-28 w-19 shrink-0 overflow-hidden rounded-md bg-frost-surface"
       >
         {review.cover_url ? (
           <Image
@@ -1396,7 +1410,7 @@ function FriendReviewCard({
             }}
           />
         ) : (
-          <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-700">
+          <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
             Sin portada
           </div>
         )}
@@ -1418,21 +1432,21 @@ function FriendReviewCard({
               href={
                 profileHref
               }
-              className="min-w-0 truncate text-[13px] font-semibold text-zinc-300 transition hover:text-fuchsia-300"
+              className="min-w-0 truncate frost-home-text-13 font-semibold text-frost-text transition hover:text-frost-accent"
             >
               {
                 displayName
               }
             </Link>
           ) : (
-            <span className="min-w-0 truncate text-[13px] font-semibold text-zinc-300">
+            <span className="min-w-0 truncate frost-home-text-13 font-semibold text-frost-text">
               {
                 displayName
               }
             </span>
           )}
 
-          <span className="ml-auto shrink-0 text-[11px] text-zinc-700">
+          <span className="ml-auto shrink-0 frost-home-text-11 text-frost-muted">
             {formatDate(
               review.created_at
             )}
@@ -1443,7 +1457,7 @@ function FriendReviewCard({
           href={
             mediaHref
           }
-          className="mt-2.5 line-clamp-1 block text-[15px] font-semibold text-zinc-100 transition hover:text-fuchsia-300"
+          className="mt-2.5 line-clamp-1 block frost-home-text-15 font-semibold text-frost-text transition hover:text-frost-accent"
         >
           {
             review.title
@@ -1451,11 +1465,11 @@ function FriendReviewCard({
         </Link>
 
         {review.contains_spoilers ? (
-          <p className="mt-1.5 text-[13px] italic leading-5 text-zinc-600">
+          <p className="mt-1.5 frost-home-text-13 italic leading-5 text-frost-muted">
             Esta review contiene spoilers.
           </p>
         ) : (
-          <p className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-zinc-500">
+          <p className="mt-1.5 line-clamp-2 frost-home-text-13 leading-5 text-frost-muted">
             {
               review.review_text
             }
@@ -1463,7 +1477,7 @@ function FriendReviewCard({
         )}
 
         {review.liked && (
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-red-400">
+          <div className="mt-2 flex items-center gap-1.5 frost-home-text-11 text-red-400">
             <Heart
               size={
                 13
@@ -1772,7 +1786,7 @@ function ProfileAvatar({
   ) {
     return (
       <div
-        className="relative shrink-0 overflow-hidden rounded-full bg-zinc-800"
+        className="relative shrink-0 overflow-hidden rounded-full bg-frost-raised"
         style={{
           width:
             size,
@@ -1803,7 +1817,7 @@ function ProfileAvatar({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full bg-fuchsia-500/10 text-xs font-semibold text-fuchsia-300"
+      className="flex shrink-0 items-center justify-center rounded-full bg-frost-accent/10 text-xs font-semibold text-frost-accent"
       style={{
         width:
           size,
@@ -1846,7 +1860,7 @@ function SmallCover({
     number;
 }) {
   return (
-    <div className="relative h-[54px] w-9 shrink-0 overflow-hidden rounded bg-zinc-900 sm:h-[58px] sm:w-10">
+    <div className="relative frost-home-height-54 w-9 shrink-0 overflow-hidden rounded bg-frost-surface frost-home-sm-height-58 sm:w-10">
       {image ? (
         <Image
           src={
@@ -1872,7 +1886,7 @@ function SmallCover({
           }}
         />
       ) : (
-        <div className="flex h-full items-center justify-center text-xs text-zinc-700">
+        <div className="flex h-full items-center justify-center text-xs text-frost-muted">
           —
         </div>
       )}
@@ -1887,7 +1901,7 @@ function EmptyState({
     React.ReactNode;
 }) {
   return (
-    <p className="py-6 text-sm text-zinc-600">
+    <p className="py-6 text-sm text-frost-muted">
       {
         children
       }

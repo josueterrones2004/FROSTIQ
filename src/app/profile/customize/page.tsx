@@ -406,7 +406,10 @@ export default async function CustomizeProfilePage() {
       : defaultSections;
 
   return (
-    <main className="mx-auto w-full max-w-[1100px] border-x-0 border-zinc-800/80 bg-zinc-950 pb-20 lg:border-x">
+    <main className="mx-auto w-full frost-customize-page-width border-x-0 border-frost-border/80 bg-frost-bg pb-20 lg:border-x">
+      <style>{`
+        .frost-customize-page-width { max-width: 1100px; }
+      `}</style>
       <ProfileCustomizeEditor
         userId={
           user.id

@@ -216,7 +216,7 @@ export default function ReportsClient({
   }
 
   return (
-    <main className="mx-auto max-w-[1400px] pb-16">
+    <main className="mx-auto pb-16" style={{ maxWidth: 1400 }}>
       {/* HEADER */}
 
       <div className="flex items-start justify-between gap-6">
@@ -224,22 +224,22 @@ export default function ReportsClient({
           <div className="flex items-center gap-2">
             <Bug
               size={24}
-              className="text-fuchsia-400"
+              className="text-frost-accent"
             />
 
-            <h1 className="text-3xl font-bold text-zinc-100">
+            <h1 className="text-3xl font-bold text-frost-text">
               Reportes
             </h1>
           </div>
 
-          <p className="mt-2 text-zinc-500">
+          <p className="mt-2 text-frost-muted">
             Problemas enviados por los usuarios durante la pre-alpha.
           </p>
         </div>
 
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-xl border border-zinc-800 px-3 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+          className="flex shrink-0 items-center gap-2 rounded-xl border border-frost-border px-3 py-2 text-sm text-frost-muted transition hover:bg-frost-raised/65 hover:text-frost-text"
         >
           <ArrowLeft size={16} />
           Volver
@@ -282,7 +282,7 @@ export default function ReportsClient({
 
       {/* FILTERS */}
 
-      <div className="mt-8 flex flex-wrap gap-2 border-b border-zinc-800 pb-4">
+      <div className="mt-8 flex flex-wrap gap-2 border-b border-frost-border pb-4">
         <FilterButton
           active={
             filter ===
@@ -359,10 +359,10 @@ export default function ReportsClient({
         <div className="py-20 text-center">
           <Bug
             size={32}
-            className="mx-auto text-zinc-800"
+            className="mx-auto text-frost-muted"
           />
 
-          <p className="mt-4 text-sm text-zinc-600">
+          <p className="mt-4 text-sm text-frost-muted">
             No hay reportes en esta categoría.
           </p>
         </div>
@@ -429,7 +429,7 @@ function ReportCard({
     );
 
   return (
-    <article className="rounded-2xl border border-zinc-800 bg-zinc-900/20 p-5">
+    <article className="rounded-2xl border border-frost-border bg-frost-surface/20 p-5">
       {/* TOP */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -441,7 +441,7 @@ function ReportCard({
           />
 
           <div className="min-w-0">
-            <p className="truncate font-semibold text-zinc-100">
+            <p className="truncate font-semibold text-frost-text">
               {
                 reporterName
               }
@@ -449,7 +449,7 @@ function ReportCard({
 
             {report.reporter
               ?.username && (
-              <p className="mt-0.5 truncate text-xs text-zinc-600">
+              <p className="mt-0.5 truncate text-xs text-frost-muted">
                 @
                 {
                   report.reporter
@@ -459,7 +459,7 @@ function ReportCard({
             )}
           </div>
 
-          <span className="rounded-full border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-500">
+          <span className="rounded-full border border-frost-border bg-frost-bg px-2.5 py-1 text-xs text-frost-muted">
             {
               categoryLabels[
                 report.category
@@ -487,7 +487,7 @@ function ReportCard({
             }
           </span>
 
-          <time className="text-xs text-zinc-600">
+          <time className="text-xs text-frost-muted">
             {formatDate(
               report.created_at
             )}
@@ -497,7 +497,7 @@ function ReportCard({
 
       {/* DESCRIPTION */}
 
-      <p className="mt-5 whitespace-pre-wrap break-words leading-7 text-zinc-300">
+      <p className="mt-5 whitespace-pre-wrap break-words leading-7 text-frost-text">
         {
           report.description
         }
@@ -513,7 +513,7 @@ function ReportCard({
             }
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-fuchsia-400 transition hover:text-fuchsia-300"
+            className="inline-flex items-center gap-2 text-sm text-frost-accent transition hover:text-frost-accent"
           >
             <ExternalLink
               size={15}
@@ -528,12 +528,12 @@ function ReportCard({
 
       {/* DEVICE */}
 
-      <details className="mt-5 border-t border-zinc-800 pt-4">
-        <summary className="cursor-pointer text-sm text-zinc-600 transition hover:text-zinc-400">
+      <details className="mt-5 border-t border-frost-border pt-4">
+        <summary className="cursor-pointer text-sm text-frost-muted transition hover:text-frost-muted">
           Información técnica
         </summary>
 
-        <div className="mt-4 space-y-2 text-xs leading-5 text-zinc-600">
+        <div className="mt-4 space-y-2 text-xs leading-5 text-frost-muted">
           {report.viewport_width &&
             report.viewport_height && (
               <p className="flex items-center gap-2">
@@ -559,7 +559,7 @@ function ReportCard({
             </p>
           )}
 
-          <p className="font-mono text-zinc-700">
+          <p className="font-mono text-frost-muted">
             {
               report.id
             }
@@ -569,8 +569,8 @@ function ReportCard({
 
       {/* STATUS */}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-800 pt-4">
-        <span className="mr-2 text-xs text-zinc-600">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-frost-border pt-4">
+        <span className="mr-2 text-xs text-frost-muted">
           Estado:
         </span>
 
@@ -600,8 +600,8 @@ function ReportCard({
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
                 report.status ===
                 status
-                  ? "bg-fuchsia-500/15 text-fuchsia-300"
-                  : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+                  ? "bg-frost-accent/15 text-frost-accent"
+                  : "bg-frost-surface text-frost-muted hover:text-frost-text"
               }`}
             >
               {
@@ -616,7 +616,7 @@ function ReportCard({
         {updating && (
           <Loader2
             size={15}
-            className="ml-2 animate-spin text-zinc-500"
+            className="ml-2 animate-spin text-frost-muted"
           />
         )}
       </div>
@@ -645,7 +645,7 @@ function ReporterAvatar({
     avatar
   ) {
     return (
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-frost-raised">
         <Image
           src={
             avatar
@@ -667,7 +667,7 @@ function ReporterAvatar({
   }
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/10 font-semibold text-fuchsia-300">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-frost-accent/10 font-semibold text-frost-accent">
       {name
         .slice(
           0,
@@ -695,21 +695,21 @@ function SummaryCard({
     string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900/20 px-5 py-4">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/10 text-fuchsia-400">
+    <div className="flex items-center gap-4 rounded-xl border border-frost-border bg-frost-surface/20 px-5 py-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-frost-accent/10 text-frost-accent">
         <Icon
           size={18}
         />
       </div>
 
       <div>
-        <p className="text-xl font-bold text-zinc-100">
+        <p className="text-xl font-bold text-frost-text">
           {
             value
           }
         </p>
 
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-frost-muted">
           {
             label
           }
@@ -741,8 +741,8 @@ function FilterButton({
       }
       className={`rounded-lg px-3 py-2 text-sm transition ${
         active
-          ? "bg-fuchsia-500/10 text-fuchsia-300"
-          : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+          ? "bg-frost-accent/10 text-frost-accent"
+          : "text-frost-muted hover:bg-frost-raised/65 hover:text-frost-text"
       }`}
     >
       {

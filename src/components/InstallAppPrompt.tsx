@@ -377,14 +377,25 @@ export default function InstallAppPrompt() {
     isIOS
   ) {
     return (
-      <div className="fixed inset-x-4 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[180] mx-auto max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50 lg:bottom-6 lg:left-auto lg:right-6 lg:mx-0">
+      <div className="fixed inset-x-4 frost-install-floating mx-auto max-w-md overflow-hidden rounded-2xl border border-frost-border bg-frost-bg shadow-2xl shadow-black/50 lg:left-auto lg:right-6 lg:mx-0">
+        <style>{`
+          .frost-install-floating {
+            bottom: calc(88px + env(safe-area-inset-bottom));
+            z-index: 180;
+          }
+          .frost-install-text-10 { font-size: 10px; }
+          .frost-install-track-018 { letter-spacing: 0.18em; }
+          @media (min-width: 1024px) {
+            .frost-install-floating { bottom: 24px; }
+          }
+        `}</style>
         <div className="relative p-5">
           <button
             type="button"
             onClick={
               dismiss
             }
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-900 hover:text-zinc-300"
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
             aria-label="Cerrar"
           >
             <X
@@ -395,15 +406,15 @@ export default function InstallAppPrompt() {
           </button>
 
           <div className="pr-10">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-400">
+            <p className="frost-install-text-10 font-semibold uppercase frost-install-track-018 text-frost-accent">
               Instalar app
             </p>
 
-            <h2 className="mt-2 text-lg font-semibold text-zinc-100">
-              Añade Media Tracker a tu inicio
+            <h2 className="mt-2 text-lg font-semibold text-frost-text">
+              Añade FROSTIQ a tu inicio
             </h2>
 
-            <p className="mt-1 text-sm leading-6 text-zinc-500">
+            <p className="mt-1 text-sm leading-6 text-frost-muted">
               En iPhone y iPad la instalación se hace desde el menú de compartir.
             </p>
           </div>
@@ -420,7 +431,7 @@ export default function InstallAppPrompt() {
               }
             >
               Pulsa el botón{" "}
-              <strong className="font-medium text-zinc-200">
+              <strong className="font-medium text-frost-text">
                 Compartir
               </strong>{" "}
               del navegador.
@@ -437,7 +448,7 @@ export default function InstallAppPrompt() {
               }
             >
               Busca{" "}
-              <strong className="font-medium text-zinc-200">
+              <strong className="font-medium text-frost-text">
                 Añadir a pantalla de inicio
               </strong>
               .
@@ -454,10 +465,10 @@ export default function InstallAppPrompt() {
               }
             >
               Pulsa{" "}
-              <strong className="font-medium text-zinc-200">
+              <strong className="font-medium text-frost-text">
                 Añadir
               </strong>
-              . Media Tracker aparecerá junto a tus apps.
+              . FROSTIQ aparecerá junto a tus apps.
             </GuideStep>
           </div>
 
@@ -467,7 +478,7 @@ export default function InstallAppPrompt() {
               onClick={
                 dismiss
               }
-              className="rounded-xl bg-fuchsia-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-fuchsia-400"
+              className="rounded-xl bg-frost-accent px-5 py-2.5 text-sm font-medium text-frost-bg transition hover:bg-frost-accent-hover"
             >
               Entendido
             </button>
@@ -484,14 +495,25 @@ export default function InstallAppPrompt() {
   }
 
   return (
-    <div className="fixed inset-x-4 bottom-[calc(88px+env(safe-area-inset-bottom))] z-[180] mx-auto max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/50 lg:bottom-6 lg:left-auto lg:right-6 lg:mx-0">
+    <div className="fixed inset-x-4 frost-install-floating mx-auto max-w-md overflow-hidden rounded-2xl border border-frost-border bg-frost-bg shadow-2xl shadow-black/50 lg:left-auto lg:right-6 lg:mx-0">
+        <style>{`
+          .frost-install-floating {
+            bottom: calc(88px + env(safe-area-inset-bottom));
+            z-index: 180;
+          }
+          .frost-install-text-10 { font-size: 10px; }
+          .frost-install-track-018 { letter-spacing: 0.18em; }
+          @media (min-width: 1024px) {
+            .frost-install-floating { bottom: 24px; }
+          }
+        `}</style>
       <div className="relative p-5">
         <button
           type="button"
           onClick={
             dismiss
           }
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-900 hover:text-zinc-300"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
           aria-label="Cerrar"
         >
           <X
@@ -502,7 +524,7 @@ export default function InstallAppPrompt() {
         </button>
 
         <div className="flex items-start gap-4 pr-8">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/10 text-fuchsia-400">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-frost-accent/10 text-frost-accent">
             <Download
               size={
                 23
@@ -511,15 +533,15 @@ export default function InstallAppPrompt() {
           </div>
 
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-400">
+            <p className="frost-install-text-10 font-semibold uppercase frost-install-track-018 text-frost-accent">
               Instalar app
             </p>
 
-            <h2 className="mt-1 text-lg font-semibold text-zinc-100">
-              Instala Media Tracker
+            <h2 className="mt-1 text-lg font-semibold text-frost-text">
+              Instala FROSTIQ
             </h2>
 
-            <p className="mt-1 text-sm leading-6 text-zinc-500">
+            <p className="mt-1 text-sm leading-6 text-frost-muted">
               Accede desde tu pantalla de inicio y úsala como una aplicación.
             </p>
           </div>
@@ -531,7 +553,7 @@ export default function InstallAppPrompt() {
             onClick={
               dismiss
             }
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-300"
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
           >
             Ahora no
           </button>
@@ -541,7 +563,7 @@ export default function InstallAppPrompt() {
             onClick={() => {
               void install();
             }}
-            className="rounded-xl bg-fuchsia-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-fuchsia-400"
+            className="rounded-xl bg-frost-accent px-5 py-2.5 text-sm font-medium text-frost-bg transition hover:bg-frost-accent-hover"
           >
             Instalar
           </button>
@@ -566,20 +588,20 @@ function GuideStep({
     React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-zinc-400">
+    <div className="flex items-center gap-3 rounded-xl border border-frost-border/80 bg-frost-surface/50 p-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-frost-raised text-frost-muted">
         {
           icon
         }
       </div>
 
-      <div className="min-w-0 flex-1 text-sm leading-5 text-zinc-500">
+      <div className="min-w-0 flex-1 text-sm leading-5 text-frost-muted">
         {
           children
         }
       </div>
 
-      <span className="text-xs font-semibold text-zinc-700">
+      <span className="text-xs font-semibold text-frost-muted">
         {
           number
         }

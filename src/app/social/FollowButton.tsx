@@ -1,45 +1,22 @@
 "use client";
 
-import {
-  Loader2,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-import {
-  useRouter,
-} from "next/navigation";
-
-import {
-  useState,
-} from "react";
-
-import {
-  FOLLOW_TABLE,
-} from "@/lib/follows";
-
-import {
-  createClient,
-} from "@/lib/supabase/client";
+import { FOLLOW_TABLE } from "@/lib/follows";
+import { createClient } from "@/lib/supabase/client";
 
 interface FollowButtonProps {
-  currentUserId:
-    string;
-
-  targetUserId:
-    string;
-
-  initialFollowing:
-    boolean;
-
-  compact?:
-    boolean;
+  currentUserId: string;
+  targetUserId: string;
+  initialFollowing: boolean;
+  compact?: boolean;
 }
 
 type FollowState = {
-  targetUserId:
-    string;
-
-  following:
-    boolean;
+  targetUserId: string;
+  following: boolean;
 };
 
 export default function FollowButton({
@@ -48,16 +25,11 @@ export default function FollowButton({
   initialFollowing,
   compact = false,
 }: FollowButtonProps) {
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const [
-    supabase,
-  ] =
-    useState(
-      () =>
-        createClient()
-    );
+  const [supabase] = useState(() =>
+    createClient(),
+  );
 
   /*
    * Guardamos también targetUserId.
@@ -67,137 +39,80 @@ export default function FollowButton({
    * falta sincronizar props con useEffect.
    */
 
-  const [
-    followState,
-    setFollowState,
-  ] =
+  const [followState, setFollowState] =
     useState<FollowState>({
       targetUserId,
-      following:
-        initialFollowing,
+      following: initialFollowing,
     });
 
-  const [
-    loading,
-    setLoading,
-  ] =
-    useState(
-      false
-    );
+  const [loading, setLoading] =
+    useState(false);
 
-  const [
-    errorMessage,
-    setErrorMessage,
-  ] =
-    useState<
-      string |
-      null
-    >(
-      null
-    );
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
 
   const following =
-    followState.targetUserId ===
-    targetUserId
+    followState.targetUserId === targetUserId
       ? followState.following
       : initialFollowing;
 
   async function toggleFollow() {
     if (
       loading ||
-      currentUserId ===
-        targetUserId
+      currentUserId === targetUserId
     ) {
       return;
     }
 
-    setLoading(
-      true
-    );
-
-    setErrorMessage(
-      null
-    );
+    setLoading(true);
+    setErrorMessage(null);
 
     try {
       const {
-        data: {
-          user,
-        },
-
-        error:
-          authError,
-      } =
-        await supabase.auth.getUser();
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (
         authError ||
         !user ||
-        user.id !==
-          currentUserId
+        user.id !== currentUserId
       ) {
         throw new Error(
-          "Tu sesión ha cambiado. Vuelve a iniciar sesión."
+          "Tu sesión ha cambiado. Vuelve a iniciar sesión.",
         );
       }
 
-      if (
-        following
-      ) {
-        const {
-          error,
-        } =
-          await supabase
-            .from(
-              FOLLOW_TABLE
-            )
-            .delete()
-            .eq(
-              "follower_id",
-              user.id
-            )
-            .eq(
-              "following_id",
-              targetUserId
-            );
+      if (following) {
+        const { error } = await supabase
+          .from(FOLLOW_TABLE)
+          .delete()
+          .eq("follower_id", user.id)
+          .eq("following_id", targetUserId);
 
-        if (
-          error
-        ) {
+        if (error) {
           throw error;
         }
 
         setFollowState({
           targetUserId,
-          following:
-            false,
+          following: false,
         });
       } else {
-        const {
-          error,
-        } =
-          await supabase
-            .from(
-              FOLLOW_TABLE
-            )
-            .insert({
-              follower_id:
-                user.id,
+        const { error } = await supabase
+          .from(FOLLOW_TABLE)
+          .insert({
+            follower_id: user.id,
+            following_id: targetUserId,
+          });
 
-              following_id:
-                targetUserId,
-            });
-
-        if (
-          error
-        ) {
+        if (error) {
           throw error;
         }
 
         setFollowState({
           targetUserId,
-          following:
-            true,
+          following: true,
         });
       }
 
@@ -210,30 +125,23 @@ export default function FollowButton({
        */
 
       router.refresh();
-    } catch (
-      error
-    ) {
+    } catch (error) {
       console.error(
         "Error updating follow status:",
-        error
+        error,
       );
 
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "No se pudo actualizar el seguimiento."
+          : "No se pudo actualizar el seguimiento.",
       );
     } finally {
-      setLoading(
-        false
-      );
+      setLoading(false);
     }
   }
 
-  if (
-    currentUserId ===
-    targetUserId
-  ) {
+  if (currentUserId === targetUserId) {
     return null;
   }
 
@@ -244,20 +152,16 @@ export default function FollowButton({
         onClick={() => {
           void toggleFollow();
         }}
-        disabled={
-          loading
-        }
-        aria-pressed={
-          following
-        }
+        disabled={loading}
+        aria-pressed={following}
         className={`inline-flex items-center justify-center rounded-full text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
           compact
-            ? "min-w-[88px] px-3.5 py-1.5"
-            : "min-w-[108px] px-5 py-2"
+            ? "min-w-22 px-3.5 py-1.5"
+            : "min-w-27 px-5 py-2"
         } ${
           following
-            ? "border border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-900"
-            : "bg-fuchsia-500 text-white hover:bg-fuchsia-400"
+            ? "border border-frost-border bg-frost-bg text-frost-text hover:border-frost-accent/40 hover:bg-frost-surface"
+            : "bg-frost-accent text-frost-bg hover:bg-frost-accent-hover"
         }`}
       >
         {loading ? (
@@ -275,11 +179,10 @@ export default function FollowButton({
       {errorMessage && (
         <p
           role="alert"
-          className="max-w-56 text-right text-[11px] leading-4 text-red-400"
+          className="max-w-56 text-right leading-4 text-frost-danger"
+          style={{ fontSize: 11 }}
         >
-          {
-            errorMessage
-          }
+          {errorMessage}
         </p>
       )}
     </div>

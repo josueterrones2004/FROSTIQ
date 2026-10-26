@@ -446,6 +446,18 @@ export default function ReviewModalCard({
 
   return (
     <>
+      <style>{`
+        .frost-movie-review-max-height { max-height: 90dvh; }
+        .frost-movie-review-poster-max-width { max-width: 150px; }
+        .frost-movie-review-toggle-min-width { min-width: 90px; }
+        .frost-movie-review-delete-z { z-index: 80; }
+
+        @media (min-width: 768px) {
+          .frost-movie-review-grid {
+            grid-template-columns: 170px 1fr;
+          }
+        }
+      `}</style>
       <div>
         <button
           type="button"
@@ -490,7 +502,7 @@ export default function ReviewModalCard({
             />
           )}
 
-          <div className="mt-1 flex items-center gap-3 text-zinc-500">
+          <div className="mt-1 flex items-center gap-3 text-frost-muted">
             {review.liked ? (
               <Heart
                 size={
@@ -546,7 +558,7 @@ export default function ReviewModalCard({
           }
         >
           <div
-            className="relative max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl sm:p-7"
+            className="relative frost-movie-review-max-height w-full max-w-3xl overflow-y-auto rounded-2xl border border-frost-border bg-frost-bg p-5 shadow-2xl sm:p-7"
             onMouseDown={(
               event
             ) =>
@@ -561,7 +573,7 @@ export default function ReviewModalCard({
               disabled={
                 loading
               }
-              className="absolute right-5 top-5 text-zinc-500 transition hover:text-white disabled:opacity-50"
+              className="absolute right-5 top-5 text-frost-muted transition hover:text-frost-text disabled:opacity-50"
               aria-label="Cerrar"
             >
               <X
@@ -571,9 +583,9 @@ export default function ReviewModalCard({
               />
             </button>
 
-            <div className="grid gap-8 md:grid-cols-[170px_1fr]">
+            <div className="grid gap-8 frost-movie-review-grid">
               <div className="flex items-start justify-center md:pt-14">
-                <div className="w-full max-w-[150px]">
+                <div className="w-full frost-movie-review-poster-max-width">
                   <Link
                     href={`/movies/${review.external_id}`}
                     onClick={() =>
@@ -612,7 +624,7 @@ export default function ReviewModalCard({
                   </h2>
 
                   {review.release_year && (
-                    <span className="text-lg text-zinc-500">
+                    <span className="text-lg text-frost-muted">
                       {
                         review.release_year
                       }
@@ -620,9 +632,9 @@ export default function ReviewModalCard({
                   )}
                 </div>
 
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-2 text-sm text-frost-muted">
                   Vista el{" "}
-                  <span className="text-zinc-300">
+                  <span className="text-frost-text">
                     {formatDate(
                       review.consumed_at
                     )}
@@ -770,24 +782,24 @@ export default function ReviewModalCard({
                       rows={
                         6
                       }
-                      className="w-full resize-none rounded-xl border border-zinc-800 bg-zinc-900 p-4 leading-7 text-zinc-200 outline-none transition focus:border-fuchsia-500"
+                      className="w-full resize-none rounded-xl border border-frost-border bg-frost-surface p-4 leading-7 text-frost-text outline-none transition focus:border-frost-accent"
                     />
                   ) : hasText &&
                     containsSpoilers &&
                     !spoilersRevealed ? (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-center">
+                    <div className="rounded-xl border border-frost-border bg-frost-surface/60 p-6 text-center">
                       <ShieldAlert
                         size={
                           32
                         }
-                        className="mx-auto text-zinc-400"
+                        className="mx-auto text-frost-muted"
                       />
 
                       <h3 className="mt-3 font-semibold">
                         Esta review contiene spoilers
                       </h3>
 
-                      <p className="mt-2 text-sm text-zinc-500">
+                      <p className="mt-2 text-sm text-frost-muted">
                         ¿Quieres continuar y leerla?
                       </p>
 
@@ -798,28 +810,28 @@ export default function ReviewModalCard({
                             true
                           )
                         }
-                        className="mt-4 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800"
+                        className="mt-4 rounded-xl border border-frost-border bg-frost-surface px-4 py-2 text-sm font-medium text-frost-text transition hover:bg-frost-raised"
                       >
                         Mostrar review
                       </button>
                     </div>
                   ) : hasText ? (
-                    <div className="rounded-xl bg-zinc-900/40 p-5">
-                      <p className="whitespace-pre-wrap leading-7 text-zinc-300">
+                    <div className="rounded-xl bg-frost-surface/40 p-5">
+                      <p className="whitespace-pre-wrap leading-7 text-frost-text">
                         {
                           reviewText
                         }
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm italic text-zinc-600">
+                    <p className="text-sm italic text-frost-muted">
                       Sin review escrita.
                     </p>
                   )}
                 </div>
 
                 {message && (
-                  <p className="mt-4 text-sm text-zinc-400">
+                  <p className="mt-4 text-sm text-frost-muted">
                     {
                       message
                     }
@@ -860,7 +872,7 @@ export default function ReviewModalCard({
                         disabled={
                           loading
                         }
-                        className="flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-900 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl border border-frost-border px-4 py-2.5 text-sm font-medium text-frost-text transition hover:bg-frost-surface disabled:opacity-50"
                       >
                         <Pencil
                           size={
@@ -880,7 +892,7 @@ export default function ReviewModalCard({
                           disabled={
                             loading
                           }
-                          className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
+                          className="rounded-xl border border-frost-border px-4 py-2.5 text-sm text-frost-text transition hover:bg-frost-surface disabled:opacity-50"
                         >
                           Cancelar
                         </button>
@@ -893,7 +905,7 @@ export default function ReviewModalCard({
                           disabled={
                             loading
                           }
-                          className="flex items-center gap-2 rounded-xl bg-fuchsia-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-xl bg-frost-accent px-4 py-2.5 text-sm font-medium text-frost-bg transition hover:bg-frost-accent/90 disabled:opacity-50"
                         >
                           <Save
                             size={
@@ -918,7 +930,7 @@ export default function ReviewModalCard({
       {open &&
         confirmDelete && (
           <div
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 frost-movie-review-delete-z flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
             onMouseDown={() => {
               if (
                 !loading
@@ -930,7 +942,7 @@ export default function ReviewModalCard({
             }}
           >
             <div
-              className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl"
+              className="w-full max-w-md rounded-2xl border border-frost-border bg-frost-bg p-6 shadow-2xl"
               onMouseDown={(
                 event
               ) =>
@@ -945,13 +957,13 @@ export default function ReviewModalCard({
                 />
               </div>
 
-              <h3 className="mt-5 text-xl font-semibold text-zinc-100">
+              <h3 className="mt-5 text-xl font-semibold text-frost-text">
                 ¿Borrar review?
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
+              <p className="mt-2 text-sm leading-6 text-frost-muted">
                 La review de{" "}
-                <span className="font-medium text-zinc-300">
+                <span className="font-medium text-frost-text">
                   {
                     review.title
                   }
@@ -970,7 +982,7 @@ export default function ReviewModalCard({
                   disabled={
                     loading
                   }
-                  className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 disabled:opacity-50"
+                  className="rounded-xl border border-frost-border px-4 py-2.5 text-sm font-medium text-frost-text transition hover:bg-frost-surface disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -1034,14 +1046,14 @@ function ReviewToggle({
       onClick={
         onClick
       }
-      className={`flex min-w-[90px] flex-col items-center gap-2 text-center ${
+      className={`flex frost-movie-review-toggle-min-width flex-col items-center gap-2 text-center ${
         editing
           ? "cursor-pointer"
           : "cursor-default"
       } ${
         active
-          ? "text-zinc-300"
-          : "text-zinc-500"
+          ? "text-frost-text"
+          : "text-frost-muted"
       }`}
     >
       {
@@ -1081,7 +1093,7 @@ function MovieCover({
     number;
 }) {
   return (
-    <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-transparent bg-zinc-900 transition-colors duration-200 hover:border-zinc-400">
+    <div className="relative aspect-2/3 overflow-hidden rounded-xl border border-transparent bg-frost-surface transition-colors duration-200 hover:border-frost-accent/40">
       {coverUrl ? (
         <Image
           src={
@@ -1107,7 +1119,7 @@ function MovieCover({
           }}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-zinc-800 px-4 text-center text-zinc-500">
+        <div className="flex h-full w-full items-center justify-center bg-frost-raised px-4 text-center text-frost-muted">
           Sin imagen
         </div>
       )}

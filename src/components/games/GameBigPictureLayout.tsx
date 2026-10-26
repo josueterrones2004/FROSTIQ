@@ -82,7 +82,7 @@ function GuestActions() {
     <div className="flex flex-wrap items-center gap-2">
       <Link
         href="/auth?mode=login"
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-fuchsia-500 px-4 text-sm font-semibold text-white transition hover:bg-fuchsia-400"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-frost-accent px-4 text-sm font-semibold text-frost-text transition hover:bg-frost-accent-hover"
       >
         <LogIn size={15} />
 
@@ -91,7 +91,7 @@ function GuestActions() {
 
       <Link
         href="/auth?mode=register"
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-zinc-500 transition hover:bg-white/[0.05] hover:text-zinc-200"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-frost-muted transition hover:bg-frost-raised/30 hover:text-frost-text"
       >
         <UserPlus size={15} />
 
@@ -115,17 +115,17 @@ function InfoRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex gap-3 border-b border-white/8 py-3.5 last:border-b-0">
-      <div className="mt-0.5 shrink-0 text-zinc-600">
+    <div className="flex gap-3 border-b border-frost-border/80 py-3.5 last:border-b-0">
+      <div className="mt-0.5 shrink-0 text-frost-muted">
         {icon}
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        <p className="font-semibold uppercase text-frost-muted" style={{ fontSize: 10, letterSpacing: "0.16em" }}>
           {label}
         </p>
 
-        <div className="mt-1.5 text-sm leading-6 text-zinc-300">
+        <div className="mt-1.5 text-sm leading-6 text-frost-text">
           {children}
         </div>
       </div>
@@ -226,9 +226,9 @@ export default function GameBigPictureLayout({
     <>
       {/* MOBILE / TABLET */}
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-zinc-400 lg:hidden">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-frost-muted lg:hidden">
         {year ? (
-          <span className="text-zinc-300">
+          <span className="text-frost-text">
             {year}
           </span>
         ) : null}
@@ -236,7 +236,7 @@ export default function GameBigPictureLayout({
         {year &&
         mobilePlatforms.length >
           0 ? (
-          <span className="text-zinc-600">
+          <span className="text-frost-muted">
             ·
           </span>
         ) : null}
@@ -248,14 +248,14 @@ export default function GameBigPictureLayout({
           ) => (
             <span
               key={platform}
-              className="text-zinc-300"
+              className="text-frost-text"
             >
               {platform}
 
               {index <
               mobilePlatforms.length -
                 1 ? (
-                <span className="ml-2 text-zinc-600">
+                <span className="ml-2 text-frost-muted">
                   ·
                 </span>
               ) : null}
@@ -266,11 +266,11 @@ export default function GameBigPictureLayout({
         {remainingMobilePlatforms >
         0 ? (
           <>
-            <span className="text-zinc-600">
+            <span className="text-frost-muted">
               ·
             </span>
 
-            <span className="font-medium text-zinc-500">
+            <span className="font-medium text-frost-muted">
               +
               {
                 remainingMobilePlatforms
@@ -284,7 +284,7 @@ export default function GameBigPictureLayout({
 
       <div className="hidden flex-wrap items-center gap-x-3 gap-y-2 text-sm lg:flex">
         {year ? (
-          <span className="text-zinc-300">
+          <span className="text-frost-text">
             {year}
           </span>
         ) : null}
@@ -292,7 +292,7 @@ export default function GameBigPictureLayout({
         {year &&
         desktopPlatforms.length >
           0 ? (
-          <span className="text-zinc-600">
+          <span className="text-frost-muted">
             ·
           </span>
         ) : null}
@@ -304,14 +304,14 @@ export default function GameBigPictureLayout({
           ) => (
             <span
               key={platform}
-              className="text-zinc-300"
+              className="text-frost-text"
             >
               {platform}
 
               {index <
               desktopPlatforms.length -
                 1 ? (
-                <span className="ml-3 text-zinc-600">
+                <span className="ml-3 text-frost-muted">
                   ·
                 </span>
               ) : null}
@@ -322,11 +322,11 @@ export default function GameBigPictureLayout({
         {remainingDesktopPlatforms >
         0 ? (
           <>
-            <span className="text-zinc-600">
+            <span className="text-frost-muted">
               ·
             </span>
 
-            <span className="text-zinc-500">
+            <span className="text-frost-muted">
               +
               {
                 remainingDesktopPlatforms
@@ -382,7 +382,7 @@ export default function GameBigPictureLayout({
                       key={
                         platform
                       }
-                      className="rounded-md bg-white/[0.045] px-2 py-1 text-xs text-zinc-300"
+                      className="rounded-md bg-frost-raised/25 px-2 py-1 text-xs text-frost-text"
                     >
                       {
                         platform
@@ -410,7 +410,7 @@ export default function GameBigPictureLayout({
               ) => (
                 <span
                   key={genre}
-                  className="rounded-full bg-white/[0.045] px-3 py-1.5 text-xs text-zinc-300"
+                  className="rounded-full bg-frost-raised/25 px-3 py-1.5 text-xs text-frost-text"
                 >
                   {genre}
                 </span>
@@ -445,7 +445,7 @@ export default function GameBigPictureLayout({
   ======================================================= */
 
   return (
-    <div className="min-h-full bg-black">
+    <div className="min-h-full bg-frost-bg">
       <MediaBigPictureShell
         eyebrow="Juego"
         title={title}
@@ -502,7 +502,7 @@ export default function GameBigPictureLayout({
       ================================================== */}
 
       {mainContent ? (
-        <section className="-mt-10 bg-black pb-12 sm:-mt-12 lg:-mt-16">
+        <section className="-mt-10 bg-frost-bg pb-12 sm:-mt-12 lg:-mt-16">
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             {mainContent}
           </div>

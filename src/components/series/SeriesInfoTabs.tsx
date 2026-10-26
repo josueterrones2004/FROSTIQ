@@ -55,7 +55,7 @@ function PersonImage({
   name: string;
 }) {
   return (
-    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-zinc-900">
+    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-frost-surface">
       {src ? (
         <Image
           src={src}
@@ -66,7 +66,7 @@ function PersonImage({
           className="object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-zinc-600">
+        <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-frost-muted">
           {name
             .slice(0, 1)
             .toUpperCase()}
@@ -86,19 +86,19 @@ function PersonRow({
   imageUrl: string | null;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 border-b border-white/[0.06] py-3 last:border-b-0">
+    <div className="flex min-w-0 items-center gap-3 border-b border-frost-border/60 py-3 last:border-b-0">
       <PersonImage
         src={imageUrl}
         name={name}
       />
 
       <div className="min-w-0">
-        <p className="truncate text-[15px] font-medium text-zinc-200">
+        <p className="truncate frost-series-info-text-15 font-medium text-frost-text">
           {name}
         </p>
 
         {role ? (
-          <p className="mt-1 truncate text-xs text-zinc-500">
+          <p className="mt-1 truncate text-xs text-frost-muted">
             {role}
           </p>
         ) : null}
@@ -115,12 +115,12 @@ function DetailRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-2 border-b border-white/[0.06] py-4 last:border-b-0 sm:grid-cols-[145px_minmax(0,1fr)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+    <div className="grid gap-2 border-b border-frost-border/60 py-4 last:border-b-0 frost-series-info-grid">
+      <p className="frost-series-info-text-10 font-semibold uppercase frost-series-info-track-016 text-frost-muted">
         {label}
       </p>
 
-      <div className="text-sm text-zinc-300">
+      <div className="text-sm text-frost-text">
         {children}
       </div>
     </div>
@@ -137,7 +137,7 @@ function Tags({
       {values.map((value) => (
         <span
           key={value}
-          className="rounded-md bg-white/[0.045] px-2.5 py-1.5 text-xs text-zinc-300"
+          className="rounded-md bg-frost-raised/25 px-2.5 py-1.5 text-xs text-frost-text"
         >
           {value}
         </span>
@@ -207,9 +207,19 @@ export default function SeriesInfoTabs({
 
   return (
     <section className="mt-9">
+      <style>{`
+        .frost-series-info-text-15 { font-size: 15px; }
+        .frost-series-info-text-10 { font-size: 10px; }
+        .frost-series-info-track-016 { letter-spacing: 0.16em; }
+        @media (min-width: 640px) {
+          .frost-series-info-grid {
+            grid-template-columns: 145px minmax(0,1fr);
+          }
+        }
+      `}</style>
       {/* TABS */}
 
-      <div className="flex items-center gap-7 border-b border-white/[0.09]">
+      <div className="flex items-center gap-7 border-b border-frost-border/90">
         {tabs.map((tab) => {
           const active =
             activeTab ===
@@ -226,14 +236,14 @@ export default function SeriesInfoTabs({
               }
               className={`relative pb-3 text-sm font-medium transition ${
                 active
-                  ? "text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-300"
+                  ? "text-frost-text"
+                  : "text-frost-muted hover:text-frost-text"
               }`}
             >
               {tab.label}
 
               {active ? (
-                <span className="absolute inset-x-0 bottom-[-1px] h-[2px] rounded-full bg-fuchsia-400" />
+                <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-frost-accent" />
               ) : null}
             </button>
           );
@@ -247,7 +257,7 @@ export default function SeriesInfoTabs({
         <div className="pt-2">
           {cast.length ===
           0 ? (
-            <p className="py-6 text-sm text-zinc-600">
+            <p className="py-6 text-sm text-frost-muted">
               No hay información de reparto.
             </p>
           ) : (
@@ -285,7 +295,7 @@ export default function SeriesInfoTabs({
                         !current,
                     )
                   }
-                  className="mt-4 text-sm font-medium text-zinc-500 transition hover:text-zinc-200"
+                  className="mt-4 text-sm font-medium text-frost-muted transition hover:text-frost-text"
                 >
                   {showAllCast
                     ? "Ver menos"
@@ -304,7 +314,7 @@ export default function SeriesInfoTabs({
         <div className="pt-2">
           {crew.length ===
           0 ? (
-            <p className="py-6 text-sm text-zinc-600">
+            <p className="py-6 text-sm text-frost-muted">
               No hay información del equipo.
             </p>
           ) : (
@@ -342,7 +352,7 @@ export default function SeriesInfoTabs({
                         !current,
                     )
                   }
-                  className="mt-4 text-sm font-medium text-zinc-500 transition hover:text-zinc-200"
+                  className="mt-4 text-sm font-medium text-frost-muted transition hover:text-frost-text"
                 >
                   {showAllCrew
                     ? "Ver menos"

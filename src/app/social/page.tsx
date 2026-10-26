@@ -1169,15 +1169,28 @@ export default async function SocialPage({
     ) as Profile[];
 
   return (
-    <main className="mx-auto w-full max-w-[1380px] pb-20">
+    <main className="mx-auto w-full frost-social-max-width pb-20">
+      <style>{`
+        .frost-social-max-width {
+          max-width: 1380px;
+        }
+
+        .frost-social-text-10 {
+          font-size: 10px;
+        }
+
+        .frost-social-text-9 {
+          font-size: 9px;
+        }
+      `}</style>
       {/* HEADER */}
 
       <div>
-        <h1 className="text-3xl font-bold text-zinc-100">
+        <h1 className="text-3xl font-bold text-frost-text">
           Social
         </h1>
 
-        <p className="mt-2 text-zinc-400">
+        <p className="mt-2 text-frost-muted">
           Mira qué están viendo, leyendo y jugando las personas que sigues.
         </p>
       </div>
@@ -1187,11 +1200,11 @@ export default async function SocialPage({
       <section className="mt-9">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-100">
+            <h2 className="text-xl font-semibold text-frost-text">
               Personas
             </h2>
 
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-frost-muted">
               Encuentra gente por nombre o usuario.
             </p>
           </div>
@@ -1199,7 +1212,7 @@ export default async function SocialPage({
           {query && (
             <Link
               href="/social"
-              className="shrink-0 text-sm text-zinc-500 transition hover:text-zinc-200"
+              className="shrink-0 text-sm text-frost-muted transition hover:text-frost-text"
             >
               Limpiar
             </Link>
@@ -1218,12 +1231,12 @@ export default async function SocialPage({
                 query
               }
               placeholder="Buscar por nombre o usuario..."
-              className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
+              className="min-w-0 flex-1 rounded-xl border border-frost-border bg-frost-bg px-4 py-3 text-sm text-frost-text outline-none transition placeholder:text-frost-muted focus:border-frost-accent"
             />
 
             <button
               type="submit"
-              className="shrink-0 rounded-xl bg-fuchsia-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-fuchsia-400 sm:px-6"
+              className="shrink-0 rounded-xl bg-frost-accent px-4 py-3 text-sm font-semibold text-frost-bg transition hover:bg-frost-accent-hover sm:px-6"
             >
               Buscar
             </button>
@@ -1232,9 +1245,9 @@ export default async function SocialPage({
 
         {query ? (
           <div className="mt-5">
-            <p className="mb-3 text-sm text-zinc-500">
+            <p className="mb-3 text-sm text-frost-muted">
               Resultados para{" "}
-              <span className="text-zinc-300">
+              <span className="text-frost-text">
                 &quot;
                 {query}
                 &quot;
@@ -1243,8 +1256,8 @@ export default async function SocialPage({
 
             {users.length ===
             0 ? (
-              <div className="border-y border-zinc-900 py-10 text-center">
-                <p className="text-sm text-zinc-600">
+              <div className="border-y border-frost-border py-10 text-center">
+                <p className="text-sm text-frost-muted">
                   No se encontraron usuarios.
                 </p>
               </div>
@@ -1279,7 +1292,7 @@ export default async function SocialPage({
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {users.length ===
             0 ? (
-              <p className="py-6 text-sm text-zinc-600">
+              <p className="py-6 text-sm text-frost-muted">
                 No hay usuarios para mostrar todavía.
               </p>
             ) : (
@@ -1312,25 +1325,25 @@ export default async function SocialPage({
 
       {/* ACTIVITY */}
 
-      <section className="mt-12 border-t border-zinc-900 pt-9">
+      <section className="mt-12 border-t border-frost-border pt-9">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-zinc-100">
+          <h2 className="text-xl font-semibold text-frost-text">
             Actividad
           </h2>
 
-          <span className="hidden text-sm text-zinc-600 sm:block">
+          <span className="hidden text-sm text-frost-muted sm:block">
             Tú y las personas que sigues
           </span>
         </div>
 
         {feedItems.length ===
         0 ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-zinc-800 px-6 py-12 text-center">
-            <p className="text-zinc-400">
+          <div className="mt-5 rounded-2xl border border-dashed border-frost-border px-6 py-12 text-center">
+            <p className="text-frost-muted">
               Todavía no hay actividad para mostrar.
             </p>
 
-            <p className="mt-2 text-sm text-zinc-600">
+            <p className="mt-2 text-sm text-frost-muted">
               Sigue personas o empieza a añadir contenido.
             </p>
           </div>
@@ -1411,7 +1424,7 @@ export default async function SocialPage({
                   return (
                     <article
                       key={`episode-group-${item.id}`}
-                      className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4 sm:p-5"
+                      className="rounded-2xl border border-frost-border bg-frost-surface/60 p-4 sm:p-5"
                     >
                       <div className="flex gap-3 sm:gap-4">
                         <FeedAvatar
@@ -1442,8 +1455,8 @@ export default async function SocialPage({
                             }
                           />
 
-                          <p className="mt-2 leading-6 text-zinc-300">
-                            <span className="text-zinc-400">
+                          <p className="mt-2 leading-6 text-frost-text">
+                            <span className="text-frost-muted">
                               vio{" "}
                               {
                                 item.activities.length
@@ -1455,7 +1468,7 @@ export default async function SocialPage({
                               href={
                                 mediaHref
                               }
-                              className="font-medium text-zinc-100 transition hover:text-fuchsia-300"
+                              className="font-medium text-frost-text transition hover:text-frost-accent"
                             >
                               {
                                 item.title
@@ -1468,7 +1481,7 @@ export default async function SocialPage({
                               href={
                                 mediaHref
                               }
-                              className="w-[72px] shrink-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
+                              className="w-18 shrink-0 overflow-hidden rounded-lg border border-frost-border bg-frost-surface"
                             >
                               {cover ? (
                                 <Image
@@ -1489,7 +1502,7 @@ export default async function SocialPage({
                                       cover
                                     )
                                   }
-                                  className="aspect-[2/3] w-full object-cover"
+                                  className="aspect-2/3 w-full object-cover"
                                   style={{
                                     objectPosition:
                                       `${coverPositionX}% ${coverPositionY}%`,
@@ -1499,14 +1512,14 @@ export default async function SocialPage({
                                   }}
                                 />
                               ) : (
-                                <div className="flex aspect-[2/3] items-center justify-center px-2 text-center text-[10px] text-zinc-600">
+                                <div className="flex aspect-2/3 items-center justify-center px-2 text-center frost-social-text-10 text-frost-muted">
                                   Sin portada
                                 </div>
                               )}
                             </Link>
 
                             <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-wide text-zinc-600">
+                              <p className="text-xs uppercase tracking-wide text-frost-muted">
                                 Serie
                               </p>
 
@@ -1514,14 +1527,14 @@ export default async function SocialPage({
                                 href={
                                   mediaHref
                                 }
-                                className="mt-1 block line-clamp-2 font-medium text-zinc-200 transition hover:text-fuchsia-300"
+                                className="mt-1 block line-clamp-2 font-medium text-frost-text transition hover:text-frost-accent"
                               >
                                 {
                                   item.title
                                 }
                               </Link>
 
-                              <div className="mt-2 inline-flex rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400">
+                              <div className="mt-2 inline-flex rounded-lg border border-frost-border bg-frost-surface/50 px-3 py-1.5 text-sm text-frost-muted">
                                 {getEpisodeRange(
                                   item
                                 )}
@@ -1634,7 +1647,7 @@ export default async function SocialPage({
                     key={
                       activity.id
                     }
-                    className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4 sm:p-5"
+                    className="rounded-2xl border border-frost-border bg-frost-surface/60 p-4 sm:p-5"
                   >
                     <div className="flex gap-3 sm:gap-4">
                       <FeedAvatar
@@ -1665,8 +1678,8 @@ export default async function SocialPage({
                           }
                         />
 
-                        <p className="mt-2 leading-6 text-zinc-300">
-                          <span className="text-zinc-400">
+                        <p className="mt-2 leading-6 text-frost-text">
+                          <span className="text-frost-muted">
                             {getActivityText(
                               activity
                             )}{" "}
@@ -1678,14 +1691,14 @@ export default async function SocialPage({
                               href={
                                 mediaHref
                               }
-                              className="font-medium text-zinc-100 transition hover:text-fuchsia-300"
+                              className="font-medium text-frost-text transition hover:text-frost-accent"
                             >
                               {
                                 activity.title
                               }
                             </Link>
                           ) : (
-                            <span className="font-medium text-zinc-100">
+                            <span className="font-medium text-frost-text">
                               {
                                 activity.title
                               }
@@ -1726,7 +1739,7 @@ export default async function SocialPage({
                                 href={
                                   mediaHref
                                 }
-                                className="w-[72px] shrink-0 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
+                                className="w-18 shrink-0 overflow-hidden rounded-lg border border-frost-border bg-frost-surface"
                               >
                                 {cover ? (
                                   <Image
@@ -1747,7 +1760,7 @@ export default async function SocialPage({
                                         cover
                                       )
                                     }
-                                    className="aspect-[2/3] w-full object-cover"
+                                    className="aspect-2/3 w-full object-cover"
                                     style={{
                                       objectPosition:
                                         `${coverPositionX}% ${coverPositionY}%`,
@@ -1757,7 +1770,7 @@ export default async function SocialPage({
                                     }}
                                   />
                                 ) : (
-                                  <div className="flex aspect-[2/3] items-center justify-center px-2 text-center text-[10px] text-zinc-600">
+                                  <div className="flex aspect-2/3 items-center justify-center px-2 text-center frost-social-text-10 text-frost-muted">
                                     Sin portada
                                   </div>
                                 )}
@@ -1765,7 +1778,7 @@ export default async function SocialPage({
                             ) : null}
 
                             <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-wide text-zinc-600">
+                              <p className="text-xs uppercase tracking-wide text-frost-muted">
                                 Serie
                               </p>
 
@@ -1774,21 +1787,21 @@ export default async function SocialPage({
                                   href={
                                     mediaHref
                                   }
-                                  className="mt-1 block font-medium text-zinc-200 transition hover:text-fuchsia-300"
+                                  className="mt-1 block font-medium text-frost-text transition hover:text-frost-accent"
                                 >
                                   {
                                     activity.title
                                   }
                                 </Link>
                               ) : (
-                                <p className="mt-1 font-medium text-zinc-200">
+                                <p className="mt-1 font-medium text-frost-text">
                                   {
                                     activity.title
                                   }
                                 </p>
                               )}
 
-                              <div className="mt-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 text-sm text-zinc-400">
+                              <div className="mt-2 rounded-lg border border-frost-border bg-frost-surface/50 px-3 py-1.5 text-sm text-frost-muted">
                                 T
                                 {
                                   activity.season_number
@@ -1811,7 +1824,7 @@ export default async function SocialPage({
                                   href={
                                     mediaHref
                                   }
-                                  className="w-16 shrink-0 overflow-hidden rounded-lg border border-zinc-800"
+                                  className="w-16 shrink-0 overflow-hidden rounded-lg border border-frost-border"
                                 >
                                   <Image
                                     src={
@@ -1831,7 +1844,7 @@ export default async function SocialPage({
                                         cover
                                       )
                                     }
-                                    className="aspect-[2/3] w-full object-cover"
+                                    className="aspect-2/3 w-full object-cover"
                                     style={{
                                       objectPosition:
                                         `${coverPositionX}% ${coverPositionY}%`,
@@ -1861,7 +1874,7 @@ export default async function SocialPage({
                                         cover
                                       )
                                     }
-                                    className="aspect-[2/3] w-full object-cover"
+                                    className="aspect-2/3 w-full object-cover"
                                     style={{
                                       objectPosition:
                                         `${coverPositionX}% ${coverPositionY}%`,
@@ -1873,13 +1886,13 @@ export default async function SocialPage({
                                 </div>
                               )
                             ) : (
-                              <div className="flex aspect-[2/3] w-16 shrink-0 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 px-2 text-center text-[10px] text-zinc-600">
+                              <div className="flex aspect-2/3 w-16 shrink-0 items-center justify-center rounded-lg border border-frost-border bg-frost-surface px-2 text-center frost-social-text-10 text-frost-muted">
                                 Sin portada
                               </div>
                             )}
 
                             <div className="flex min-w-0 flex-col justify-center">
-                              <span className="text-xs uppercase tracking-wide text-zinc-600">
+                              <span className="text-xs uppercase tracking-wide text-frost-muted">
                                 {getMediaLabel(
                                   activity.media_type
                                 )}
@@ -1890,14 +1903,14 @@ export default async function SocialPage({
                                   href={
                                     mediaHref
                                   }
-                                  className="mt-1 line-clamp-2 font-medium text-zinc-200 transition hover:text-fuchsia-300"
+                                  className="mt-1 line-clamp-2 font-medium text-frost-text transition hover:text-frost-accent"
                                 >
                                   {
                                     activity.title
                                   }
                                 </Link>
                               ) : (
-                                <p className="mt-1 line-clamp-2 font-medium text-zinc-200">
+                                <p className="mt-1 line-clamp-2 font-medium text-frost-text">
                                   {
                                     activity.title
                                   }
@@ -1976,7 +1989,7 @@ function FeedAvatar({
         className="h-full w-full object-cover"
       />
     ) : (
-      <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-500">
+      <div className="flex h-full w-full items-center justify-center font-semibold text-frost-muted">
         {getInitial(
           profile
         )}
@@ -1991,7 +2004,7 @@ function FeedAvatar({
         href={`/profile/${encodeURIComponent(
           username
         )}`}
-        className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-zinc-800"
+        className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-frost-raised"
       >
         {
           content
@@ -2001,7 +2014,7 @@ function FeedAvatar({
   }
 
   return (
-    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-frost-raised">
       {
         content
       }
@@ -2037,14 +2050,14 @@ function FeedUserHeader({
           href={`/profile/${encodeURIComponent(
             username
           )}`}
-          className="font-semibold text-zinc-100 transition hover:text-fuchsia-300"
+          className="font-semibold text-frost-text transition hover:text-frost-accent"
         >
           {
             displayName
           }
         </Link>
       ) : (
-        <span className="font-semibold text-zinc-100">
+        <span className="font-semibold text-frost-text">
           {
             displayName
           }
@@ -2053,23 +2066,23 @@ function FeedUserHeader({
 
       {profile?.special_role ===
         "OWNER" && (
-        <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-medium text-fuchsia-300">
+        <span className="rounded-full border border-frost-accent/30 bg-frost-accent/10 px-2 py-0.5 frost-social-text-10 font-medium text-frost-accent">
           Owner
         </span>
       )}
 
       {profile?.special_role ===
         "BETA_TESTER" && (
-        <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400">
+        <span className="rounded-full border border-frost-border bg-frost-surface px-2 py-0.5 frost-social-text-10 text-frost-muted">
           Beta Tester
         </span>
       )}
 
-      <span className="text-sm text-zinc-700">
+      <span className="text-sm text-frost-muted">
         ·
       </span>
 
-      <span className="text-sm text-zinc-600">
+      <span className="text-sm text-frost-muted">
         {formatActivityDate(
           createdAt
         )}
@@ -2105,13 +2118,13 @@ function PersonSuggestion({
       : "/social";
 
   return (
-    <article className="flex min-w-0 flex-col rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+    <article className="flex min-w-0 flex-col rounded-2xl border border-frost-border bg-frost-surface/60 p-4">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <Link
           href={
             profileHref
           }
-          className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-zinc-800"
+          className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-frost-raised"
         >
           {profile.avatar_url ? (
             <Image
@@ -2135,7 +2148,7 @@ function PersonSuggestion({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-500">
+            <div className="flex h-full w-full items-center justify-center font-semibold text-frost-muted">
               {getInitial(
                 profile
               )}
@@ -2163,7 +2176,7 @@ function PersonSuggestion({
             href={
               profileHref
             }
-            className="min-w-0 truncate font-semibold text-zinc-100 transition hover:text-fuchsia-300"
+            className="min-w-0 truncate font-semibold text-frost-text transition hover:text-frost-accent"
           >
             {
               displayName
@@ -2172,21 +2185,21 @@ function PersonSuggestion({
 
           {profile.special_role ===
             "OWNER" && (
-            <span className="shrink-0 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-1.5 py-0.5 text-[9px] font-medium text-fuchsia-300">
+            <span className="shrink-0 rounded-full border border-frost-accent/30 bg-frost-accent/10 px-1.5 py-0.5 frost-social-text-9 font-medium text-frost-accent">
               Owner
             </span>
           )}
 
           {profile.special_role ===
             "BETA_TESTER" && (
-            <span className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-[9px] text-zinc-500">
+            <span className="shrink-0 rounded-full border border-frost-border bg-frost-surface px-1.5 py-0.5 frost-social-text-9 text-frost-muted">
               Beta
             </span>
           )}
         </div>
 
         {profile.username && (
-          <p className="mt-0.5 truncate text-sm text-zinc-600">
+          <p className="mt-0.5 truncate text-sm text-frost-muted">
             @
             {
               profile.username
@@ -2195,7 +2208,7 @@ function PersonSuggestion({
         )}
 
         {profile.bio?.trim() && (
-          <p className="mt-2 line-clamp-2 text-xs leading-5 text-zinc-500">
+          <p className="mt-2 line-clamp-2 text-xs leading-5 text-frost-muted">
             {
               profile.bio
             }
@@ -2233,12 +2246,12 @@ function PersonListItem({
       : "/social";
 
   return (
-    <article className="flex min-w-0 items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+    <article className="flex min-w-0 items-center gap-3 rounded-2xl border border-frost-border bg-frost-surface/60 p-4">
       <Link
         href={
           profileHref
         }
-        className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-zinc-800"
+        className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-frost-raised"
       >
         {profile.avatar_url ? (
           <Image
@@ -2262,7 +2275,7 @@ function PersonListItem({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-500">
+          <div className="flex h-full w-full items-center justify-center font-semibold text-frost-muted">
             {getInitial(
               profile
             )}
@@ -2276,7 +2289,7 @@ function PersonListItem({
             href={
               profileHref
             }
-            className="truncate font-semibold text-zinc-100 transition hover:text-fuchsia-300"
+            className="truncate font-semibold text-frost-text transition hover:text-frost-accent"
           >
             {
               displayName
@@ -2285,21 +2298,21 @@ function PersonListItem({
 
           {profile.special_role ===
             "OWNER" && (
-            <span className="shrink-0 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-medium text-fuchsia-300">
+            <span className="shrink-0 rounded-full border border-frost-accent/30 bg-frost-accent/10 px-2 py-0.5 frost-social-text-10 font-medium text-frost-accent">
               Owner
             </span>
           )}
 
           {profile.special_role ===
             "BETA_TESTER" && (
-            <span className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+            <span className="shrink-0 rounded-full border border-frost-border bg-frost-surface px-2 py-0.5 frost-social-text-10 text-frost-muted">
               Beta Tester
             </span>
           )}
         </div>
 
         {profile.username && (
-          <p className="mt-0.5 truncate text-sm text-zinc-600">
+          <p className="mt-0.5 truncate text-sm text-frost-muted">
             @
             {
               profile.username

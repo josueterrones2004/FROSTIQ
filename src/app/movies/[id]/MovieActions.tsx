@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import LibraryReviewModalCard, {
   type ReviewDraft,
 } from "@/components/media/LibraryReviewModalCard";
+import { persistMediaReview } from "@/components/RegisterReviewModal";
 import { createClient } from "@/lib/supabase/client";
 
 interface MovieActionsProps {
@@ -21,14 +22,9 @@ interface MovieActionsProps {
   };
 }
 
-function getToday() {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
-    .toISOString()
-    .slice(0, 10);
-}
-
-export default function MovieActions({ movie }: MovieActionsProps) {
+export default function MovieActions({
+  movie,
+}: MovieActionsProps) {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
@@ -41,9 +37,13 @@ export default function MovieActions({ movie }: MovieActionsProps) {
 
   useEffect(() => {
     let cancelled = false;
+
     const timeout = window.setTimeout(() => {
       void (async () => {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (!user || cancelled) return;
 
         const [libraryResult, reviewResult] = await Promise.all([
@@ -54,6 +54,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
             .eq("media_type", "MOVIE")
             .eq("external_id", movie.id)
             .maybeSingle(),
+
           supabase
             .from("reviews")
             .select("id")
@@ -64,17 +65,30 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         ]);
 
         if (libraryResult.error) {
-          console.error("Error loading movie state:", libraryResult.error);
+          console.error(
+            "Error loading movie state:",
+            libraryResult.error,
+          );
         }
+
         if (reviewResult.error) {
-          console.error("Error loading movie reviews:", reviewResult.error);
+          console.error(
+            "Error loading movie reviews:",
+            reviewResult.error,
+          );
         }
+
         if (cancelled) return;
 
-        setPending(libraryResult.data?.status === "PENDING");
-        setHasWatchedBefore(Boolean(reviewResult.data?.length));
+        setPending(
+          libraryResult.data?.status === "PENDING",
+        );
+        setHasWatchedBefore(
+          Boolean(reviewResult.data?.length),
+        );
       })();
     }, 0);
+
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
@@ -101,20 +115,30 @@ export default function MovieActions({ movie }: MovieActionsProps) {
       .eq("user_id", userId)
       .eq("media_type", "MOVIE")
       .eq("external_id", movie.id)
-      .in("activity_type", ["ADDED_PENDING", "STARTED"]);
+      .in("activity_type", [
+        "ADDED_PENDING",
+        "STARTED",
+      ]);
 
     if (error) {
-      console.error("Error clearing temporary movie activity:", error);
+      console.error(
+        "Error clearing temporary movie activity:",
+        error,
+      );
     }
   }
 
   async function togglePending() {
     if (loading) return;
+
     setLoading(true);
     setMessage("");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         setMessage("Debes iniciar sesión.");
         return;
@@ -134,6 +158,7 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         }
 
         await clearTemporaryActivity(user.id);
+
         setPending(false);
         setMessage("Quitada de tu lista.");
         router.refresh();
@@ -141,11 +166,18 @@ export default function MovieActions({ movie }: MovieActionsProps) {
       }
 
       await clearTemporaryActivity(user.id);
+
       const { error } = await supabase
         .from("library_items")
         .upsert(
-          { ...getMovieData(user.id), status: "PENDING" },
-          { onConflict: "user_id,media_type,external_id" },
+          {
+            ...getMovieData(user.id),
+            status: "PENDING",
+          },
+          {
+            onConflict:
+              "user_id,media_type,external_id",
+          },
         );
 
       if (error) {
@@ -165,14 +197,20 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         });
 
       if (activityError) {
-        console.error("Error creating movie pending activity:", activityError);
+        console.error(
+          "Error creating movie pending activity:",
+          activityError,
+        );
       }
 
       setPending(true);
       setMessage("Añadida para ver después.");
       router.refresh();
     } catch (error) {
-      console.error("Error changing movie library status:", error);
+      console.error(
+        "Error changing movie library status:",
+        error,
+      );
       setMessage("No se pudo actualizar la película.");
     } finally {
       setLoading(false);
@@ -181,14 +219,21 @@ export default function MovieActions({ movie }: MovieActionsProps) {
 
   async function openWatchedModal() {
     setMessage("");
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         setMessage("Debes iniciar sesión.");
         return;
       }
 
-      const { data: previousReviews, error } = await supabase
+      const {
+        data: previousReviews,
+        error,
+      } = await supabase
         .from("reviews")
         .select("id")
         .eq("user_id", user.id)
@@ -197,97 +242,74 @@ export default function MovieActions({ movie }: MovieActionsProps) {
         .limit(1);
 
       if (error) {
-        console.error("Error checking previous movie reviews:", error);
+        console.error(
+          "Error checking previous movie reviews:",
+          error,
+        );
       }
 
       setIsRewatch(Boolean(previousReviews?.length));
       setShowReview(true);
     } catch (error) {
-      console.error("Error opening movie review:", error);
+      console.error(
+        "Error opening movie review:",
+        error,
+      );
       setMessage("No se pudo abrir la review.");
     }
   }
 
   async function saveReview(draft: ReviewDraft) {
     if (loading) return;
+
     setLoading(true);
     setMessage("");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         setMessage("Debes iniciar sesión.");
         return;
       }
 
-      const { data: createdReview, error: reviewError } = await supabase
-        .from("reviews")
-        .insert({
-          user_id: user.id,
-          media_type: "MOVIE",
-          external_id: movie.id,
-          title: movie.title,
-          review_text: draft.reviewText.trim() || null,
-          rating: draft.rating,
-          liked: draft.liked,
-          is_rewatch: draft.isRepeat,
-          contains_spoilers: draft.containsSpoilers,
-          show_consumed_date: draft.showConsumedDate,
-          experience: draft.isRepeat ? "REWATCH" : "FIRST_TIME",
-          consumed_at: getToday(),
-          cover_url: movie.coverUrl,
-          backdrop_url: movie.backdropUrl,
-          release_year: movie.releaseYear,
-        })
-        .select("id")
-        .single();
+      const result = await persistMediaReview({
+        supabase,
+        userId: user.id,
+        mediaType: "MOVIE",
+        externalId: movie.id,
+        title: movie.title,
+        coverUrl: movie.coverUrl,
+        backdropUrl: movie.backdropUrl,
+        releaseYear: movie.releaseYear,
+        draft,
+      });
 
-      if (reviewError) {
-        setMessage(reviewError.message);
-        return;
-      }
-
-      if (createdReview) {
-        const { error: activityError } = await supabase
-          .from("activity_events")
-          .insert({
-            user_id: user.id,
-            activity_type: "REVIEWED",
-            media_type: "MOVIE",
-            external_id: movie.id,
-            title: movie.title,
-            cover_url: movie.coverUrl,
-            review_id: createdReview.id,
-          });
-
-        if (activityError) {
-          console.error("Error creating movie review activity:", activityError);
-        }
-      }
-
-      const { error: deleteError } = await supabase
-        .from("library_items")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("media_type", "MOVIE")
-        .eq("external_id", movie.id);
-
-      if (deleteError) {
-        setMessage(deleteError.message);
-        return;
-      }
-
-      await clearTemporaryActivity(user.id);
       setPending(false);
       setHasWatchedBefore(true);
       setShowReview(false);
+
       setMessage(
-        draft.isRepeat ? "Rewatch guardado." : "Película marcada como vista.",
+        result.warning ??
+          (draft.isRepeat
+            ? "Rewatch guardado."
+            : "Película marcada como vista."),
       );
+
       router.refresh();
     } catch (error) {
-      console.error("Error saving movie review:", error);
-      setMessage("No se pudo guardar la review. Inténtalo de nuevo.");
+      console.error(
+        "Error saving movie review:",
+        error,
+      );
+
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar la review.",
+      );
     } finally {
       setLoading(false);
     }
@@ -300,17 +322,23 @@ export default function MovieActions({ movie }: MovieActionsProps) {
           type="button"
           disabled={loading}
           onClick={() => void openWatchedModal()}
-          className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-fuchsia-500/15 px-4 text-sm font-medium text-fuchsia-200 transition hover:bg-fuchsia-500/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-frost-accent/15 px-4 text-sm font-medium text-frost-accent transition hover:bg-frost-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {loading ? (
-            <Loader2 size={15} className="animate-spin" />
+            <Loader2
+              size={15}
+              className="animate-spin"
+            />
           ) : hasWatchedBefore ? (
             <Repeat2 size={16} />
           ) : (
             <Eye size={17} />
           )}
+
           <span>
-            {hasWatchedBefore ? "Registrar rewatch" : "Marcar como vista"}
+            {hasWatchedBefore
+              ? "Registrar rewatch"
+              : "Marcar como vista"}
           </span>
         </button>
 
@@ -322,16 +350,21 @@ export default function MovieActions({ movie }: MovieActionsProps) {
           className={`inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition sm:w-auto ${
             pending
               ? "bg-amber-500/12 text-amber-200"
-              : "bg-white/[0.035] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200"
+              : "bg-frost-surface/35 text-frost-muted hover:bg-frost-raised/40 hover:text-frost-text"
           } disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Clock3 size={16} />
-          <span>{pending ? "En mi lista" : "Ver después"}</span>
+
+          <span>
+            {pending ? "En mi lista" : "Ver después"}
+          </span>
         </button>
       </div>
 
       {message ? (
-        <p className="mt-3 text-xs text-zinc-500 sm:text-sm">{message}</p>
+        <p className="mt-3 text-xs text-frost-muted sm:text-sm">
+          {message}
+        </p>
       ) : null}
 
       <LibraryReviewModalCard

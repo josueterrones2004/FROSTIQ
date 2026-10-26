@@ -136,13 +136,50 @@ export default function GameDetailLayout({
       : null;
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-24 text-zinc-100">
+    <main className="min-h-screen bg-frost-bg pb-24 text-frost-text">
+      <style>{`
+        /* frost-game-detail-palette-v1 */
+        .frost-game-width-1600 { max-width: 1600px; }
+        .frost-game-width-1500 { max-width: 1500px; }
+        .frost-game-width-850 { max-width: 850px; }
+        .frost-game-backdrop-height { height: 330px; }
+        .frost-game-mobile-spacer { height: 260px; }
+        .frost-game-gradient-side { width: 15%; }
+        .frost-game-cover-width { width: 110px; }
+        .frost-game-screenshot-hover:hover { transform: scale(1.02); }
+        .frost-game-text-10 { font-size: 10px; }
+        .frost-game-text-11 { font-size: 11px; }
+        .frost-game-text-15 { font-size: 15px; }
+        .frost-game-leading-105 { line-height: 1.05; }
+        .frost-game-track-014 { letter-spacing: .14em; }
+        .frost-game-track-018 { letter-spacing: .18em; }
+        .frost-game-track-019 { letter-spacing: .19em; }
+        .frost-game-track-022 { letter-spacing: .22em; }
+        .frost-game-track-neg035 { letter-spacing: -.035em; }
+        @media (min-width: 640px) {
+          .frost-game-backdrop-height { height: 430px; }
+          .frost-game-mobile-spacer { height: 350px; }
+          .frost-game-cover-width { width: 130px; }
+          .frost-game-text-15 { font-size: 16px; }
+        }
+        @media (min-width: 1024px) {
+          .frost-game-backdrop-height { height: 710px; }
+          .frost-game-cover-width { width: 100%; }
+          .frost-game-hero-min-height { min-height: 710px; }
+          .frost-game-hero-grid { grid-template-columns: 350px minmax(0,1fr); }
+          .frost-game-info-grid { grid-template-columns: minmax(0,1fr) 320px; }
+        }
+        @media (min-width: 1280px) {
+          .frost-game-hero-grid { grid-template-columns: 390px minmax(0,1fr); }
+          .frost-game-xl-text-36 { font-size: 36px; }
+        }
+      `}</style>
       {/* HERO */}
 
-      <section className="relative mx-auto max-w-[1600px] overflow-hidden lg:min-h-[710px]">
+      <section className="relative mx-auto frost-game-width-1600 overflow-hidden frost-game-hero-min-height">
         {/* BACKDROP */}
 
-        <div className="absolute inset-x-0 top-0 h-[330px] overflow-hidden bg-zinc-900 sm:h-[430px] lg:h-[710px]">
+        <div className="absolute inset-x-0 top-0 frost-game-backdrop-height overflow-hidden bg-frost-surface  ">
           {backdropUrl ? (
             <Image
               src={
@@ -167,7 +204,7 @@ export default function GameDetailLayout({
               }}
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-zinc-900 text-zinc-700">
+            <div className="flex h-full items-center justify-center bg-frost-surface text-frost-muted">
               <ImageOff
                 size={
                   42
@@ -176,30 +213,30 @@ export default function GameDetailLayout({
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/45 to-zinc-950/15 lg:via-zinc-950/25" />
+          <div className="absolute inset-0 bg-gradient-to-r from-frost-bg via-frost-bg/45 to-frost-bg/15 lg:via-frost-bg/25" />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/35 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-frost-bg via-frost-bg/35 to-transparent" />
 
-          <div className="absolute inset-y-0 right-0 w-[15%] bg-gradient-to-l from-zinc-950/80 to-transparent" />
+          <div className="absolute inset-y-0 right-0 frost-game-gradient-side bg-gradient-to-l from-frost-bg/80 to-transparent" />
         </div>
 
         {/* MOBILE BACKDROP SPACE */}
 
-        <div className="h-[260px] sm:h-[350px] lg:hidden" />
+        <div className="frost-game-mobile-spacer  lg:hidden" />
 
         {/* DESKTOP / MAIN GRID */}
 
-        <div className="relative z-10 px-4 sm:px-6 lg:grid lg:min-h-[710px] lg:grid-cols-[350px_minmax(0,1fr)] lg:items-end lg:gap-10 lg:px-10 lg:pb-10 xl:grid-cols-[390px_minmax(0,1fr)] xl:gap-14 xl:px-14">
+        <div className="relative z-10 px-4 sm:px-6 lg:grid frost-game-hero-min-height frost-game-hero-grid lg:items-end lg:gap-10 lg:px-10 lg:pb-10  xl:gap-14 xl:px-14">
           {/* LEFT CONTROL PANEL */}
 
           <div className="-mt-16 lg:mt-0">
-            <div className="rounded-[24px] border border-white/10 bg-zinc-950/88 p-4 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:p-5">
+            <div className="rounded-3xl border border-frost-border bg-frost-bg/88 p-4 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:p-5">
               <div className="flex gap-4 lg:block">
                 {/* COVER */}
 
-                <div className="w-[110px] shrink-0 sm:w-[130px] lg:w-full">
+                <div className="frost-game-cover-width shrink-0  lg:w-full">
                   {coverUrl ? (
-                    <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-xl">
+                    <div className="relative aspect-2/3 overflow-hidden rounded-2xl border border-frost-border bg-frost-surface shadow-xl">
                       <Image
                         src={
                           coverUrl
@@ -226,7 +263,7 @@ export default function GameDetailLayout({
                       />
                     </div>
                   ) : (
-                    <div className="flex aspect-[2/3] items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-600">
+                    <div className="flex aspect-2/3 items-center justify-center rounded-2xl border border-frost-border bg-frost-surface text-frost-muted">
                       <ImageOff
                         size={
                           28
@@ -239,13 +276,13 @@ export default function GameDetailLayout({
                 {/* MOBILE TITLE */}
 
                 <div className="min-w-0 flex-1 lg:hidden">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fuchsia-400">
+                  <p className="frost-game-text-10 font-semibold uppercase frost-game-track-018 text-frost-accent">
                     {
                       eyebrow
                     }
                   </p>
 
-                  <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl">
+                  <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-frost-text sm:text-3xl">
                     {
                       title
                     }
@@ -253,7 +290,7 @@ export default function GameDetailLayout({
 
                   {cleanMeta.length >
                     0 && (
-                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-zinc-500">
+                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-frost-muted">
                       {cleanMeta.join(
                         " · "
                       )}
@@ -282,13 +319,13 @@ export default function GameDetailLayout({
               {/* DESKTOP TITLE INSIDE LEFT PANEL */}
 
               <div className="mt-5 hidden lg:block">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.19em] text-fuchsia-400">
+                <p className="frost-game-text-10 font-semibold uppercase frost-game-track-019 text-frost-accent">
                   {
                     eyebrow
                   }
                 </p>
 
-                <h1 className="mt-2 text-3xl font-bold leading-[1.05] tracking-tight text-white xl:text-[36px]">
+                <h1 className="mt-2 text-3xl font-bold frost-game-leading-105 tracking-tight text-frost-text frost-game-xl-text-36">
                   {
                     title
                   }
@@ -296,7 +333,7 @@ export default function GameDetailLayout({
 
                 {cleanMeta.length >
                   0 && (
-                  <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-5 text-zinc-500">
+                  <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xs leading-5 text-frost-muted">
                     {cleanMeta.map(
                       (
                         item,
@@ -307,7 +344,7 @@ export default function GameDetailLayout({
                         >
                           {index >
                             0 && (
-                            <span className="mr-2 text-zinc-700">
+                            <span className="mr-2 text-frost-muted">
                               ·
                             </span>
                           )}
@@ -326,9 +363,9 @@ export default function GameDetailLayout({
 
               {roundedRating !==
                 null && (
-                <div className="mt-5 hidden items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/70 px-4 py-3 lg:flex">
+                <div className="mt-5 hidden items-center justify-between rounded-xl border border-frost-border/80 bg-frost-surface/70 px-4 py-3 lg:flex">
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+                    <p className="frost-game-text-10 font-medium uppercase frost-game-track-014 text-frost-muted">
                       Valoración
                     </p>
 
@@ -339,7 +376,7 @@ export default function GameDetailLayout({
                         }
                       </span>
 
-                      <span className="text-xs text-zinc-600">
+                      <span className="text-xs text-frost-muted">
                         /100
                       </span>
                     </div>
@@ -368,7 +405,7 @@ export default function GameDetailLayout({
               {/* DEV */}
 
               {developerAction && (
-                <div className="mt-3 border-t border-zinc-800 pt-3">
+                <div className="mt-3 border-t border-frost-border pt-3">
                   {
                     developerAction
                   }
@@ -383,13 +420,13 @@ export default function GameDetailLayout({
             {/* LARGE DESKTOP TITLE */}
 
             <div className="hidden max-w-4xl lg:block">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300/80">
+              <p className="frost-game-text-11 font-semibold uppercase frost-game-track-022 text-frost-accent/80">
                 {
                   eyebrow
                 }
               </p>
 
-              <h2 className="mt-2 text-5xl font-black tracking-[-0.035em] text-white drop-shadow-2xl xl:text-6xl">
+              <h2 className="mt-2 text-5xl font-black frost-game-track-neg035 text-frost-text drop-shadow-2xl xl:text-6xl">
                 {
                   title
                 }
@@ -411,7 +448,7 @@ export default function GameDetailLayout({
                           key={
                             tag
                           }
-                          className="rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-xs text-zinc-300 backdrop-blur-md"
+                          className="rounded-full border border-frost-border bg-black/35 px-3 py-1.5 text-xs text-frost-text backdrop-blur-md"
                         >
                           {
                             tag
@@ -428,7 +465,7 @@ export default function GameDetailLayout({
             {screenshots.length >
               0 && (
               <div className="mt-7 lg:mt-8">
-                <div className="mb-3 flex items-center gap-2 text-xs text-zinc-500">
+                <div className="mb-3 flex items-center gap-2 text-xs text-frost-muted">
                   <Images
                     size={
                       15
@@ -451,7 +488,7 @@ export default function GameDetailLayout({
                       ) => (
                         <div
                           key={`${screenshot}-${index}`}
-                          className={`relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 ${
+                          className={`relative overflow-hidden rounded-xl border border-frost-border bg-frost-surface ${
                             index ===
                               0
                               ? "col-span-2 aspect-video sm:col-span-2 xl:col-span-2"
@@ -470,7 +507,7 @@ export default function GameDetailLayout({
                                 screenshot
                               )
                             }
-                            className="object-cover transition duration-300 hover:scale-[1.02]"
+                            className="object-cover transition duration-300 frost-game-screenshot-hover"
                           />
                         </div>
                       )
@@ -484,26 +521,26 @@ export default function GameDetailLayout({
 
       {/* CONTENT */}
 
-      <section className="mx-auto mt-10 max-w-[1500px] px-4 sm:px-6 lg:mt-14 lg:px-10 xl:px-14">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:gap-14">
+      <section className="mx-auto mt-10 frost-game-width-1500 px-4 sm:px-6 lg:mt-14 lg:px-10 xl:px-14">
+        <div className="grid gap-8 frost-game-info-grid xl:gap-14">
           {/* DESCRIPTION */}
 
           <div className="min-w-0">
-            <div className="flex items-center gap-3 border-b border-zinc-800 pb-3">
+            <div className="flex items-center gap-3 border-b border-frost-border pb-3">
               <Sparkles
                 size={
                   16
                 }
-                className="text-fuchsia-400"
+                className="text-frost-accent"
               />
 
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.19em] text-zinc-500">
+              <h2 className="frost-game-text-11 font-semibold uppercase frost-game-track-019 text-frost-muted">
                 Acerca de este juego
               </h2>
             </div>
 
-            <div className="mt-6 max-w-[850px]">
-              <p className="whitespace-pre-line text-[15px] leading-7 text-zinc-400 sm:text-base sm:leading-8">
+            <div className="mt-6 frost-game-width-850">
+              <p className="whitespace-pre-line frost-game-text-15 leading-7 text-frost-muted sm:text-base sm:leading-8">
                 {description ||
                   "No hay una descripción disponible para este juego."}
               </p>
@@ -522,7 +559,7 @@ export default function GameDetailLayout({
                       key={
                         tag
                       }
-                      className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-400"
+                      className="rounded-full border border-frost-border bg-frost-surface px-3 py-1.5 text-xs text-frost-muted"
                     >
                       {
                         tag
@@ -537,20 +574,20 @@ export default function GameDetailLayout({
           {/* INFORMATION */}
 
           <aside>
-            <div className="flex items-center gap-3 border-b border-zinc-800 pb-3">
+            <div className="flex items-center gap-3 border-b border-frost-border pb-3">
               <Monitor
                 size={
                   16
                 }
-                className="text-zinc-500"
+                className="text-frost-muted"
               />
 
-              <h2 className="text-[11px] font-semibold uppercase tracking-[0.19em] text-zinc-500">
+              <h2 className="frost-game-text-11 font-semibold uppercase frost-game-track-019 text-frost-muted">
                 Información
               </h2>
             </div>
 
-            <div className="divide-y divide-zinc-900">
+            <div className="divide-y divide-frost-border">
               {information.map(
                 (
                   item,
@@ -561,7 +598,7 @@ export default function GameDetailLayout({
                     className="flex gap-3 py-4"
                   >
                     {item.icon && (
-                      <div className="mt-0.5 text-zinc-600">
+                      <div className="mt-0.5 text-frost-muted">
                         {
                           item.icon
                         }
@@ -569,13 +606,13 @@ export default function GameDetailLayout({
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+                      <p className="frost-game-text-10 font-medium uppercase frost-game-track-014 text-frost-muted">
                         {
                           item.label
                         }
                       </p>
 
-                      <div className="mt-1 text-sm leading-6 text-zinc-300">
+                      <div className="mt-1 text-sm leading-6 text-frost-text">
                         {
                           item.value
                         }
@@ -586,7 +623,7 @@ export default function GameDetailLayout({
                       size={
                         14
                       }
-                      className="mt-1 text-zinc-800"
+                      className="mt-1 text-frost-muted"
                     />
                   </div>
                 )
@@ -597,7 +634,7 @@ export default function GameDetailLayout({
                 ratingCount >
                   0 && (
                   <div className="flex gap-3 py-4">
-                    <div className="mt-0.5 text-zinc-600">
+                    <div className="mt-0.5 text-frost-muted">
                       <Star
                         size={
                           15
@@ -606,11 +643,11 @@ export default function GameDetailLayout({
                     </div>
 
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+                      <p className="frost-game-text-10 font-medium uppercase frost-game-track-014 text-frost-muted">
                         Valoraciones
                       </p>
 
-                      <p className="mt-1 text-sm text-zinc-300">
+                      <p className="mt-1 text-sm text-frost-text">
                         {new Intl.NumberFormat(
                           "es-MX"
                         ).format(

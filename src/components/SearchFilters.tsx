@@ -10,18 +10,19 @@ import {
 import {
   useState,
   useTransition,
+  type ReactNode,
 } from "react";
 
-import {
-  useRouter,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export type MediaFilter =
   | "all"
   | "game"
   | "movie"
   | "series"
-  | "book";
+  | "book"
+  | "manga"
+  | "comic";
 
 export type SortMode =
   | "relevance"
@@ -35,22 +36,16 @@ type SearchCounts = {
   movie: number;
   series: number;
   book: number;
+  manga: number;
+  comic: number;
 };
 
 interface SearchFiltersProps {
   query: string;
-
-  type:
-    MediaFilter;
-
-  sort:
-    SortMode;
-
-  onlyWithImage:
-    boolean;
-
-  counts:
-    SearchCounts;
+  type: MediaFilter;
+  sort: SortMode;
+  onlyWithImage: boolean;
+  counts: SearchCounts;
 }
 
 export default function SearchFilters({
@@ -60,114 +55,59 @@ export default function SearchFilters({
   onlyWithImage,
   counts,
 }: SearchFiltersProps) {
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const [
-    mobileOpen,
-    setMobileOpen,
-  ] =
+  const [mobileOpen, setMobileOpen] =
     useState(false);
 
-  const [
-    pending,
-    startTransition,
-  ] =
+  const [pending, startTransition] =
     useTransition();
 
   const hasCustomFilters =
-    type !==
-      "all" ||
-    sort !==
-      "relevance" ||
+    type !== "all" ||
+    sort !== "relevance" ||
     onlyWithImage;
 
   function navigate({
-    type:
-      nextType =
-        type,
-
-    sort:
-      nextSort =
-        sort,
-
-    onlyWithImage:
-      nextOnlyWithImage =
-        onlyWithImage,
+    type: nextType = type,
+    sort: nextSort = sort,
+    onlyWithImage: nextOnlyWithImage = onlyWithImage,
   }: {
-    type?:
-      MediaFilter;
-
-    sort?:
-      SortMode;
-
-    onlyWithImage?:
-      boolean;
+    type?: MediaFilter;
+    sort?: SortMode;
+    onlyWithImage?: boolean;
   }) {
-    const params =
-      new URLSearchParams();
+    const params = new URLSearchParams();
 
-    params.set(
-      "q",
-      query
-    );
+    params.set("q", query);
 
-    if (
-      nextType !==
-      "all"
-    ) {
-      params.set(
-        "type",
-        nextType
-      );
+    if (nextType !== "all") {
+      params.set("type", nextType);
     }
 
-    if (
-      nextSort !==
-      "relevance"
-    ) {
-      params.set(
-        "sort",
-        nextSort
-      );
+    if (nextSort !== "relevance") {
+      params.set("sort", nextSort);
     }
 
-    if (
-      nextOnlyWithImage
-    ) {
-      params.set(
-        "image",
-        "with"
-      );
+    if (nextOnlyWithImage) {
+      params.set("image", "with");
     }
 
-    setMobileOpen(
-      false
-    );
+    setMobileOpen(false);
 
-    startTransition(
-      () => {
-        router.push(
-          `/search?${params.toString()}`
-        );
-      }
-    );
+    startTransition(() => {
+      router.push(`/search?${params.toString()}`);
+    });
   }
 
   function resetFilters() {
-    setMobileOpen(
-      false
-    );
+    setMobileOpen(false);
 
-    startTransition(
-      () => {
-        router.push(
-          `/search?q=${encodeURIComponent(
-            query
-          )}`
-        );
-      }
-    );
+    startTransition(() => {
+      router.push(
+        `/search?q=${encodeURIComponent(query)}`,
+      );
+    });
   }
 
   const filterContent = (
@@ -176,157 +116,98 @@ export default function SearchFilters({
 
       <FilterGroup title="Mostrar">
         <FilterOption
-          active={
-            type ===
-            "all"
-          }
+          active={type === "all"}
           label="Todos"
-          count={
-            counts.all
-          }
-          onClick={() =>
-            navigate({
-              type:
-                "all",
-            })
-          }
+          count={counts.all}
+          onClick={() => navigate({ type: "all" })}
         />
 
         <FilterOption
-          active={
-            type ===
-            "game"
-          }
+          active={type === "game"}
           label="Juegos"
-          count={
-            counts.game
-          }
-          onClick={() =>
-            navigate({
-              type:
-                "game",
-            })
-          }
+          count={counts.game}
+          onClick={() => navigate({ type: "game" })}
         />
 
         <FilterOption
-          active={
-            type ===
-            "movie"
-          }
+          active={type === "movie"}
           label="Películas"
-          count={
-            counts.movie
-          }
-          onClick={() =>
-            navigate({
-              type:
-                "movie",
-            })
-          }
+          count={counts.movie}
+          onClick={() => navigate({ type: "movie" })}
         />
 
         <FilterOption
-          active={
-            type ===
-            "series"
-          }
+          active={type === "series"}
           label="Series"
-          count={
-            counts.series
-          }
-          onClick={() =>
-            navigate({
-              type:
-                "series",
-            })
-          }
+          count={counts.series}
+          onClick={() => navigate({ type: "series" })}
         />
 
         <FilterOption
-          active={
-            type ===
-            "book"
-          }
+          active={type === "book"}
           label="Libros"
-          count={
-            counts.book
-          }
-          onClick={() =>
-            navigate({
-              type:
-                "book",
-            })
-          }
+          count={counts.book}
+          onClick={() => navigate({ type: "book" })}
+        />
+
+        <FilterOption
+          active={type === "manga"}
+          label="Mangas"
+          count={counts.manga}
+          onClick={() => navigate({ type: "manga" })}
+        />
+
+        <FilterOption
+          active={type === "comic"}
+          label="Cómics"
+          count={counts.comic}
+          onClick={() => navigate({ type: "comic" })}
         />
       </FilterGroup>
 
       {/* SORT */}
 
-      <div className="mt-7 border-t border-zinc-800 pt-6">
+      <div className="mt-7 border-t border-frost-border pt-6">
         <FilterGroup title="Ordenar por">
           <FilterOption
-            active={
-              sort ===
-              "relevance"
-            }
+            active={sort === "relevance"}
             label="Relevancia"
             onClick={() =>
-              navigate({
-                sort:
-                  "relevance",
-              })
+              navigate({ sort: "relevance" })
             }
           />
 
           <FilterOption
-            active={
-              sort ===
-              "newest"
-            }
+            active={sort === "newest"}
             label="Más recientes"
             onClick={() =>
-              navigate({
-                sort:
-                  "newest",
-              })
+              navigate({ sort: "newest" })
             }
           />
 
           <FilterOption
-            active={
-              sort ===
-              "oldest"
-            }
+            active={sort === "oldest"}
             label="Más antiguos"
             onClick={() =>
-              navigate({
-                sort:
-                  "oldest",
-              })
+              navigate({ sort: "oldest" })
             }
           />
 
           <FilterOption
-            active={
-              sort ===
-              "az"
-            }
+            active={sort === "az"}
             label="A–Z"
-            onClick={() =>
-              navigate({
-                sort:
-                  "az",
-              })
-            }
+            onClick={() => navigate({ sort: "az" })}
           />
         </FilterGroup>
       </div>
 
       {/* APPEARANCE */}
 
-      <div className="mt-7 border-t border-zinc-800 pt-6">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
+      <div className="mt-7 border-t border-frost-border pt-6">
+        <p
+          className="mb-4 text-xs font-semibold uppercase text-frost-muted"
+          style={{ letterSpacing: "0.14em" }}
+        >
           Apariencia
         </p>
 
@@ -334,29 +215,27 @@ export default function SearchFilters({
           type="button"
           onClick={() =>
             navigate({
-              onlyWithImage:
-                !onlyWithImage,
+              onlyWithImage: !onlyWithImage,
             })
           }
           className="flex w-full items-center justify-between gap-4 text-left"
         >
-          <span className="text-sm text-zinc-400">
+          <span className="text-sm text-frost-muted">
             Ocultar sin portada
           </span>
 
           <span
             className={`relative h-5 w-9 shrink-0 rounded-full transition ${
               onlyWithImage
-                ? "bg-fuchsia-500"
-                : "bg-zinc-800"
+                ? "bg-frost-accent"
+                : "bg-frost-raised"
             }`}
           >
             <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${
-                onlyWithImage
-                  ? "left-[18px]"
-                  : "left-0.5"
-              }`}
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{
+                left: onlyWithImage ? 18 : 2,
+              }}
             />
           </span>
         </button>
@@ -365,18 +244,13 @@ export default function SearchFilters({
       {/* RESET */}
 
       {hasCustomFilters && (
-        <div className="mt-7 border-t border-zinc-800 pt-5">
+        <div className="mt-7 border-t border-frost-border pt-5">
           <button
             type="button"
-            onClick={
-              resetFilters
-            }
-            className="flex items-center gap-2 text-sm text-zinc-600 transition hover:text-zinc-300"
+            onClick={resetFilters}
+            className="flex items-center gap-2 text-sm text-frost-muted transition-colors hover:text-frost-text"
           >
-            <RotateCcw
-              size={14}
-            />
-
+            <RotateCcw size={14} />
             Restablecer filtros
           </button>
         </div>
@@ -389,23 +263,27 @@ export default function SearchFilters({
       {/* DESKTOP */}
 
       <aside className="hidden lg:block">
-        <div className="sticky top-[106px] border-l border-zinc-800 pl-7">
+        <div
+          className="sticky border-l border-frost-border pl-7"
+          style={{ top: 106 }}
+        >
           <div className="mb-5 flex items-center justify-between gap-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            <p
+              className="text-xs font-semibold uppercase text-frost-muted"
+              style={{ letterSpacing: "0.16em" }}
+            >
               Filtros
             </p>
 
             {pending && (
               <Loader2
                 size={14}
-                className="animate-spin text-fuchsia-400"
+                className="animate-spin text-frost-accent"
               />
             )}
           </div>
 
-          {
-            filterContent
-          }
+          {filterContent}
         </div>
       </aside>
 
@@ -413,12 +291,8 @@ export default function SearchFilters({
 
       <button
         type="button"
-        onClick={() =>
-          setMobileOpen(
-            true
-          )
-        }
-        className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/95 px-4 py-2.5 text-sm font-medium text-zinc-300 shadow-xl backdrop-blur transition hover:border-fuchsia-500/30 hover:text-fuchsia-300 lg:hidden"
+        onClick={() => setMobileOpen(true)}
+        className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-frost-border bg-frost-surface/95 px-4 py-2.5 text-sm font-medium text-frost-text shadow-xl backdrop-blur transition-colors hover:border-frost-accent/30 hover:text-frost-accent lg:hidden"
       >
         {pending ? (
           <Loader2
@@ -426,9 +300,7 @@ export default function SearchFilters({
             className="animate-spin"
           />
         ) : (
-          <Filter
-            size={16}
-          />
+          <Filter size={16} />
         )}
 
         Filtros
@@ -437,22 +309,24 @@ export default function SearchFilters({
       {/* MOBILE PANEL */}
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
+        <div
+          className="fixed inset-0 lg:hidden"
+          style={{ zIndex: 100 }}
+        >
           <button
             type="button"
             aria-label="Cerrar filtros"
-            onClick={() =>
-              setMobileOpen(
-                false
-              )
-            }
+            onClick={() => setMobileOpen(false)}
             className="absolute inset-0 bg-black/75 backdrop-blur-sm"
           />
 
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl border-t border-zinc-800 bg-zinc-950 px-5 pb-8 pt-5 shadow-2xl">
+          <div
+            className="absolute bottom-0 left-0 right-0 overflow-y-auto rounded-t-3xl border-t border-frost-border bg-frost-bg px-5 pb-8 pt-5 shadow-2xl"
+            style={{ maxHeight: "85dvh" }}
+          >
             {/* HANDLE */}
 
-            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-zinc-800" />
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-frost-raised" />
 
             {/* HEADER */}
 
@@ -460,17 +334,17 @@ export default function SearchFilters({
               <div className="flex items-center gap-2">
                 <Filter
                   size={18}
-                  className="text-fuchsia-400"
+                  className="text-frost-accent"
                 />
 
-                <h2 className="font-semibold text-zinc-100">
+                <h2 className="font-semibold text-frost-text">
                   Filtrar resultados
                 </h2>
 
                 {pending && (
                   <Loader2
                     size={14}
-                    className="animate-spin text-fuchsia-400"
+                    className="animate-spin text-frost-accent"
                   />
                 )}
               </div>
@@ -478,22 +352,14 @@ export default function SearchFilters({
               <button
                 type="button"
                 aria-label="Cerrar filtros"
-                onClick={() =>
-                  setMobileOpen(
-                    false
-                  )
-                }
-                className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-900 hover:text-white"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg p-2 text-frost-muted transition-colors hover:bg-frost-surface hover:text-frost-text"
               >
-                <X
-                  size={20}
-                />
+                <X size={20} />
               </button>
             </div>
 
-            {
-              filterContent
-            }
+            {filterContent}
           </div>
         </div>
       )}
@@ -506,22 +372,19 @@ function FilterGroup({
   children,
 }: {
   title: string;
-
-  children:
-    React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-600">
-        {
-          title
-        }
+      <p
+        className="mb-2 text-xs font-semibold uppercase text-frost-muted"
+        style={{ letterSpacing: "0.14em" }}
+      >
+        {title}
       </p>
 
       <div className="space-y-0.5">
-        {
-          children
-        }
+        {children}
       </div>
     </div>
   );
@@ -534,59 +397,45 @@ function FilterOption({
   count,
 }: {
   active: boolean;
-
-  onClick:
-    () => void;
-
+  onClick: () => void;
   label: string;
-
-  count?:
-    number;
+  count?: number;
 }) {
   return (
     <button
       type="button"
-      onClick={
-        onClick
-      }
-      className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm transition ${
+      onClick={onClick}
+      className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors ${
         active
-          ? "text-fuchsia-300"
-          : "text-zinc-500 hover:bg-zinc-900/70 hover:text-zinc-300"
+          ? "text-frost-accent"
+          : "text-frost-muted hover:bg-frost-surface/70 hover:text-frost-text"
       }`}
     >
       <div className="flex items-center gap-3">
         <span
           className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
             active
-              ? "border-fuchsia-400"
-              : "border-zinc-700"
+              ? "border-frost-accent"
+              : "border-frost-border"
           }`}
         >
           {active && (
-            <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-frost-accent" />
           )}
         </span>
 
-        <span>
-          {
-            label
-          }
-        </span>
+        <span>{label}</span>
       </div>
 
-      {count !==
-        undefined && (
+      {count !== undefined && (
         <span
           className={`text-xs ${
             active
-              ? "text-fuchsia-500/70"
-              : "text-zinc-700"
+              ? "text-frost-accent/70"
+              : "text-frost-muted"
           }`}
         >
-          {
-            count
-          }
+          {count}
         </span>
       )}
     </button>

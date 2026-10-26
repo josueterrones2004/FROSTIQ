@@ -2,261 +2,120 @@
 
 import Image from "next/image";
 import Link from "next/link";
-
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
 import {
-  BookOpen,
   ChevronDown,
-  Film,
-  Gamepad2,
   ImageIcon,
   Library,
   LogOut,
   ShieldCheck,
-  Tv,
   UserRound,
 } from "lucide-react";
-
-import {
-  usePathname,
-  useRouter,
-} from "next/navigation";
-
-import {
-  Suspense,
-  useState,
-} from "react";
 
 import BugReportButton from "@/components/BugReportButton";
 import GlobalSearch from "@/components/GlobalSearch";
 import InstallAppPrompt from "@/components/InstallAppPrompt";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import NotificationsButton from "@/components/NotificationsButton";
+import { createClient } from "@/lib/supabase/client";
 
-import {
-  createClient,
-} from "@/lib/supabase/client";
-
-type SpecialRole =
-  | "OWNER"
-  | "BETA_TESTER"
-  | null;
+type SpecialRole = "OWNER" | "BETA_TESTER" | null;
 
 type ShellProfile = {
-  username:
-    | string
-    | null;
-
-  display_name:
-    | string
-    | null;
-
-  avatar_url:
-    | string
-    | null;
-
-  special_role:
-    SpecialRole;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  special_role: SpecialRole;
 };
 
-interface AppShellProps {
-  children:
-    React.ReactNode;
-
-  authenticated:
-    boolean;
-
-  profile:
-    | ShellProfile
-    | null;
-}
-
-const desktopLibraryItems = [
-  {
-    href:
-      "/movies",
-
-    label:
-      "Películas",
-
-    icon:
-      Film,
-  },
-
-  {
-    href:
-      "/series",
-
-    label:
-      "Series",
-
-    icon:
-      Tv,
-  },
-
-  {
-    href:
-      "/games",
-
-    label:
-      "Juegos",
-
-    icon:
-      Gamepad2,
-  },
-
-  {
-    href:
-      "/books",
-
-    label:
-      "Libros",
-
-    icon:
-      BookOpen,
-  },
-];
+type Props = {
+  children: React.ReactNode;
+  authenticated: boolean;
+  profile: ShellProfile | null;
+};
 
 function isNavigationActive(
-  pathname:
-    string,
-
-  href:
-    string
+  pathname: string,
+  route: string,
 ) {
-  if (
-    href ===
-    "/"
-  ) {
-    return (
-      pathname ===
-      "/"
-    );
-  }
+  return route === "/"
+    ? pathname === "/"
+    : pathname === route ||
+        pathname.startsWith(`${route}/`);
+}
+
+function isMediaDetailRoute(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean);
 
   return (
-    pathname ===
-      href ||
-    pathname.startsWith(
-      `${href}/`
+    segments.length === 2 &&
+    ["movies", "series", "books", "games"].includes(
+      segments[0],
     )
   );
 }
 
-function isMediaDetailRoute(
-  pathname:
-    string
-) {
-  const segments =
-    pathname
-      .split(
-        "/"
-      )
-      .filter(
-        Boolean
-      );
-
-  if (
-    segments.length !==
-    2
-  ) {
-    return false;
-  }
-
-  return [
-    "movies",
-    "series",
-    "books",
-    "games",
-  ].includes(
-    segments[0]
-  );
-}
-
-function getInitial(
-  profile:
-    | ShellProfile
-    | null
-) {
-  const value =
+function getInitial(profile: ShellProfile | null) {
+  return (
     profile?.display_name ??
     profile?.username ??
-    "U";
-
-  return value
-    .slice(
-      0,
-      1
-    )
+    "U"
+  )
+    .slice(0, 1)
     .toUpperCase();
+}
+
+function getMobileTitle(pathname: string) {
+  if (pathname === "/") return "FROSTIQ";
+
+  const sections: { route: string; title: string }[] = [
+    { route: "/library", title: "Biblioteca" },
+    { route: "/social", title: "Social" },
+    { route: "/profile", title: "Perfil" },
+    { route: "/notifications", title: "Notificaciones" },
+    { route: "/discover", title: "Descubrir" },
+    { route: "/search", title: "Buscar" },
+    { route: "/auth", title: "Acceder" },
+    { route: "/movies", title: "Películas" },
+    { route: "/series", title: "Series" },
+    { route: "/books", title: "Libros" },
+    { route: "/games", title: "Videojuegos" },
+    { route: "/admin", title: "Administración" },
+  ];
+
+  const section = sections.find(({ route }) =>
+    isNavigationActive(pathname, route),
+  );
+
+  return section?.title ?? "FROSTIQ";
 }
 
 export default function AppShell({
   children,
   authenticated,
   profile,
-}: AppShellProps) {
-  const pathname =
-    usePathname();
+}: Props) {
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const router =
-    useRouter();
+  const [supabase] = useState(() => createClient());
 
-  const [
-    supabase,
-  ] =
-    useState(
-      () =>
-        createClient()
-    );
+  const [profileMenuOpen, setProfileMenuOpen] =
+    useState(false);
 
-  const [
-    profileMenuOpen,
-    setProfileMenuOpen,
-  ] =
-    useState(
-      false
-    );
-
-  const [
-    desktopLibraryOpen,
-    setDesktopLibraryOpen,
-  ] =
-    useState(
-      false
-    );
-
-  const [
-    loggingOut,
-    setLoggingOut,
-  ] =
-    useState(
-      false
-    );
+  const [loggingOut, setLoggingOut] =
+    useState(false);
 
   const isFlushProfileRoute =
-    pathname ===
-      "/profile" ||
-    pathname ===
-      "/profile/customize" ||
-    (
-      pathname.startsWith(
-        "/profile/"
-      ) &&
-      pathname
-        .split(
-          "/"
-        )
-        .filter(
-          Boolean
-        ).length ===
-        2
-    );
+    pathname === "/profile" ||
+    pathname === "/profile/customize" ||
+    (pathname.startsWith("/profile/") &&
+      pathname.split("/").filter(Boolean).length === 2);
 
   const isFlushRoute =
     isFlushProfileRoute ||
-    isMediaDetailRoute(
-      pathname
-    );
+    isMediaDetailRoute(pathname);
 
   const displayName =
     profile?.display_name ??
@@ -265,245 +124,100 @@ export default function AppShell({
 
   const libraryActive =
     authenticated &&
-    [
-      "/movies",
-      "/series",
-      "/games",
-      "/books",
-    ].some(
-      (
-        route
-      ) =>
-        isNavigationActive(
-          pathname,
-          route
-        )
-    );
+    isNavigationActive(pathname, "/library");
 
   const socialActive =
     authenticated &&
-    isNavigationActive(
-      pathname,
-      "/social"
-    );
+    isNavigationActive(pathname, "/social");
 
-  const homeActive =
-    pathname ===
-    "/";
+  const homeActive = pathname === "/";
+
+  const mobileTitle = getMobileTitle(pathname);
+
+  const navStyle = (active: boolean) =>
+    `rounded-lg px-3 py-2 text-sm transition-colors ${
+      active
+        ? "bg-frost-active text-frost-accent"
+        : "text-frost-muted hover:bg-frost-surface hover:text-frost-text"
+    }`;
 
   async function handleLogout() {
     if (loggingOut) return;
+
     setLoggingOut(true);
+
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } =
+        await supabase.auth.signOut();
+
       if (error) {
         console.error("Error signing out:", error);
         return;
       }
 
       setProfileMenuOpen(false);
-      setDesktopLibraryOpen(false);
 
       router.replace("/");
       router.refresh();
     } catch (error) {
-      console.error("Unexpected error signing out:", error);
+      console.error(
+        "Unexpected error signing out:",
+        error,
+      );
     } finally {
       setLoggingOut(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="relative z-[100] border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-xl lg:sticky lg:top-0">
-        {/* DESKTOP */}
+    <div className="min-h-screen bg-frost-bg text-frost-text">
+      <header className="relative z-100 border-b border-frost-border bg-frost-bg/95 backdrop-blur-xl desktop:sticky desktop:top-0">
+        {/* NAVEGACIÓN DE ESCRITORIO */}
 
-        <div className="hidden h-[70px] lg:block">
-          <div className="mx-auto flex h-full w-full max-w-[1700px] items-center gap-3 px-5 xl:gap-5 xl:px-6">
+        <div className="hidden h-17.5 desktop:block">
+          <div className="mx-auto flex h-full w-full max-w-425 items-center gap-3 px-5 xl:gap-5 xl:px-6">
             <Link
               href="/"
-              onClick={() => {
-                setProfileMenuOpen(
-                  false
-                );
-
-                setDesktopLibraryOpen(
-                  false
-                );
-              }}
-              className="shrink-0 text-lg font-bold tracking-tight text-fuchsia-400 xl:text-xl"
+              onClick={() =>
+                setProfileMenuOpen(false)
+              }
+              className="shrink-0 text-lg font-bold tracking-tight text-frost-accent xl:text-xl"
             >
-              Media Tracker
+              FROSTIQ
             </Link>
 
             <nav className="flex shrink-0 items-center gap-1">
               <Link
                 href="/"
-                onClick={() => {
-                  setDesktopLibraryOpen(
-                    false
-                  );
-
-                  setProfileMenuOpen(
-                    false
-                  );
-                }}
-                className={`rounded-lg px-3 py-2 text-sm transition ${
-                  homeActive
-                    ? "bg-fuchsia-500/10 text-fuchsia-300"
-                    : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                }`}
+                onClick={() =>
+                  setProfileMenuOpen(false)
+                }
+                className={navStyle(homeActive)}
               >
                 Inicio
               </Link>
 
               {authenticated && (
                 <>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileMenuOpen(
-                          false
-                        );
-
-                        setDesktopLibraryOpen(
-                          (
-                            current
-                          ) =>
-                            !current
-                        );
-                      }}
-                      aria-expanded={
-                        desktopLibraryOpen
-                      }
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-                        libraryActive ||
-                        desktopLibraryOpen
-                          ? "bg-fuchsia-500/10 text-fuchsia-300"
-                          : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                      }`}
-                    >
-                      <Library
-                        size={
-                          16
-                        }
-                      />
-
-                      Biblioteca
-
-                      <ChevronDown
-                        size={
-                          14
-                        }
-                        className={`transition ${
-                          desktopLibraryOpen
-                            ? "rotate-180"
-                            : ""
-                        }`}
-                      />
-                    </button>
-
-                    {desktopLibraryOpen && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label="Cerrar biblioteca"
-                          onClick={() =>
-                            setDesktopLibraryOpen(
-                              false
-                            )
-                          }
-                          className="fixed inset-0 z-40 cursor-default"
-                        />
-
-                        <div className="absolute left-0 top-[calc(100%+10px)] z-50 w-56 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-1.5 shadow-2xl">
-                          {desktopLibraryItems.map(
-                            (
-                              item
-                            ) => {
-                              const Icon =
-                                item.icon;
-
-                              const active =
-                                isNavigationActive(
-                                  pathname,
-                                  item.href
-                                );
-
-                              return (
-                                <Link
-                                  key={
-                                    item.href
-                                  }
-                                  href={
-                                    item.href
-                                  }
-                                  onClick={() =>
-                                    setDesktopLibraryOpen(
-                                      false
-                                    )
-                                  }
-                                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
-                                    active
-                                      ? "bg-fuchsia-500/10 text-fuchsia-300"
-                                      : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
-                                  }`}
-                                >
-                                  <Icon
-                                    size={
-                                      17
-                                    }
-                                  />
-
-                                  {
-                                    item.label
-                                  }
-                                </Link>
-                              );
-                            }
-                          )}
-
-                          <div className="my-1 border-t border-zinc-800" />
-
-                          <Link
-                            href="/profile?tab=pending"
-                            onClick={() =>
-                              setDesktopLibraryOpen(
-                                false
-                              )
-                            }
-                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
-                          >
-                            <Library
-                              size={
-                                17
-                              }
-                            />
-
-                            Pendientes
-                          </Link>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <Link
+                    href="/library"
+                    onClick={() =>
+                      setProfileMenuOpen(false)
+                    }
+                    className={`flex items-center gap-2 ${navStyle(
+                      libraryActive,
+                    )}`}
+                  >
+                    <Library size={16} />
+                    Biblioteca
+                  </Link>
 
                   <Link
                     href="/social"
-                    onClick={() => {
-                      setDesktopLibraryOpen(
-                        false
-                      );
-
-                      setProfileMenuOpen(
-                        false
-                      );
-                    }}
-                    className={`rounded-lg px-3 py-2 text-sm transition ${
-                      socialActive
-                        ? "bg-fuchsia-500/10 text-fuchsia-300"
-                        : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200"
-                    }`}
+                    onClick={() =>
+                      setProfileMenuOpen(false)
+                    }
+                    className={navStyle(socialActive)}
                   >
                     Social
                   </Link>
@@ -514,10 +228,10 @@ export default function AppShell({
             <div className="ml-auto flex min-w-0 items-center gap-2 xl:gap-3">
               <Suspense
                 fallback={
-                  <div className="h-11 w-[230px] rounded-xl border border-zinc-800 bg-zinc-900/70 xl:w-[340px] 2xl:w-[420px]" />
+                  <div className="h-11 w-57.5 rounded-xl border border-frost-border bg-frost-surface/70 xl:w-85 2xl:w-105" />
                 }
               >
-                <GlobalSearch className="w-[230px] xl:w-[340px] 2xl:w-[420px]" />
+                <GlobalSearch className="w-57.5 xl:w-85 2xl:w-105" />
               </Suspense>
 
               {authenticated ? (
@@ -527,62 +241,40 @@ export default function AppShell({
                   <div className="relative shrink-0">
                     <button
                       type="button"
-                      onClick={() => {
-                        setDesktopLibraryOpen(
-                          false
-                        );
-
+                      onClick={() =>
                         setProfileMenuOpen(
-                          (
-                            current
-                          ) =>
-                            !current
-                        );
-                      }}
-                      className="flex h-11 items-center gap-2 rounded-xl px-2 text-zinc-200 transition hover:bg-zinc-900"
-                      aria-label="Abrir menú del perfil"
-                      aria-expanded={
-                        profileMenuOpen
+                          (current) => !current,
+                        )
                       }
+                      className="flex h-11 items-center gap-2 rounded-xl px-2 text-frost-text transition-colors hover:bg-frost-surface"
+                      aria-label="Abrir menú del perfil"
+                      aria-expanded={profileMenuOpen}
                     >
-                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-zinc-800">
+                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-frost-raised">
                         {profile?.avatar_url ? (
                           <Image
-                            src={
-                              profile.avatar_url
-                            }
-                            alt={
-                              displayName
-                            }
-                            width={
-                              64
-                            }
-                            height={
-                              64
-                            }
+                            src={profile.avatar_url}
+                            alt={displayName}
+                            width={64}
+                            height={64}
+                            loading="eager"
                             unoptimized
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-zinc-500">
-                            {getInitial(
-                              profile
-                            )}
+                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-frost-muted">
+                            {getInitial(profile)}
                           </div>
                         )}
                       </div>
 
-                      <span className="hidden max-w-[120px] truncate text-sm font-semibold xl:block">
-                        {
-                          displayName
-                        }
+                      <span className="hidden max-w-30 truncate text-sm font-semibold xl:block">
+                        {displayName}
                       </span>
 
                       <ChevronDown
-                        size={
-                          14
-                        }
-                        className={`hidden shrink-0 text-zinc-600 transition xl:block ${
+                        size={14}
+                        className={`hidden shrink-0 text-frost-muted transition-transform xl:block ${
                           profileMenuOpen
                             ? "rotate-180"
                             : ""
@@ -596,91 +288,60 @@ export default function AppShell({
                           type="button"
                           aria-label="Cerrar menú del perfil"
                           onClick={() =>
-                            setProfileMenuOpen(
-                              false
-                            )
+                            setProfileMenuOpen(false)
                           }
                           className="fixed inset-0 z-40 cursor-default"
                         />
 
-                        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-1.5 shadow-2xl">
+                        <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-frost-border bg-frost-surface p-1.5 shadow-2xl">
                           <Link
                             href="/profile"
                             onClick={() =>
-                              setProfileMenuOpen(
-                                false
-                              )
+                              setProfileMenuOpen(false)
                             }
-                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-frost-muted transition-colors hover:bg-frost-raised hover:text-frost-text"
                           >
-                            <UserRound
-                              size={
-                                17
-                              }
-                            />
-
+                            <UserRound size={17} />
                             Perfil
                           </Link>
 
-                          {profile?.special_role ===
-                            "OWNER" && (
+                          {profile?.special_role === "OWNER" && (
                             <>
                               <Link
                                 href="/admin/reports"
                                 onClick={() =>
-                                  setProfileMenuOpen(
-                                    false
-                                  )
+                                  setProfileMenuOpen(false)
                                 }
-                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-frost-muted transition-colors hover:bg-frost-raised hover:text-frost-text"
                               >
-                                <ShieldCheck
-                                  size={
-                                    17
-                                  }
-                                />
-
+                                <ShieldCheck size={17} />
                                 Reportes
                               </Link>
 
                               <Link
                                 href="/admin/media"
                                 onClick={() =>
-                                  setProfileMenuOpen(
-                                    false
-                                  )
+                                  setProfileMenuOpen(false)
                                 }
-                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-frost-muted transition-colors hover:bg-frost-raised hover:text-frost-text"
                               >
-                                <ImageIcon
-                                  size={
-                                    17
-                                  }
-                                />
-
+                                <ImageIcon size={17} />
                                 Editar portadas
                               </Link>
                             </>
                           )}
 
-                          <div className="my-1 border-t border-zinc-800" />
+                          <div className="my-1 border-t border-frost-border" />
 
                           <button
                             type="button"
-                            onClick={() => {
-                              void handleLogout();
-                            }}
-                            disabled={
-                              loggingOut
+                            onClick={() =>
+                              void handleLogout()
                             }
-                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-zinc-500 transition hover:bg-zinc-900 hover:text-red-400 disabled:opacity-50"
+                            disabled={loggingOut}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-frost-muted transition-colors hover:bg-frost-raised hover:text-frost-danger disabled:opacity-50"
                           >
-                            <LogOut
-                              size={
-                                17
-                              }
-                            />
-
+                            <LogOut size={17} />
                             {loggingOut
                               ? "Cerrando..."
                               : "Cerrar sesión"}
@@ -694,14 +355,14 @@ export default function AppShell({
                 <div className="flex items-center gap-2">
                   <Link
                     href="/auth?mode=login"
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-frost-muted transition-colors hover:bg-frost-surface hover:text-frost-text"
                   >
                     Iniciar sesión
                   </Link>
 
                   <Link
                     href="/auth?mode=register"
-                    className="rounded-xl bg-fuchsia-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-fuchsia-400"
+                    className="rounded-xl bg-frost-accent px-4 py-2.5 text-sm font-semibold text-frost-bg transition-colors hover:bg-frost-accent-hover"
                   >
                     Registrarse
                   </Link>
@@ -711,22 +372,24 @@ export default function AppShell({
           </div>
         </div>
 
-        {/* MOBILE */}
+        {/* NAVEGACIÓN MÓVIL */}
 
-        <div className="flex h-[58px] items-center justify-between px-4 lg:hidden">
+        <div className="relative flex h-14.5 items-center justify-center px-4 desktop:hidden">
           <Link
             href="/"
-            className="text-lg font-bold tracking-tight text-fuchsia-400"
+            className="max-w-64 truncate px-12 text-center text-lg font-bold tracking-tight text-frost-accent"
           >
-            Media Tracker
+            {mobileTitle}
           </Link>
 
           {authenticated ? (
-            <NotificationsButton />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <NotificationsButton />
+            </div>
           ) : (
             <Link
               href="/auth?mode=login"
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-300"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg border border-frost-border bg-frost-surface px-3 py-2 text-xs font-medium text-frost-muted"
             >
               Entrar
             </Link>
@@ -734,22 +397,24 @@ export default function AppShell({
         </div>
       </header>
 
-      <div className="pb-[calc(68px+env(safe-area-inset-bottom))] lg:pb-0">
+      {/* CONTENIDO PRINCIPAL */}
+
+      <div className="pb-17 desktop:pb-0">
         <main
           className={
             isFlushRoute
               ? "min-w-0 p-0"
-              : "min-w-0 p-4 sm:p-6 lg:p-8"
+              : "min-w-0 p-4 sm:p-6 desktop:p-8"
           }
         >
-          {
-            children
-          }
+          {children}
         </main>
       </div>
 
+      {/* REPORTE DE PROBLEMAS */}
+
       {authenticated && (
-        <div className="hidden lg:block">
+        <div className="hidden desktop:block">
           <BugReportButton />
         </div>
       )}
@@ -757,12 +422,8 @@ export default function AppShell({
       <InstallAppPrompt />
 
       <MobileBottomNav
-        profile={
-          profile
-        }
-        authenticated={
-          authenticated
-        }
+        profile={profile}
+        authenticated={authenticated}
       />
     </div>
   );

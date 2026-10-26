@@ -94,7 +94,7 @@ function DesktopCast({
 }) {
   if (cast.length === 0) {
     return (
-      <p className="py-4 text-sm text-zinc-600">
+      <p className="py-4 text-sm text-frost-muted">
         No hay información de reparto.
       </p>
     );
@@ -113,7 +113,7 @@ function DesktopCast({
               member.character ??
               undefined
             }
-            className="rounded bg-white/[0.07] px-2.5 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.11] hover:text-zinc-100"
+            className="rounded bg-frost-raised/35 px-2.5 py-1.5 text-xs text-frost-text transition hover:bg-frost-raised/55 hover:text-frost-text"
           >
             {member.name}
           </span>
@@ -130,7 +130,7 @@ function DesktopCrew({
 }) {
   if (crew.length === 0) {
     return (
-      <p className="py-4 text-sm text-zinc-600">
+      <p className="py-4 text-sm text-frost-muted">
         No hay información del equipo.
       </p>
     );
@@ -146,13 +146,13 @@ function DesktopCrew({
           <span
             key={`${member.name}-${member.job}-${index}`}
             title={member.job}
-            className="rounded bg-white/[0.07] px-2.5 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.11] hover:text-zinc-100"
+            className="rounded bg-frost-raised/35 px-2.5 py-1.5 text-xs text-frost-text transition hover:bg-frost-raised/55 hover:text-frost-text"
           >
             <span>
               {member.name}
             </span>
 
-            <span className="ml-1.5 text-zinc-600">
+            <span className="ml-1.5 text-frost-muted">
               {member.job}
             </span>
           </span>
@@ -175,7 +175,7 @@ function DesktopDetailGroup({
 
   return (
     <div>
-      <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
+      <p className="frost-movie-tabs-text-9 font-semibold uppercase frost-movie-tabs-track-018 text-frost-muted">
         {label}
       </p>
 
@@ -184,7 +184,7 @@ function DesktopDetailGroup({
           (value) => (
             <span
               key={value}
-              className="rounded bg-white/[0.06] px-2.5 py-1.5 text-xs text-zinc-300"
+              className="rounded bg-frost-raised/30 px-2.5 py-1.5 text-xs text-frost-text"
             >
               {value}
             </span>
@@ -211,7 +211,7 @@ function DesktopDetails({
 
   if (!hasDetails) {
     return (
-      <p className="py-4 text-sm text-zinc-600">
+      <p className="py-4 text-sm text-frost-muted">
         No hay información adicional.
       </p>
     );
@@ -276,7 +276,7 @@ function PersonAvatar({
     | null;
 }) {
   return (
-    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white/[0.055]">
+    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-frost-raised/25">
       {imageUrl ? (
         <Image
           src={imageUrl}
@@ -286,7 +286,7 @@ function PersonAvatar({
           className="object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-zinc-600">
+        <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-frost-muted">
           {name
             .slice(
               0,
@@ -312,7 +312,7 @@ function ShowMoreButton({
     <button
       type="button"
       onClick={onToggle}
-      className="mt-1 flex w-full items-center justify-center border-t border-white/[0.08] py-4 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400 transition hover:text-white"
+      className="mt-1 flex w-full items-center justify-center border-t border-frost-border/80 py-4 text-xs font-semibold uppercase frost-movie-tabs-track-018 text-frost-muted transition hover:text-frost-text"
     >
       {expanded
         ? "Ver menos"
@@ -338,7 +338,7 @@ function MobileCast({
 }) {
   if (cast.length === 0) {
     return (
-      <p className="py-5 text-sm text-zinc-600">
+      <p className="py-5 text-sm text-frost-muted">
         No hay información de reparto.
       </p>
     );
@@ -368,7 +368,7 @@ function MobileCast({
         ) => (
           <div
             key={`${member.name}-${member.character}-${index}`}
-            className="flex items-center gap-3 border-b border-white/[0.065] py-3.5 last:border-b-0"
+            className="flex items-center gap-3 border-b border-frost-border/65 py-3.5 last:border-b-0"
           >
             <PersonAvatar
               name={
@@ -380,12 +380,12 @@ function MobileCast({
             />
 
             <div className="min-w-0">
-              <p className="truncate text-[17px] font-medium leading-tight text-zinc-200">
+              <p className="truncate frost-movie-tabs-text-17 font-medium leading-tight text-frost-text">
                 {member.name}
               </p>
 
               {member.character ? (
-                <p className="mt-1 truncate text-sm text-zinc-600">
+                <p className="mt-1 truncate text-sm text-frost-muted">
                   {
                     member.character
                   }
@@ -431,7 +431,7 @@ function MobileCrew({
 }) {
   if (crew.length === 0) {
     return (
-      <p className="py-5 text-sm text-zinc-600">
+      <p className="py-5 text-sm text-frost-muted">
         No hay información del equipo.
       </p>
     );
@@ -461,7 +461,7 @@ function MobileCrew({
         ) => (
           <div
             key={`${member.name}-${member.job}-${index}`}
-            className="flex items-center gap-3 border-b border-white/[0.065] py-3.5 last:border-b-0"
+            className="flex items-center gap-3 border-b border-frost-border/65 py-3.5 last:border-b-0"
           >
             <PersonAvatar
               name={
@@ -473,11 +473,11 @@ function MobileCrew({
             />
 
             <div className="min-w-0">
-              <p className="truncate text-[17px] font-medium leading-tight text-zinc-200">
+              <p className="truncate frost-movie-tabs-text-17 font-medium leading-tight text-frost-text">
                 {member.name}
               </p>
 
-              <p className="mt-1 truncate text-sm text-zinc-600">
+              <p className="mt-1 truncate text-sm text-frost-muted">
                 {member.job}
               </p>
             </div>
@@ -619,8 +619,8 @@ function MobileDetailSection({
   values: string[];
 }) {
   return (
-    <section className="border-b border-white/[0.08] py-4 last:border-b-0">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.17em] text-zinc-500">
+    <section className="border-b border-frost-border/80 py-4 last:border-b-0">
+      <h3 className="frost-movie-tabs-text-11 font-semibold uppercase frost-movie-tabs-track-017 text-frost-muted">
         {title}
       </h3>
 
@@ -629,7 +629,7 @@ function MobileDetailSection({
           (value) => (
             <p
               key={value}
-              className="py-1.5 text-[16px] leading-6 text-zinc-300"
+              className="py-1.5 text-base leading-6 text-frost-text"
             >
               {value}
             </p>
@@ -675,7 +675,7 @@ function MobileDetails({
     totalItems === 0
   ) {
     return (
-      <p className="py-5 text-sm text-zinc-600">
+      <p className="py-5 text-sm text-frost-muted">
         No hay información adicional.
       </p>
     );
@@ -770,9 +770,17 @@ export default function MovieInfoTabs({
 
   return (
     <section>
+      <style>{`
+        .frost-movie-tabs-text-9 { font-size: 9px; }
+        .frost-movie-tabs-text-11 { font-size: 11px; }
+        .frost-movie-tabs-text-17 { font-size: 17px; }
+        .frost-movie-tabs-track-008 { letter-spacing: 0.08em; }
+        .frost-movie-tabs-track-017 { letter-spacing: 0.17em; }
+        .frost-movie-tabs-track-018 { letter-spacing: 0.18em; }
+      `}</style>
       {/* TABS */}
 
-      <div className="flex items-end gap-6 border-b border-white/15">
+      <div className="flex items-end gap-6 border-b border-frost-border">
         {TABS.map(
           (tab) => {
             const active =
@@ -790,10 +798,10 @@ export default function MovieInfoTabs({
                     tab.value,
                   )
                 }
-                className={`relative pb-2.5 text-[11px] font-medium uppercase tracking-[0.08em] transition ${
+                className={`relative pb-2.5 frost-movie-tabs-text-11 font-medium uppercase frost-movie-tabs-track-008 transition ${
                   active
-                    ? "text-zinc-100"
-                    : "text-fuchsia-400 hover:text-fuchsia-300"
+                    ? "text-frost-text"
+                    : "text-frost-accent hover:text-frost-accent"
                 }`}
               >
                 {
@@ -801,7 +809,7 @@ export default function MovieInfoTabs({
                 }
 
                 {active ? (
-                  <span className="absolute inset-x-0 bottom-[-1px] h-px bg-zinc-100" />
+                  <span className="absolute inset-x-0 -bottom-px h-px bg-frost-text" />
                 ) : null}
               </button>
             );

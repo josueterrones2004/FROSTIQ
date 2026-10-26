@@ -37,13 +37,13 @@ function RatingStars({
           return (
             <div
               key={index}
-              className="relative h-[14px] w-[14px] shrink-0"
+              className="relative h-3.5 w-3.5 shrink-0"
             >
               <Star
                 size={14}
                 strokeWidth={0}
                 fill="currentColor"
-                className="absolute inset-0 text-zinc-800"
+                className="absolute inset-0 text-frost-raised"
               />
 
               <div
@@ -83,15 +83,32 @@ export default function MediaRatings({
     );
 
   return (
-    <section className="mt-5 border-t border-white/8 pt-4">
+    <section className="mt-5 border-t border-frost-border pt-4">
+      <style>{`
+        .frost-ratings-grid { grid-template-columns: minmax(0,1fr) auto; }
+        .frost-ratings-bars-height { height: 58px; }
+        .frost-ratings-bars-gap { gap: 3px; }
+        .frost-ratings-bar-radius { border-radius: 1px; }
+        .frost-ratings-average-width { min-width: 76px; }
+        .frost-ratings-text-9 { font-size: 9px; }
+        .frost-ratings-text-10 { font-size: 10px; }
+        .frost-ratings-track-018 { letter-spacing: .18em; }
+        .frost-ratings-track-012 { letter-spacing: .12em; }
+        .frost-ratings-average-track { letter-spacing: -.04em; }
+        @media (min-width: 640px) {
+          .frost-ratings-bars-height { height: 64px; }
+          .frost-ratings-average-width { min-width: 90px; }
+          .frost-ratings-sm-text-34 { font-size: 34px; }
+        }
+      `}</style>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+        <h2 className="frost-ratings-text-10 font-semibold uppercase frost-ratings-track-018 text-frost-muted">
           Valoraciones
         </h2>
 
         {stats.count >
         0 ? (
-          <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-600">
+          <p className="frost-ratings-text-10 uppercase frost-ratings-track-012 text-frost-muted">
             {new Intl.NumberFormat(
               "es-MX",
             ).format(
@@ -110,20 +127,20 @@ export default function MediaRatings({
       stats.average ===
         null ? (
         <div className="mt-4">
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-frost-muted">
             Todavía no hay valoraciones.
           </p>
 
-          <p className="mt-1 text-xs text-zinc-700">
+          <p className="mt-1 text-xs text-frost-muted">
             Sé el primero en valorar este título.
           </p>
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-5 sm:gap-8">
+        <div className="mt-4 grid frost-ratings-grid items-end gap-5 sm:gap-8">
           {/* HISTOGRAM */}
 
           <div className="min-w-0">
-            <div className="flex h-[58px] items-end gap-[3px] sm:h-[64px] sm:gap-1">
+            <div className="flex frost-ratings-bars-height items-end frost-ratings-bars-gap  sm:gap-1">
               {stats.buckets.map(
                 (
                   bucket,
@@ -153,11 +170,11 @@ export default function MediaRatings({
                       title={`${bucket.value} ★ · ${bucket.count}`}
                     >
                       <div
-                        className={`w-full rounded-[1px] ${
+                        className={`w-full frost-ratings-bar-radius ${
                           bucket.count >
                           0
-                            ? "bg-zinc-500/80"
-                            : "bg-zinc-800"
+                            ? "bg-frost-muted/80"
+                            : "bg-frost-raised"
                         }`}
                         style={{
                           height:
@@ -170,7 +187,7 @@ export default function MediaRatings({
               )}
             </div>
 
-            <div className="mt-1.5 flex items-center justify-between text-[9px] font-medium text-zinc-700">
+            <div className="mt-1.5 flex items-center justify-between frost-ratings-text-9 font-medium text-frost-muted">
               <span>
                 ½
               </span>
@@ -183,8 +200,8 @@ export default function MediaRatings({
 
           {/* AVERAGE */}
 
-          <div className="min-w-[76px] pb-0.5 text-right sm:min-w-[90px]">
-            <p className="text-3xl font-light leading-none tracking-[-0.04em] text-zinc-400 sm:text-[34px]">
+          <div className="frost-ratings-average-width pb-0.5 text-right ">
+            <p className="text-3xl font-light leading-none frost-ratings-average-track text-frost-muted frost-ratings-sm-text-34">
               {stats.average.toFixed(
                 1,
               )}

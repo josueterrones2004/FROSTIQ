@@ -1,5 +1,18 @@
 "use client";
 
+import Image from "next/image";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Clock,
   Loader2,
@@ -7,1311 +20,340 @@ import {
   X,
 } from "lucide-react";
 
-import Image from "next/image";
-
+import { getPosterImageConfig } from "@/lib/image-optimization";
 import {
-  FormEvent,
-  KeyboardEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+  getMediaKindLabel,
+  type MediaSuggestion,
+  useMediaSearch,
+} from "@/hooks/useMediaSearch";
 
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-
-import {
-  shouldUseOriginalImage,
-} from "@/lib/image-optimization";
-
-type Source =
-  | "games"
-  | "screen"
-  | "books";
-
-type Suggestion = {
-  key: string;
-
-  title: string;
-
-  kind:
-    | "game"
-    | "movie"
-    | "series"
-    | "book";
-
-  image:
-    | string
-    | null;
-
-  year:
-    | number
-    | null;
-
-  subtitle:
-    string;
-
-  href:
-    string;
-
-  score:
-    number;
+type Props = {
+  className?: string;
+  onNavigate?: () => void;
 };
-
-type SourceResults =
-  Record<
-    Source,
-    Suggestion[]
-  >;
-
-const EMPTY_RESULTS:
-  SourceResults = {
-  games: [],
-  screen: [],
-  books: [],
-};
-
-const SOURCES:
-  Source[] = [
-  "games",
-  "screen",
-  "books",
-];
-
-const RECENT_KEY =
-  "media-tracker-recent-searches";
-
-function normalize(
-  value:
-    string
-) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(
-      /\s+/g,
-      " "
-    );
-}
-
-function getKindLabel(
-  kind:
-    Suggestion["kind"]
-) {
-  if (
-    kind ===
-    "game"
-  ) {
-    return "Juego";
-  }
-
-  if (
-    kind ===
-    "movie"
-  ) {
-    return "Película";
-  }
-
-  if (
-    kind ===
-    "series"
-  ) {
-    return "Serie";
-  }
-
-  return "Libro";
-}
-
-function parseRecent(
-  value:
-    string |
-    null
-) {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    const parsed =
-      JSON.parse(
-        value
-      );
-
-    if (
-      !Array.isArray(
-        parsed
-      )
-    ) {
-      return [];
-    }
-
-    return parsed
-      .filter(
-        (
-          item
-        ): item is string =>
-          typeof item ===
-          "string"
-      )
-      .slice(
-        0,
-        6
-      );
-  } catch {
-    return [];
-  }
-}
-
-function mergeSuggestions(
-  results:
-    SourceResults
-) {
-  const all = [
-    ...results.games,
-    ...results.screen,
-    ...results.books,
-  ];
-
-  const strongByKind =
-    new Map<
-      Suggestion["kind"],
-      number
-    >();
-
-  for (
-    const result of
-    all
-  ) {
-    if (
-      result.score >=
-      95
-    ) {
-      strongByKind.set(
-        result.kind,
-        (
-          strongByKind.get(
-            result.kind
-          ) ??
-          0
-        ) +
-          1
-      );
-    }
-  }
-
-  const seen =
-    new Set<
-      string
-    >();
-
-  return all
-    .map(
-      (
-        result
-      ) => ({
-        ...result,
-
-        finalScore:
-          result.score +
-          Math.min(
-            (
-              strongByKind.get(
-                result.kind
-              ) ??
-              0
-            ) *
-              4,
-            16
-          ),
-      })
-    )
-    .sort(
-      (
-        first,
-        second
-      ) =>
-        second.finalScore -
-        first.finalScore
-    )
-    .filter(
-      (
-        result
-      ) => {
-        /*
-         * Aquí usamos el ID real.
-         *
-         * De esta forma dos obras distintas
-         * con el mismo título no desaparecen.
-         */
-        const key =
-          result.key;
-
-        if (
-          seen.has(
-            key
-          )
-        ) {
-          return false;
-        }
-
-        seen.add(
-          key
-        );
-
-        return true;
-      }
-    )
-    .slice(
-      0,
-      8
-    );
-}
 
 export default function GlobalSearch({
-  className =
-    "",
-
+  className = "",
   onNavigate,
-}: {
-  className?:
-    string;
-
-  onNavigate?:
-    () => void;
-}) {
-  const router =
-    useRouter();
-
-  const pathname =
-    usePathname();
-
-  const searchParams =
-    useSearchParams();
-
-  const containerRef =
-    useRef<
-      HTMLDivElement
-    >(
-      null
-    );
-
-  const requestIdRef =
-    useRef(
-      0
-    );
-
-  /*
-   * Indica que la siguiente navegación
-   * salió desde este buscador.
-   *
-   * Cuando cambie la URL forzaremos
-   * scroll al inicio.
-   */
-  const scrollToTopRef =
-    useRef(
-      false
-    );
-
-  const cacheRef =
-    useRef(
-      new Map<
-        string,
-        Suggestion[]
-      >()
-    );
+}: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
 
   const currentQuery =
-    pathname ===
-    "/search"
-      ? searchParams.get(
-          "q"
-        ) ??
-        ""
+    pathname === "/search"
+      ? params.get("q") ?? ""
       : "";
 
-  const [
-    value,
-    setValue,
-  ] =
-    useState(
-      currentQuery
-    );
-
-  const [
-    sourceResults,
-    setSourceResults,
-  ] =
-    useState<SourceResults>(
-      EMPTY_RESULTS
-    );
-
-  const [
+  const {
+    query,
+    setQuery,
+    suggestions,
+    loading,
     recent,
-    setRecent,
-  ] =
-    useState<
-      string[]
-    >(
-      []
-    );
+    saveRecent,
+    removeRecent,
+  } = useMediaSearch({
+    initialQuery: currentQuery,
+  });
 
-  const [
-    open,
-    setOpen,
-  ] =
-    useState(
-      false
-    );
+  const [open, setOpen] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-  const [
-    fetching,
-    setFetching,
-  ] =
-    useState(
-      false
-    );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollToTop = useRef(false);
 
-  const [
-    navigating,
-    setNavigating,
-  ] =
-    useState(
-      false
-    );
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setQuery(currentQuery);
+      setNavigating(false);
+    }, 0);
 
-  const [
-    activeIndex,
-    setActiveIndex,
-  ] =
-    useState(
-      -1
-    );
+    return () => window.clearTimeout(timeout);
+  }, [currentQuery, pathname, setQuery]);
 
-  const suggestions =
-    mergeSuggestions(
-      sourceResults
-    );
+  useEffect(() => {
+    if (!scrollToTop.current) return;
 
-  /*
-   * SCROLL DESPUÉS DE NAVEGAR
-   */
+    scrollToTop.current = false;
 
-  useEffect(
-    () => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "auto",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname, currentQuery]);
+
+  useEffect(() => {
+    function handleClick(event: MouseEvent) {
       if (
-        !scrollToTopRef.current
+        !containerRef.current?.contains(
+          event.target as Node,
+        )
       ) {
-        return;
+        setOpen(false);
+        setActiveIndex(-1);
       }
-
-      scrollToTopRef.current =
-        false;
-
-      const frame =
-        window.requestAnimationFrame(
-          () => {
-            window.scrollTo({
-              top: 0,
-              left: 0,
-              behavior:
-                "auto",
-            });
-          }
-        );
-
-      return () =>
-        window.cancelAnimationFrame(
-          frame
-        );
-    },
-    [
-      pathname,
-      currentQuery,
-    ]
-  );
-
-  /*
-   * RECENTS
-   */
-
-  useEffect(
-    () => {
-      const timeout =
-        window.setTimeout(
-          () => {
-            setRecent(
-              parseRecent(
-                window.localStorage.getItem(
-                  RECENT_KEY
-                )
-              )
-            );
-          },
-          0
-        );
-
-      return () =>
-        window.clearTimeout(
-          timeout
-        );
-    },
-    []
-  );
-
-  /*
-   * URL -> INPUT
-   */
-
-  useEffect(
-    () => {
-      const timeout =
-        window.setTimeout(
-          () => {
-            setValue(
-              currentQuery
-            );
-
-            setNavigating(
-              false
-            );
-          },
-          0
-        );
-
-      return () =>
-        window.clearTimeout(
-          timeout
-        );
-    },
-    [
-      currentQuery,
-      pathname,
-    ]
-  );
-
-  /*
-   * CLICK OUTSIDE
-   */
-
-  useEffect(
-    () => {
-      function handleClick(
-        event:
-          MouseEvent
-      ) {
-        if (
-          !containerRef.current
-            ?.contains(
-              event.target as Node
-            )
-        ) {
-          setOpen(
-            false
-          );
-
-          setActiveIndex(
-            -1
-          );
-        }
-      }
-
-      document.addEventListener(
-        "mousedown",
-        handleClick
-      );
-
-      return () =>
-        document.removeEventListener(
-          "mousedown",
-          handleClick
-        );
-    },
-    []
-  );
-
-  /*
-   * PROGRESSIVE AUTOCOMPLETE
-   */
-
-  useEffect(
-    () => {
-      const query =
-        value.trim();
-
-      requestIdRef.current +=
-        1;
-
-      const requestId =
-        requestIdRef.current;
-
-      if (
-        query.length <
-        2
-      ) {
-        const timeout =
-          window.setTimeout(
-            () => {
-              if (
-                requestId !==
-                requestIdRef.current
-              ) {
-                return;
-              }
-
-              setSourceResults({
-                ...EMPTY_RESULTS,
-              });
-
-              setFetching(
-                false
-              );
-
-              setActiveIndex(
-                -1
-              );
-            },
-            0
-          );
-
-        return () =>
-          window.clearTimeout(
-            timeout
-          );
-      }
-
-      const controllers =
-        SOURCES.map(
-          () =>
-            new AbortController()
-        );
-
-      const timeout =
-        window.setTimeout(
-          () => {
-            if (
-              requestId !==
-              requestIdRef.current
-            ) {
-              return;
-            }
-
-            const normalizedQuery =
-              normalize(
-                query
-              );
-
-            const initial:
-              SourceResults = {
-              games:
-                cacheRef.current.get(
-                  `games:${normalizedQuery}`
-                ) ??
-                [],
-
-              screen:
-                cacheRef.current.get(
-                  `screen:${normalizedQuery}`
-                ) ??
-                [],
-
-              books:
-                cacheRef.current.get(
-                  `books:${normalizedQuery}`
-                ) ??
-                [],
-            };
-
-            setSourceResults(
-              initial
-            );
-
-            const missing =
-              SOURCES.filter(
-                (
-                  source
-                ) =>
-                  !cacheRef.current.has(
-                    `${source}:${normalizedQuery}`
-                  )
-              );
-
-            if (
-              missing.length ===
-              0
-            ) {
-              setFetching(
-                false
-              );
-
-              return;
-            }
-
-            setFetching(
-              true
-            );
-
-            let remaining =
-              missing.length;
-
-            missing.forEach(
-              (
-                source
-              ) => {
-                const sourceIndex =
-                  SOURCES.indexOf(
-                    source
-                  );
-
-                const controller =
-                  controllers[
-                    sourceIndex
-                  ];
-
-                void fetch(
-                  `/api/search-suggestions?q=${encodeURIComponent(
-                    query
-                  )}&source=${source}`,
-                  {
-                    signal:
-                      controller.signal,
-                  }
-                )
-                  .then(
-                    async (
-                      response
-                    ) => {
-                      if (
-                        !response.ok
-                      ) {
-                        return [];
-                      }
-
-                      const data =
-                        await response.json();
-
-                      return Array.isArray(
-                        data.results
-                      )
-                        ? data.results as Suggestion[]
-                        : [];
-                    }
-                  )
-                  .then(
-                    (
-                      results
-                    ) => {
-                      if (
-                        requestId !==
-                        requestIdRef.current
-                      ) {
-                        return;
-                      }
-
-                      cacheRef.current.set(
-                        `${source}:${normalizedQuery}`,
-                        results
-                      );
-
-                      setSourceResults(
-                        (
-                          current
-                        ) => ({
-                          ...current,
-
-                          [source]:
-                            results,
-                        })
-                      );
-                    }
-                  )
-                  .catch(
-                    (
-                      error
-                    ) => {
-                      if (
-                        error instanceof
-                          DOMException &&
-                        error.name ===
-                          "AbortError"
-                      ) {
-                        return;
-                      }
-                    }
-                  )
-                  .finally(
-                    () => {
-                      if (
-                        requestId !==
-                        requestIdRef.current
-                      ) {
-                        return;
-                      }
-
-                      remaining -=
-                        1;
-
-                      if (
-                        remaining <=
-                        0
-                      ) {
-                        setFetching(
-                          false
-                        );
-                      }
-                    }
-                  );
-              }
-            );
-          },
-          100
-        );
-
-      return () => {
-        window.clearTimeout(
-          timeout
-        );
-
-        for (
-          const controller of
-          controllers
-        ) {
-          controller.abort();
-        }
-      };
-    },
-    [
-      value,
-    ]
-  );
-
-  /*
-   * RECENT
-   */
-
-  function saveRecent(
-    query:
-      string
-  ) {
-    const clean =
-      query.trim();
-
-    if (!clean) {
-      return;
     }
 
-    setRecent(
-      (
-        current
-      ) => {
-        const next = [
-          clean,
+    document.addEventListener("mousedown", handleClick);
 
-          ...current.filter(
-            (
-              item
-            ) =>
-              item.toLowerCase() !==
-              clean.toLowerCase()
-          ),
-        ].slice(
-          0,
-          6
-        );
+    return () =>
+      document.removeEventListener("mousedown", handleClick);
+  }, []);
 
-        window.localStorage.setItem(
-          RECENT_KEY,
-          JSON.stringify(
-            next
-          )
-        );
-
-        return next;
-      }
-    );
-  }
-
-  function removeRecent(
-    query:
-      string
-  ) {
-    setRecent(
-      (
-        current
-      ) => {
-        const next =
-          current.filter(
-            (
-              item
-            ) =>
-              item !==
-              query
-          );
-
-        window.localStorage.setItem(
-          RECENT_KEY,
-          JSON.stringify(
-            next
-          )
-        );
-
-        return next;
-      }
-    );
-  }
-
-  /*
-   * FULL SEARCH
-   */
-
-  function goToSearch(
-    query:
-      string
-  ) {
-    const clean =
-      query.trim();
-
-    if (!clean) {
-      return;
-    }
-
-    saveRecent(
-      clean
-    );
-
-    setValue(
-      clean
-    );
-
-    setOpen(
-      false
-    );
-
-    setActiveIndex(
-      -1
-    );
-
-    setNavigating(
-      true
-    );
-
-    scrollToTopRef.current =
-      true;
-
+  function navigate(href: string, value: string) {
+    saveRecent(value);
+    setQuery(value);
+    setOpen(false);
+    setActiveIndex(-1);
+    setNavigating(true);
+    scrollToTop.current = true;
     onNavigate?.();
 
-    router.push(
-      `/search?q=${encodeURIComponent(
-        clean
-      )}`,
-      {
-        scroll:
-          true,
-      }
+    router.push(href, {
+      scroll: true,
+    });
+  }
+
+  function fullSearch(value: string) {
+    const clean = value.trim();
+
+    if (!clean) return;
+
+    navigate(
+      `/search?q=${encodeURIComponent(clean)}`,
+      clean,
     );
   }
 
-  function openSuggestion(
-    suggestion:
-      Suggestion
-  ) {
-    saveRecent(
-      suggestion.title
-    );
-
-    setValue(
-      suggestion.title
-    );
-
-    setOpen(
-      false
-    );
-
-    setActiveIndex(
-      -1
-    );
-
-    setNavigating(
-      true
-    );
-
-    scrollToTopRef.current =
-      true;
-
-    onNavigate?.();
-
-    router.push(
-      suggestion.href,
-      {
-        scroll:
-          true,
-      }
-    );
+  function openSuggestion(item: MediaSuggestion) {
+    navigate(item.href, item.title);
   }
 
-  /*
-   * SUBMIT
-   */
-
-  function handleSubmit(
-    event:
-      FormEvent<HTMLFormElement>
-  ) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (
-      activeIndex >=
-        0 &&
-      suggestions[
-        activeIndex
-      ]
+      activeIndex >= 0 &&
+      suggestions[activeIndex]
     ) {
-      openSuggestion(
-        suggestions[
-          activeIndex
-        ]
-      );
-
+      openSuggestion(suggestions[activeIndex]);
       return;
     }
 
-    goToSearch(
-      value
-    );
+    fullSearch(query);
   }
 
-  /*
-   * KEYBOARD
-   */
-
   function handleKeyboard(
-    event:
-      KeyboardEvent<HTMLInputElement>
+    event: KeyboardEvent<HTMLInputElement>,
   ) {
-    if (
-      event.key ===
-      "ArrowDown"
-    ) {
-      if (
-        suggestions.length ===
-        0
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-
-      setActiveIndex(
-        (
-          current
-        ) =>
-          current >=
-          suggestions.length -
-            1
-            ? 0
-            : current +
-              1
-      );
-
+    if (event.key === "Escape") {
+      setOpen(false);
+      setActiveIndex(-1);
       return;
     }
 
-    if (
-      event.key ===
-      "ArrowUp"
-    ) {
-      if (
-        suggestions.length ===
-        0
-      ) {
-        return;
-      }
+    if (!suggestions.length) return;
 
+    if (event.key === "ArrowDown") {
       event.preventDefault();
 
       setActiveIndex(
-        (
-          current
-        ) =>
-          current <=
-          0
-            ? suggestions.length -
-              1
-            : current -
-              1
+        (index) => (index + 1) % suggestions.length,
       );
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
 
-      return;
-    }
-
-    if (
-      event.key ===
-      "Escape"
-    ) {
-      setOpen(
-        false
-      );
-
-      setActiveIndex(
-        -1
+      setActiveIndex((index) =>
+        index <= 0
+          ? suggestions.length - 1
+          : index - 1,
       );
     }
   }
 
   const showRecent =
-    open &&
-    value.trim().length ===
-      0 &&
-    recent.length >
-      0;
+    open && !query.trim() && recent.length > 0;
 
   const showSuggestions =
-    open &&
-    value.trim().length >=
-      2;
+    open && query.trim().length >= 2;
 
   return (
     <div
-      ref={
-        containerRef
-      }
+      ref={containerRef}
       className={`relative ${className}`}
     >
-      <form
-        onSubmit={
-          handleSubmit
-        }
-      >
+      <form onSubmit={handleSubmit}>
         <div className="relative">
           {navigating ? (
             <Loader2
               size={17}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin text-fuchsia-400"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin text-frost-accent"
             />
           ) : (
             <Search
               size={17}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-frost-muted"
             />
           )}
 
           <input
             type="search"
-            value={
-              value
-            }
-            onFocus={() =>
-              setOpen(
-                true
-              )
-            }
-            onChange={(
-              event
-            ) => {
-              setValue(
-                event.target.value
-              );
-
-              setOpen(
-                true
-              );
-
-              setNavigating(
-                false
-              );
-
-              setActiveIndex(
-                -1
-              );
+            value={query}
+            onFocus={() => setOpen(true)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setOpen(true);
+              setNavigating(false);
+              setActiveIndex(-1);
             }}
-            onKeyDown={
-              handleKeyboard
-            }
+            onKeyDown={handleKeyboard}
             autoComplete="off"
             placeholder="Buscar títulos..."
-            className="h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/70 pl-10 pr-4 text-[15px] text-zinc-200 outline-none transition placeholder:text-zinc-600 focus:border-fuchsia-500"
+            className="h-11 w-full rounded-xl border border-frost-border bg-frost-surface pl-10 pr-4 text-sm text-frost-text outline-none transition-colors placeholder:text-frost-muted focus:border-frost-accent"
           />
         </div>
       </form>
 
-      {(showRecent ||
-        showSuggestions) && (
-        <div className="absolute left-0 right-0 top-[52px] z-[80] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+      {(showRecent || showSuggestions) && (
+        <div className="absolute inset-x-0 top-13 z-80 overflow-hidden rounded-xl border border-frost-border bg-frost-bg shadow-2xl">
           {showRecent && (
             <div className="p-2">
-              <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-600">
+              <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-widest text-frost-muted">
                 Búsquedas recientes
               </p>
 
-              {recent.map(
-                (
-                  item
-                ) => (
-                  <div
-                    key={
-                      item
-                    }
-                    className="flex items-center rounded-lg hover:bg-zinc-900"
+              {recent.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center rounded-lg hover:bg-frost-raised"
+                >
+                  <button
+                    type="button"
+                    onClick={() => fullSearch(item)}
+                    className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left text-sm text-frost-text"
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        goToSearch(
-                          item
-                        )
-                      }
-                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left text-sm text-zinc-300"
-                    >
-                      <Clock
-                        size={15}
-                        className="shrink-0 text-zinc-600"
-                      />
+                    <Clock
+                      size={15}
+                      className="shrink-0 text-frost-muted"
+                    />
 
-                      <span className="truncate">
-                        {
-                          item
-                        }
-                      </span>
-                    </button>
+                    <span className="truncate">
+                      {item}
+                    </span>
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeRecent(
-                          item
-                        )
-                      }
-                      className="mr-2 rounded-md p-1.5 text-zinc-700 hover:bg-zinc-800 hover:text-zinc-300"
-                      aria-label={`Eliminar ${item}`}
-                    >
-                      <X
-                        size={14}
-                      />
-                    </button>
-                  </div>
-                )
-              )}
+                  <button
+                    type="button"
+                    onClick={() => removeRecent(item)}
+                    aria-label={`Eliminar ${item}`}
+                    className="mr-2 rounded-md p-1.5 text-frost-muted hover:bg-frost-surface hover:text-frost-text"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
           {showSuggestions && (
             <div className="p-2">
-              {suggestions.length ===
-                0 &&
-              fetching ? (
-                <div className="flex items-center gap-2 px-3 py-4 text-sm text-zinc-600">
-                  <Loader2
-                    size={15}
-                    className="animate-spin"
-                  />
-
-                  Buscando...
+              {suggestions.length === 0 ? (
+                <div className="flex items-center gap-2 px-3 py-4 text-sm text-frost-muted">
+                  {loading ? (
+                    <>
+                      <Loader2
+                        size={15}
+                        className="animate-spin"
+                      />
+                      Buscando...
+                    </>
+                  ) : (
+                    "No encontramos coincidencias."
+                  )}
                 </div>
-              ) : suggestions.length ===
-                  0 &&
-                !fetching ? (
-                <p className="px-3 py-4 text-sm text-zinc-600">
-                  No encontramos coincidencias.
-                </p>
               ) : (
                 <>
-                  {suggestions.map(
-                    (
-                      suggestion,
-                      index
-                    ) => (
+                  {suggestions.map((item, index) => {
+                    const posterImage = item.image
+                      ? getPosterImageConfig(item.image)
+                      : null;
+
+                    return (
                       <button
-                        key={
-                          suggestion.key
-                        }
+                        key={item.key}
                         type="button"
                         onMouseEnter={() =>
-                          setActiveIndex(
-                            index
-                          )
+                          setActiveIndex(index)
                         }
                         onClick={() =>
-                          openSuggestion(
-                            suggestion
-                          )
+                          openSuggestion(item)
                         }
-                        className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition ${
-                          activeIndex ===
-                          index
-                            ? "bg-zinc-900"
-                            : "hover:bg-zinc-900"
+                        className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors ${
+                          activeIndex === index
+                            ? "bg-frost-active"
+                            : "hover:bg-frost-raised"
                         }`}
                       >
-                        <div className="relative h-[54px] w-9 shrink-0 overflow-hidden rounded bg-zinc-900">
-                          {suggestion.image ? (
+                        <span className="relative h-13.5 w-9 shrink-0 overflow-hidden rounded bg-frost-surface">
+                          {posterImage ? (
                             <Image
-                              src={
-                                suggestion.image
-                              }
-                              alt={
-                                suggestion.title
-                              }
+                              src={posterImage.src}
+                              alt={item.title}
                               fill
                               sizes="36px"
                               unoptimized={
-                                shouldUseOriginalImage(
-                                  suggestion.image
-                                )
+                                posterImage.unoptimized
                               }
                               className="object-cover"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center text-[8px] text-zinc-700">
+                            <span className="flex h-full w-full items-center justify-center text-xs text-frost-muted">
                               —
-                            </div>
+                            </span>
                           )}
-                        </div>
+                        </span>
 
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-zinc-200">
-                            {
-                              suggestion.title
-                            }
-                          </p>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-frost-text">
+                            {item.title}
+                          </span>
 
-                          <p className="mt-1 text-xs text-zinc-600">
-                            {getKindLabel(
-                              suggestion.kind
-                            )}
-
-                            {suggestion.year &&
-                              ` · ${suggestion.year}`}
-                          </p>
-                        </div>
+                          <span className="mt-1 block text-xs text-frost-muted">
+                            {item.kind === "book"
+                              ? item.subtitle || "Lectura"
+                              : getMediaKindLabel(item.kind)}
+                            {item.year != null &&
+                              ` · ${item.year}`}
+                          </span>
+                        </span>
                       </button>
-                    )
-                  )}
+                    );
+                  })}
 
-                  {fetching && (
-                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-700">
+                  {loading && (
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-frost-muted">
                       <Loader2
                         size={12}
                         className="animate-spin"
                       />
-
                       Buscando más resultados...
                     </div>
                   )}
 
                   <button
                     type="button"
-                    onClick={() =>
-                      goToSearch(
-                        value
-                      )
-                    }
-                    className="mt-1 w-full border-t border-zinc-800 px-3 py-3 text-left text-sm font-medium text-fuchsia-400 transition hover:text-fuchsia-300"
+                    onClick={() => fullSearch(query)}
+                    className="mt-1 w-full border-t border-frost-border px-3 py-3 text-left text-sm font-medium text-frost-accent transition-colors hover:text-frost-accent-hover"
                   >
                     Ver todos los resultados para “
-                    {value.trim()}
-                    ”
+                    {query.trim()}”
                   </button>
                 </>
               )}

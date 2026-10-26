@@ -95,7 +95,7 @@ function UserAvatar({
 }) {
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-full bg-zinc-900"
+      className="relative shrink-0 overflow-hidden rounded-full bg-frost-surface"
       style={{
         width: size,
         height: size,
@@ -113,7 +113,7 @@ function UserAvatar({
           className="object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-zinc-500">
+        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-frost-muted">
           {review.displayName
             .slice(0, 1)
             .toUpperCase()}
@@ -136,7 +136,7 @@ function ReviewStars({
 }) {
   return (
     <div
-      className="flex items-center gap-[2px]"
+      className="flex items-center gap-0.5"
       aria-label={`${value.toFixed(1)} de 5 estrellas`}
     >
       {[0, 1, 2, 3, 4].map(
@@ -162,7 +162,7 @@ function ReviewStars({
                 size={size}
                 strokeWidth={0}
                 fill="currentColor"
-                className="absolute inset-0 text-zinc-700"
+                className="absolute inset-0 text-frost-muted"
               />
 
               {fill > 0 ? (
@@ -209,7 +209,7 @@ function ReviewCard({
         onOpen(review)
       }
       aria-label={`Abrir reseña de ${review.displayName}`}
-      className="group w-full rounded-xl border border-white/[0.08] bg-white/[0.018] p-4 text-left transition hover:border-white/[0.15] hover:bg-white/[0.035] focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500/60 sm:p-5"
+      className="group w-full rounded-xl border border-frost-border/80 bg-frost-surface/20 p-4 text-left transition hover:border-frost-accent/35 hover:bg-frost-surface/45 focus:outline-none focus-visible:ring-2 focus-visible:ring-frost-accent/60 sm:p-5"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
@@ -218,11 +218,11 @@ function ReviewCard({
           />
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-zinc-200">
+            <p className="truncate text-sm font-medium text-frost-text">
               {review.displayName}
             </p>
 
-            <p className="mt-0.5 text-[11px] text-zinc-600">
+            <p className="mt-0.5 frost-reviews-text-11 text-frost-muted">
               {formatDate(
                 review.createdAt,
               )}
@@ -235,7 +235,7 @@ function ReviewCard({
             <Heart
               size={14}
               fill="currentColor"
-              className="text-rose-400"
+              className="text-red-500"
             />
           ) : null}
 
@@ -268,7 +268,7 @@ function ReviewCard({
           Contiene spoilers
         </div>
       ) : (
-        <p className="mt-4 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-7 text-zinc-400">
+        <p className="mt-4 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-7 text-frost-muted">
           {review.reviewText}
         </p>
       )}
@@ -307,8 +307,8 @@ function SectionHeading({
   children: string;
 }) {
   return (
-    <div className="border-b border-white/10 pb-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.21em] text-zinc-500">
+    <div className="border-b border-frost-border/60 pb-3">
+      <h2 className="frost-reviews-text-11 font-semibold uppercase frost-reviews-track-021 text-frost-muted">
         {children}
       </h2>
     </div>
@@ -338,7 +338,7 @@ function ReviewUser({
         size={42}
       />
 
-      <p className="min-w-0 truncate text-[17px] font-semibold text-zinc-100">
+      <p className="min-w-0 truncate frost-reviews-text-17 font-semibold text-frost-text">
         {review.displayName}
       </p>
     </>
@@ -377,7 +377,7 @@ function ReviewPoster({
   title: string;
 }) {
   return (
-    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-zinc-900 shadow-[0_12px_36px_rgba(0,0,0,0.32)]">
+    <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-frost-surface frost-reviews-poster-shadow">
       {src ? (
         <Image
           src={src}
@@ -390,7 +390,7 @@ function ReviewPoster({
           className="object-cover"
         />
       ) : (
-        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-700">
+        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
           Sin portada
         </div>
       )}
@@ -417,7 +417,7 @@ function ReviewRating({
             size={16}
           />
 
-          <span className="text-sm text-zinc-400">
+          <span className="text-sm text-frost-muted">
             {review.rating.toFixed(
               1,
             )}
@@ -429,7 +429,7 @@ function ReviewRating({
         <Heart
           size={19}
           fill="currentColor"
-          className="text-rose-400"
+          className="text-red-500"
           aria-label="Le gustó"
         />
       ) : null}
@@ -458,12 +458,12 @@ function ReviewText({
 
           Esta reseña contiene spoilers
 
-          <span className="text-xs text-zinc-600 group-open:hidden">
+          <span className="text-xs text-frost-muted group-open:hidden">
             — mostrar
           </span>
         </summary>
 
-        <p className="mt-4 whitespace-pre-wrap break-words text-[16px] leading-7 text-zinc-300">
+        <p className="mt-4 whitespace-pre-wrap break-words frost-reviews-text-16 leading-7 text-frost-text">
           {review.reviewText}
         </p>
       </details>
@@ -471,7 +471,7 @@ function ReviewText({
   }
 
   return (
-    <p className="whitespace-pre-wrap break-words text-[16px] leading-7 text-zinc-300">
+    <p className="whitespace-pre-wrap break-words frost-reviews-text-16 leading-7 text-frost-text">
       {review.reviewText}
     </p>
   );
@@ -516,7 +516,7 @@ function ReviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-5"
+      className="fixed inset-0 frost-reviews-z-250 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-5"
       onMouseDown={(
         event,
       ) => {
@@ -528,7 +528,7 @@ function ReviewModal({
         }
       }}
     >
-      <article className="relative max-h-[calc(100dvh-24px)] w-full max-w-[820px] overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#131820] shadow-[0_30px_100px_rgba(0,0,0,0.75)]">
+      <article className="relative frost-reviews-modal-max-height w-full frost-reviews-modal-width overflow-y-auto rounded-2xl border border-frost-border/80 bg-frost-surface frost-reviews-modal-shadow">
         {/* ==================================================
             MOBILE
         ================================================== */}
@@ -540,16 +540,16 @@ function ReviewModal({
 
           <div className="mt-5 flex items-start gap-4">
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+              <p className="frost-reviews-text-9 font-semibold uppercase frost-reviews-track-020 text-frost-muted">
                 {mediaTypeLabel}
               </p>
 
-              <h3 className="mt-1.5 break-words text-[21px] font-bold leading-[1.08] tracking-[-0.025em] text-white">
+              <h3 className="mt-1.5 break-words frost-reviews-text-21 font-bold frost-reviews-leading-108 frost-reviews-track-neg025 text-frost-text">
                 {mediaTitle}
               </h3>
 
               {mediaYear ? (
-                <p className="mt-1.5 text-sm text-zinc-500">
+                <p className="mt-1.5 text-sm text-frost-muted">
                   {mediaYear}
                 </p>
               ) : null}
@@ -560,12 +560,12 @@ function ReviewModal({
                 />
               </div>
 
-              <p className="mt-4 text-sm text-zinc-500">
+              <p className="mt-4 text-sm text-frost-muted">
                 {reviewDate}
               </p>
             </div>
 
-            <div className="w-[86px] shrink-0">
+            <div className="frost-reviews-width-86 shrink-0">
               <ReviewPoster
                 src={mediaPosterUrl}
                 title={mediaTitle}
@@ -597,21 +597,21 @@ function ReviewModal({
             review={review}
           />
 
-          <div className="mt-7 grid grid-cols-[minmax(0,1fr)_185px] items-start gap-8">
+          <div className="mt-7 grid frost-reviews-modal-grid items-start gap-8">
             {/* CONTENT */}
 
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+              <p className="frost-reviews-text-10 font-semibold uppercase frost-reviews-track-020 text-frost-muted">
                 {mediaTypeLabel}
               </p>
 
               <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <h3 className="max-w-[480px] break-words text-[34px] font-bold leading-[1.04] tracking-[-0.03em] text-white">
+                <h3 className="frost-reviews-width-480 break-words frost-reviews-text-34 font-bold frost-reviews-leading-104 frost-reviews-track-neg03 text-frost-text">
                   {mediaTitle}
                 </h3>
 
                 {mediaYear ? (
-                  <span className="text-[22px] font-normal text-zinc-500">
+                  <span className="frost-reviews-text-22 font-normal text-frost-muted">
                     {mediaYear}
                   </span>
                 ) : null}
@@ -623,11 +623,11 @@ function ReviewModal({
                 />
               </div>
 
-              <p className="mt-5 text-[14px] text-zinc-500">
+              <p className="mt-5 frost-reviews-text-14 text-frost-muted">
                 {reviewDate}
               </p>
 
-              <div className="mt-7 max-w-[500px]">
+              <div className="mt-7 frost-reviews-width-500">
                 <ReviewText
                   review={review}
                 />
@@ -644,7 +644,7 @@ function ReviewModal({
 
             {/* POSTER RIGHT */}
 
-            <div className="w-[185px]">
+            <div className="frost-reviews-width-185">
               <ReviewPoster
                 src={mediaPosterUrl}
                 title={mediaTitle}
@@ -737,6 +737,33 @@ export default function MediaReviews({
 
   return (
     <>
+      <style>{`
+        .frost-reviews-z-250 { z-index: 250; }
+        .frost-reviews-modal-width { max-width: 820px; }
+        .frost-reviews-modal-max-height { max-height: calc(100dvh - 24px); }
+        .frost-reviews-width-480 { max-width: 480px; }
+        .frost-reviews-width-500 { max-width: 500px; }
+        .frost-reviews-width-86 { width: 86px; }
+        .frost-reviews-width-185 { width: 185px; }
+        .frost-reviews-modal-grid { grid-template-columns: minmax(0,1fr) 185px; }
+        .frost-reviews-modal-shadow { box-shadow: 0 30px 100px rgba(0,0,0,.75); }
+        .frost-reviews-poster-shadow { box-shadow: 0 12px 36px rgba(0,0,0,.32); }
+        .frost-reviews-track-neg025 { letter-spacing: -.025em; }
+        .frost-reviews-track-neg03 { letter-spacing: -.03em; }
+        .frost-reviews-track-021 { letter-spacing: .21em; }
+        .frost-reviews-track-020 { letter-spacing: .2em; }
+        .frost-reviews-leading-104 { line-height: 1.04; }
+        .frost-reviews-leading-108 { line-height: 1.08; }
+        .frost-reviews-text-9 { font-size: 9px; }
+        .frost-reviews-text-10 { font-size: 10px; }
+        .frost-reviews-text-11 { font-size: 11px; }
+        .frost-reviews-text-14 { font-size: 14px; }
+        .frost-reviews-text-16 { font-size: 16px; }
+        .frost-reviews-text-17 { font-size: 17px; }
+        .frost-reviews-text-21 { font-size: 21px; }
+        .frost-reviews-text-22 { font-size: 22px; }
+        .frost-reviews-text-34 { font-size: 34px; }
+      `}</style>
       <div className="space-y-7">
         {hasFriendReviews ? (
           <section>
@@ -777,11 +804,11 @@ export default function MediaReviews({
             </SectionHeading>
 
             <div className="py-4">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-frost-muted">
                 Aún no hay reseñas.
               </p>
 
-              <p className="mt-1.5 text-sm text-zinc-600">
+              <p className="mt-1.5 text-sm text-frost-muted">
                 Sé el primero en escribir una.
               </p>
             </div>
