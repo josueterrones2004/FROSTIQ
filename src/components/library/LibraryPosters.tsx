@@ -19,7 +19,7 @@ import type {
 
 import LibraryReviewModalCard from "@/components/media/LibraryReviewModalCard";
 import StarRating from "@/components/media/StarRating";
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
+import { getPosterImageConfig } from "@/lib/image-optimization";
 
 import {
   hrefOf,
@@ -42,20 +42,50 @@ function Poster({
   item: LibraryEntry;
   eager?: boolean;
 }) {
+  const posterImage = item.coverUrl
+    ? getPosterImageConfig(item.coverUrl)
+    : null;
+
   return (
-    <div className="relative aspect-[2/3] overflow-hidden rounded-[13px] bg-zinc-900">
-      {item.coverUrl ? (
+    <div className="relative aspect-2/3 overflow-hidden frost-poster-radius bg-frost-surface">
+      <style>{`
+        .frost-poster-radius {
+          border-radius: 13px;
+        }
+
+        .frost-poster-border {
+          border-width: 5px;
+        }
+
+        .frost-tip-width {
+          max-width: min(340px, calc(100vw - 32px));
+        }
+
+        .group:hover .group-hover\\:frost-poster-scale {
+          transform: scale(1.075);
+        }
+
+        .group:hover .group-hover\\:frost-rating-width,
+        .group:focus-within .group-focus-within\\:frost-rating-width {
+          width: 132px;
+        }
+
+        .group:hover .group-hover\\:frost-actions-width,
+        .group:focus-within .group-focus-within\\:frost-actions-width {
+          width: var(--hover-width);
+        }
+      `}</style>
+
+      {posterImage ? (
         <div className="absolute inset-0 overflow-hidden">
-          <div className="relative h-full w-full transition-transform duration-[400ms] group-hover:scale-[1.075] motion-reduce:transition-none">
+          <div className="relative h-full w-full transition-transform duration-400 group-hover:frost-poster-scale motion-reduce:transition-none">
             <Image
-              src={item.coverUrl}
+              src={posterImage.src}
               alt={item.title}
               fill
               sizes="(max-width:640px) 46vw, (max-width:1024px) 25vw, 180px"
               loading={eager ? "eager" : "lazy"}
-              unoptimized={
-                shouldUseOriginalImage(item.coverUrl)
-              }
+              unoptimized={posterImage.unoptimized}
               className="object-cover"
               style={{
                 objectPosition:
@@ -68,14 +98,14 @@ function Poster({
           </div>
         </div>
       ) : (
-        <div className="absolute inset-0 flex h-full items-center justify-center text-zinc-600">
+        <div className="absolute inset-0 flex h-full w-full items-center justify-center text-frost-muted">
           <Library size={28} />
         </div>
       )}
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-20 rounded-[13px] border-[5px] border-transparent transition-colors duration-200 group-hover:border-violet-300/85 group-focus-within:border-violet-300/85"
+        className="pointer-events-none absolute inset-0 z-20 frost-poster-radius frost-poster-border border-transparent transition-colors duration-200 group-hover:border-frost-accent/85 group-focus-within:border-frost-accent/85"
       />
 
       <Link
@@ -97,11 +127,14 @@ function TitleTip({
   title: string;
 }) {
   return (
-    <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[min(340px,calc(100vw-32px))] -translate-x-1/2 translate-y-1 opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
-      <div className="relative rounded-lg border border-violet-300/40 bg-[#252d3e] px-3 py-2 text-center text-[13px] font-bold leading-snug text-zinc-100 shadow-xl">
+    <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max frost-tip-width -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+      <div
+        className="relative rounded-lg border border-frost-accent/40 bg-frost-raised px-3 py-2 text-center font-bold leading-snug text-frost-text shadow-xl"
+        style={{ fontSize: 13 }}
+      >
         {title}
 
-        <span className="absolute left-1/2 top-full h-[10px] w-[10px] -translate-x-1/2 -translate-y-[5px] rotate-45 border-b border-r border-violet-300/40 bg-[#252d3e]" />
+        <span className="absolute left-1/2 top-full size-2.5 -translate-x-1/2 -translate-y-1.25 rotate-45 border-b border-r border-frost-accent/40 bg-frost-raised" />
       </div>
     </div>
   );
@@ -118,7 +151,7 @@ function Pill({
 }) {
   return (
     <div className="pointer-events-none absolute bottom-0 left-1/2 z-30 -translate-x-1/2 translate-y-1/2">
-      <div className="flex min-h-10 w-max items-center justify-center whitespace-nowrap rounded-xl border border-white/20 bg-[#2c3446] px-3 py-1.5 text-sm font-semibold text-white shadow-xl">
+      <div className="flex min-h-10 w-max items-center justify-center whitespace-nowrap rounded-xl border border-frost-border bg-frost-raised px-3 py-1.5 text-sm font-semibold text-frost-text shadow-xl">
         {children}
       </div>
     </div>
@@ -140,8 +173,8 @@ function RatingPill({
 
   return (
     <div className="pointer-events-none absolute bottom-0 left-1/2 z-30 -translate-x-1/2 translate-y-1/2">
-      <div className="relative flex h-10 w-max items-center justify-center rounded-xl border border-white/20 bg-[#2c3446] px-3 shadow-xl transition-[width] duration-200 group-hover:w-[132px] group-focus-within:w-[132px]">
-        <span className="whitespace-nowrap text-sm font-semibold text-white transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0">
+      <div className="relative flex h-10 w-max items-center justify-center rounded-xl border border-frost-border bg-frost-raised px-3 shadow-xl transition-all duration-200 group-hover:frost-rating-width group-focus-within:frost-rating-width">
+        <span className="whitespace-nowrap text-sm font-semibold text-frost-text transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0">
           Completado
         </span>
 
@@ -209,7 +242,7 @@ function StatusPill({
             label: "Registrar avance",
             icon: Clock3,
             run: () => actions.progress(item),
-            color: "hover:text-sky-300",
+            color: "hover:text-frost-accent",
           },
         ]
       : []),
@@ -229,7 +262,7 @@ function StatusPill({
             ? "IN_PROGRESS"
             : "DROPPED",
         ),
-      color: "hover:text-violet-300",
+      color: "hover:text-frost-accent",
     },
 
     {
@@ -253,7 +286,7 @@ function StatusPill({
               `${hoverWidth}px`,
           } as CSSProperties
         }
-        className={`relative flex h-10 w-max items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-[#2c3446] shadow-xl transition-[width,opacity] duration-200 group-hover:w-[var(--hover-width)] group-focus-within:w-[var(--hover-width)] ${
+        className={`relative flex h-10 w-max items-center justify-center overflow-hidden rounded-xl border border-frost-border bg-frost-raised shadow-xl transition-all duration-200 group-hover:frost-actions-width group-focus-within:frost-actions-width ${
           view === "ALL"
             ? "opacity-100"
             : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
@@ -261,7 +294,7 @@ function StatusPill({
       >
         {/* ETIQUETA EN REPOSO */}
 
-        <span className="whitespace-nowrap px-3 text-sm font-semibold text-white transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0">
+        <span className="whitespace-nowrap px-3 text-sm font-semibold text-frost-text transition-opacity duration-150 group-hover:opacity-0 group-focus-within:opacity-0">
           {label}
         </span>
 
@@ -287,7 +320,8 @@ function StatusPill({
                   event.stopPropagation();
                   run();
                 }}
-                className={`flex h-9 w-[37px] shrink-0 items-center justify-center rounded-lg text-zinc-200 transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 disabled:opacity-40 ${color}`}
+                style={{ width: 37 }}
+                className={`flex h-9 shrink-0 items-center justify-center rounded-lg text-frost-text transition-colors hover:bg-frost-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-frost-accent disabled:opacity-40 ${color}`}
               >
                 <Icon size={19} />
               </button>
@@ -324,6 +358,34 @@ export function LibraryPoster({
 
   return (
     <article className="group relative z-0 min-w-0 pb-6 hover:z-40 focus-within:z-40">
+      <style>{`
+        .frost-poster-radius {
+          border-radius: 13px;
+        }
+
+        .frost-poster-border {
+          border-width: 5px;
+        }
+
+        .frost-tip-width {
+          max-width: min(340px, calc(100vw - 32px));
+        }
+
+        .group:hover .group-hover\\:frost-poster-scale {
+          transform: scale(1.075);
+        }
+
+        .group:hover .group-hover\\:frost-rating-width,
+        .group:focus-within .group-focus-within\\:frost-rating-width {
+          width: 132px;
+        }
+
+        .group:hover .group-hover\\:frost-actions-width,
+        .group:focus-within .group-focus-within\\:frost-actions-width {
+          width: var(--hover-width);
+        }
+      `}</style>
+
       <TitleTip
         title={`${item.title}${
           item.releaseYear
@@ -370,6 +432,34 @@ export function ReviewPoster({
 }) {
   return (
     <article className="group relative z-0 min-w-0 pb-6 hover:z-40 focus-within:z-40">
+      <style>{`
+        .frost-poster-radius {
+          border-radius: 13px;
+        }
+
+        .frost-poster-border {
+          border-width: 5px;
+        }
+
+        .frost-tip-width {
+          max-width: min(340px, calc(100vw - 32px));
+        }
+
+        .group:hover .group-hover\\:frost-poster-scale {
+          transform: scale(1.075);
+        }
+
+        .group:hover .group-hover\\:frost-rating-width,
+        .group:focus-within .group-focus-within\\:frost-rating-width {
+          width: 132px;
+        }
+
+        .group:hover .group-hover\\:frost-actions-width,
+        .group:focus-within .group-focus-within\\:frost-actions-width {
+          width: var(--hover-width);
+        }
+      `}</style>
+
       <TitleTip
         title={`${item.review.title}${
           item.review.release_year
@@ -379,8 +469,8 @@ export function ReviewPoster({
       />
 
       <div className="relative">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-[13px] bg-zinc-900">
-          <div className="relative h-full w-full transition-transform duration-[400ms] group-hover:scale-[1.075]">
+        <div className="relative aspect-2/3 overflow-hidden frost-poster-radius bg-frost-surface">
+          <div className="relative h-full w-full transition-transform duration-400 group-hover:frost-poster-scale">
             <LibraryReviewModalCard
               mode="saved"
               mediaType={item.mediaType}
@@ -391,7 +481,7 @@ export function ReviewPoster({
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-20 rounded-[13px] border-[5px] border-transparent transition-colors duration-200 group-hover:border-violet-300/85"
+            className="pointer-events-none absolute inset-0 z-20 frost-poster-radius frost-poster-border border-transparent transition-colors duration-200 group-hover:border-frost-accent/85"
           />
         </div>
 

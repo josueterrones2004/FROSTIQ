@@ -5,7 +5,7 @@ import {
   BookOpen,
   X,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 export type BookReadingEdition = {
   id: string;
@@ -80,6 +80,53 @@ export default function BookProgressModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  const closingRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const animateClose = useCallback(
+    (completedBook = false) => {
+      if (closingRef.current) return;
+
+      closingRef.current = true;
+      setClosing(true);
+      setDiscardOpen(false);
+
+      const finish = () => {
+        closeTimerRef.current = null;
+
+        if (completedBook) {
+          onCompleted();
+        } else {
+          onClose();
+        }
+      };
+
+      if (
+        window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches
+      ) {
+        finish();
+        return;
+      }
+
+      closeTimerRef.current = window.setTimeout(
+        finish,
+        220,
+      );
+    },
+    [onClose, onCompleted, setDiscardOpen],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
 
   const pagesRead =
     pagesText === ""
@@ -107,16 +154,19 @@ export default function BookProgressModal({
         return;
       }
 
-      if (saving) return;
+      if (saving || closingRef.current) return;
 
       if (changed) {
         setDiscardOpen(true);
       } else {
-        onClose();
+        animateClose();
       }
     }
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener(
+      "keydown",
+      handleEscape,
+    );
 
     return () => {
       window.removeEventListener(
@@ -127,17 +177,17 @@ export default function BookProgressModal({
   }, [
     changed,
     discardOpen,
-    onClose,
+    animateClose,
     saving,
   ]);
 
   function requestClose() {
-    if (saving) return;
+    if (saving || closingRef.current) return;
 
     if (changed) {
       setDiscardOpen(true);
     } else {
-      onClose();
+      animateClose();
     }
   }
 
@@ -145,6 +195,7 @@ export default function BookProgressModal({
     setPagesText(
       String(clampPages(value, totalPages)),
     );
+
     setError("");
   }
 
@@ -176,6 +227,7 @@ export default function BookProgressModal({
     const currentPages = pagesRead ?? 0;
 
     setEditionId(id);
+
     setPagesText(
       String(
         clampPages(
@@ -191,6 +243,7 @@ export default function BookProgressModal({
   async function save() {
     if (
       saving ||
+      closingRef.current ||
       !edition ||
       totalPages <= 0 ||
       pagesRead === null
@@ -208,11 +261,7 @@ export default function BookProgressModal({
         totalPages,
       });
 
-      if (completed) {
-        onCompleted();
-      } else {
-        onClose();
-      }
+      animateClose(completed);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -225,24 +274,95 @@ export default function BookProgressModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: 300 }}
+    >
+      <style>{`
+        @keyframes frost-book-pop-in {
+          from {
+            opacity: 0;
+            transform: scale(0.92);
+          }
+
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes frost-book-pop-out {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+
+          to {
+            opacity: 0;
+            transform: scale(0.92);
+          }
+        }
+
+        @keyframes frost-book-shade-in {
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes frost-book-shade-out {
+          from {
+            opacity: 1;
+          }
+
+          to {
+            opacity: 0;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .frost-book-popup,
+          .frost-book-backdrop {
+            animation-duration: 1ms !important;
+          }
+        }
+      `}</style>
+
       <button
         type="button"
         aria-label="Cerrar registro de lectura"
         onClick={requestClose}
-        className="absolute inset-0 bg-black/75 backdrop-blur-[3px]"
+        disabled={closing || saving}
+        className="frost-book-backdrop absolute inset-0 bg-black/75"
+        style={{
+          backdropFilter: "blur(3px)",
+          animation: closing
+            ? "frost-book-shade-out 220ms ease-in both"
+            : "frost-book-shade-in 280ms ease-out both",
+        }}
       />
 
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-[520px] overflow-hidden rounded-2xl border border-white/15 bg-[#1b2030] shadow-[0_24px_70px_rgba(0,0,0,0.6)]"
+        className="frost-book-popup relative z-10 w-full overflow-hidden rounded-2xl border border-frost-border bg-frost-surface"
+        style={{
+          maxWidth: 520,
+          boxShadow: "0 24px 70px rgba(0,0,0,0.6)",
+          transformOrigin: "center",
+          animation: closing
+            ? "frost-book-pop-out 220ms ease-in both"
+            : "frost-book-pop-in 280ms cubic-bezier(.22,1,.36,1) both",
+        }}
       >
-        <header className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+        <header className="flex items-center justify-between border-b border-frost-border/60 px-6 py-5">
           <h2
             id={titleId}
-            className="text-lg font-semibold text-white"
+            className="text-lg font-semibold text-frost-text"
           >
             Actualizar lectura
           </h2>
@@ -250,9 +370,9 @@ export default function BookProgressModal({
           <button
             type="button"
             aria-label="Cerrar"
-            disabled={saving}
+            disabled={saving || closing}
             onClick={requestClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white disabled:opacity-40"
+            className="rounded-lg p-1.5 text-frost-muted hover:bg-frost-raised/30 hover:text-frost-text disabled:opacity-40"
           >
             <X size={19} />
           </button>
@@ -262,10 +382,10 @@ export default function BookProgressModal({
           <div className="mb-7 text-center">
             <BookOpen
               size={22}
-              className="mx-auto mb-3 text-violet-300"
+              className="mx-auto mb-3 text-frost-accent"
             />
 
-            <h3 className="text-xl font-semibold text-white">
+            <h3 className="text-xl font-semibold text-frost-text">
               {bookTitle}
             </h3>
           </div>
@@ -280,17 +400,17 @@ export default function BookProgressModal({
             <>
               {editions.length > 1 && (
                 <label className="mb-7 block">
-                  <span className="mb-2 block text-xs font-medium text-zinc-400">
+                  <span className="mb-2 block text-xs font-medium text-frost-muted">
                     Edición
                   </span>
 
                   <select
                     value={editionId}
-                    disabled={saving}
+                    disabled={saving || closing}
                     onChange={(event) =>
                       selectEdition(event.target.value)
                     }
-                    className="h-11 w-full rounded-xl border border-white/15 bg-[#252d3e] px-3 text-sm text-zinc-200 outline-none focus:border-violet-300 disabled:opacity-40"
+                    className="h-11 w-full rounded-xl border border-frost-border bg-frost-raised px-3 text-sm text-frost-text outline-none focus:border-frost-accent disabled:opacity-40"
                   >
                     {editions.map((item) => (
                       <option
@@ -305,7 +425,7 @@ export default function BookProgressModal({
                     ))}
                   </select>
 
-                  <p className="mt-2 text-xs text-zinc-500">
+                  <p className="mt-2 text-xs text-frost-muted">
                     El número de páginas puede variar
                     según la edición.
                   </p>
@@ -317,13 +437,13 @@ export default function BookProgressModal({
                   <button
                     key={amount}
                     type="button"
-                    disabled={saving}
+                    disabled={saving || closing}
                     onClick={() =>
                       updatePages(
                         (pagesRead ?? 0) + amount,
                       )
                     }
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#30394e] text-sm font-medium text-zinc-200 transition-colors hover:bg-[#3b4560] disabled:opacity-40"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-frost-border bg-frost-raised text-sm font-medium text-frost-text transition-colors hover:bg-frost-active disabled:opacity-40"
                   >
                     {amount}
                   </button>
@@ -335,7 +455,7 @@ export default function BookProgressModal({
                   pattern="[0-9]*"
                   aria-label="Páginas leídas"
                   autoComplete="off"
-                  disabled={saving}
+                  disabled={saving || closing}
                   value={pagesText}
                   placeholder={String(totalPages)}
                   onChange={(event) =>
@@ -346,20 +466,20 @@ export default function BookProgressModal({
                       setPagesText(String(pagesRead));
                     }
                   }}
-                  className="h-20 w-[125px] min-w-0 rounded-xl border border-violet-300/35 bg-[#202638] px-2 text-center text-3xl font-medium tabular-nums text-white outline-none placeholder:text-zinc-600 focus:border-violet-300 disabled:opacity-40"
+                  className="h-20 w-32 min-w-0 rounded-xl border border-frost-accent/35 bg-frost-bg px-2 text-center text-3xl font-medium tabular-nums text-frost-text outline-none placeholder:text-frost-muted focus:border-frost-accent disabled:opacity-40"
                 />
 
                 {([1, 5] as const).map((amount) => (
                   <button
                     key={amount}
                     type="button"
-                    disabled={saving}
+                    disabled={saving || closing}
                     onClick={() =>
                       updatePages(
                         (pagesRead ?? 0) + amount,
                       )
                     }
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#30394e] text-sm font-medium text-zinc-200 transition-colors hover:bg-[#3b4560] disabled:opacity-40"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-frost-border bg-frost-raised text-sm font-medium text-frost-text transition-colors hover:bg-frost-active disabled:opacity-40"
                   >
                     +{amount}
                   </button>
@@ -373,17 +493,17 @@ export default function BookProgressModal({
                   min={0}
                   max={totalPages}
                   step={1}
-                  disabled={saving}
+                  disabled={saving || closing}
                   value={pagesRead ?? 0}
                   onChange={(event) =>
                     updatePages(
                       Number(event.target.value),
                     )
                   }
-                  className="w-full cursor-pointer accent-violet-300 disabled:cursor-not-allowed"
+                  className="w-full cursor-pointer accent-frost-accent disabled:cursor-not-allowed"
                 />
 
-                <p className="mt-2 text-center text-xs text-zinc-500">
+                <p className="mt-2 text-center text-xs text-frost-muted">
                   {pagesRead ?? 0} de {totalPages} páginas
                 </p>
               </div>
@@ -400,12 +520,12 @@ export default function BookProgressModal({
           )}
         </div>
 
-        <footer className="flex justify-end gap-2 border-t border-white/10 px-6 py-5">
+        <footer className="flex justify-end gap-2 border-t border-frost-border/60 px-6 py-5">
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || closing}
             onClick={requestClose}
-            className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+            className="rounded-lg border border-frost-border px-4 py-2.5 text-sm font-medium text-frost-muted hover:bg-frost-raised/30 disabled:opacity-40"
           >
             Cancelar
           </button>
@@ -414,12 +534,13 @@ export default function BookProgressModal({
             type="button"
             disabled={
               saving ||
+              closing ||
               !edition ||
               totalPages <= 0 ||
               pagesRead === null
             }
             onClick={() => void save()}
-            className="rounded-lg bg-violet-300 px-4 py-2.5 text-sm font-semibold text-[#161827] hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg bg-frost-accent px-4 py-2.5 text-sm font-semibold text-frost-bg hover:bg-frost-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving
               ? "Guardando..."
@@ -429,38 +550,43 @@ export default function BookProgressModal({
       </section>
 
       {discardOpen && (
-        <div className="fixed inset-0 z-[310] flex items-center justify-center bg-black/70 p-4">
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/70 p-4"
+          style={{ zIndex: 310 }}
+        >
           <section
             role="alertdialog"
             aria-modal="true"
             aria-label="Descartar progreso"
-            className="w-full max-w-sm rounded-xl border border-white/15 bg-[#252d3e] p-6 shadow-2xl"
+            className="w-full max-w-sm rounded-xl border border-frost-border bg-frost-raised p-6 shadow-2xl"
           >
             <AlertTriangle
               size={23}
               className="mb-4 text-amber-300"
             />
 
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-frost-text">
               ¿Descartar cambios?
             </h3>
 
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
+            <p className="mt-2 text-sm leading-6 text-frost-muted">
               El avance que modificaste no se guardará.
             </p>
 
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setDiscardOpen(false)}
-                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-200"
+                onClick={() =>
+                  setDiscardOpen(false)
+                }
+                className="rounded-lg border border-frost-border px-4 py-2 text-sm text-frost-text"
               >
                 Seguir editando
               </button>
 
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => animateClose()}
                 className="rounded-lg bg-red-400/15 px-4 py-2 text-sm font-medium text-red-200"
               >
                 Descartar

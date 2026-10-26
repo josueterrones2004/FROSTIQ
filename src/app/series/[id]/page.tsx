@@ -1136,7 +1136,7 @@ export default async function SeriesDetailsPage({
   ======================================================= */
 
   return (
-    <div className="min-h-full bg-black">
+    <div className="min-h-full bg-frost-bg">
       <MediaDetailLayout
         title={
           show.name
@@ -1242,7 +1242,7 @@ export default async function SeriesDetailsPage({
 
       {/* REVIEWS SIEMPRE HASTA ABAJO */}
 
-      <section className="-mt-8 bg-black pb-12 sm:-mt-10 lg:-mt-12">
+      <section className="-mt-8 bg-frost-bg pb-12 sm:-mt-10 lg:-mt-12">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <MediaReviews
             friendReviews={

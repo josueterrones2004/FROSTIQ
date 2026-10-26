@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import LibraryRecentCarousel from "../LibraryRecentCarousel";
+
 import type {
   Actions,
   CompletedReview,
@@ -19,7 +20,11 @@ type Props = {
   children: ReactNode;
 };
 
-/** Mantiene el layout de escritorio; el contenido central es compartido. */
+/**
+ * Biblioteca de escritorio.
+ * Mantiene la distribución original.
+ * Paleta: FROSTIQ Cobalt Ink.
+ */
 export default function DesktopLibrary({
   recent,
   reviews,
@@ -30,9 +35,12 @@ export default function DesktopLibrary({
   children,
 }: Props) {
   return (
-    <div className="mx-auto w-full max-w-[1650px] pb-20">
+    <div
+      className="mx-auto w-full pb-20 text-frost-text"
+      style={{ maxWidth: 1650 }}
+    >
       <header className="mb-7">
-        <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-frost-text sm:text-4xl">
           Tu biblioteca
         </h1>
       </header>
@@ -45,14 +53,19 @@ export default function DesktopLibrary({
       />
 
       <div className="flex gap-9 xl:gap-12">
-        <aside className="hidden w-[210px] shrink-0 lg:block xl:w-[240px]">
-          <div className="sticky top-[90px]">
-            <div className="mb-7">{searchBar}</div>
+        <aside className="hidden w-52.5 shrink-0 lg:block xl:w-60">
+          <div className="sticky top-22.5">
+            <div className="mb-7">
+              {searchBar}
+            </div>
+
             {filters}
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {children}
+        </main>
       </div>
     </div>
   );

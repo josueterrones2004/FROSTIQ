@@ -739,7 +739,14 @@ export default async function PublicProfilePage({
 
   return (
     <main className="pb-20">
-      <div className="mx-auto w-full lg:max-w-[1160px]">
+      <style>{`
+        .frost-public-profile-text-10 { font-size: 10px; }
+        @media (min-width: 1024px) {
+          .frost-public-profile-width { max-width: 1160px; }
+          .frost-public-profile-grid { grid-template-columns: minmax(0, 1fr) 290px; }
+        }
+      `}</style>
+      <div className="mx-auto w-full frost-public-profile-width">
         <ProfileMediaHeader
           banner={
             profile.banner_url ? (
@@ -768,7 +775,7 @@ export default async function PublicProfilePage({
                 }
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-zinc-500">
+              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-frost-muted">
                 {displayName
                   .slice(
                     0,
@@ -782,7 +789,7 @@ export default async function PublicProfilePage({
             isOwnProfile ? (
               <Link
                 href="/profile/customize"
-                className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-950/95 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
+                className="inline-flex items-center gap-2 rounded-full border border-frost-border bg-frost-bg/95 px-4 py-2 text-sm font-medium text-frost-text transition hover:border-frost-accent/40 hover:bg-frost-surface"
               >
                 <Settings2
                   size={
@@ -809,7 +816,7 @@ export default async function PublicProfilePage({
         >
           <div className="text-left">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+              <h1 className="text-2xl font-bold tracking-tight text-frost-text">
                 {
                   displayName
                 }
@@ -817,20 +824,20 @@ export default async function PublicProfilePage({
 
               {profile.special_role ===
                 "OWNER" && (
-                <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] text-fuchsia-300">
+                <span className="rounded-full border border-frost-accent/30 bg-frost-accent/10 px-2 py-0.5 frost-public-profile-text-10 text-frost-accent">
                   Owner
                 </span>
               )}
             </div>
 
             {profile.username && (
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-frost-muted">
                 @{profile.username}
               </p>
             )}
 
             {profile.bio && (
-              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-frost-text">
                 {
                   profile.bio
                 }
@@ -863,7 +870,7 @@ export default async function PublicProfilePage({
           </div>
         </ProfileMediaHeader>
 
-        <nav className="mt-6 grid grid-cols-4 border-y border-zinc-800 lg:hidden">
+        <nav className="mt-6 grid grid-cols-4 border-y border-frost-border lg:hidden">
           <MobileTabLink
             href={`${profilePath}?tab=profile`}
             active={
@@ -961,7 +968,7 @@ export default async function PublicProfilePage({
           )}
         </div>
 
-        <div className="mt-9 hidden gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_290px]">
+        <div className="mt-9 hidden gap-10 px-6 lg:grid frost-public-profile-grid">
           <div className="min-w-0">
             {profile.username && (
               <ProfileSections
@@ -1098,17 +1105,17 @@ export default async function PublicProfilePage({
                             />
                           </div>
                         ) : (
-                          <div className="h-14 w-10 bg-zinc-900" />
+                          <div className="h-14 w-10 bg-frost-surface" />
                         )}
 
                         <div>
-                          <p className="text-sm text-zinc-300">
+                          <p className="text-sm text-frost-text">
                             {
                               item.title
                             }
                           </p>
 
-                          <p className="text-xs text-zinc-600">
+                          <p className="text-xs text-frost-muted">
                             {getCurrentLabel(
                               item.media_type
                             )}
@@ -1119,7 +1126,7 @@ export default async function PublicProfilePage({
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600">
+                <p className="text-sm text-frost-muted">
                   No hay ningún medio en curso.
                 </p>
               )}
@@ -1169,7 +1176,7 @@ export default async function PublicProfilePage({
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600">
+                <p className="text-sm text-frost-muted">
                   Todavía no hay reviews.
                 </p>
               )}
@@ -1193,7 +1200,7 @@ function ReviewGrid({
     0
   ) {
     return (
-      <p className="py-10 text-center text-sm text-zinc-600">
+      <p className="py-10 text-center text-sm text-frost-muted">
         Todavía no hay reviews.
       </p>
     );
@@ -1263,10 +1270,10 @@ function MobileTabLink({
       scroll={
         false
       }
-      className={`relative flex min-h-[52px] items-center justify-center px-1 text-xs font-medium ${
+      className={`relative flex min-h-13 items-center justify-center px-1 text-xs font-medium ${
         active
           ? "text-white"
-          : "text-zinc-600"
+          : "text-frost-muted"
       }`}
     >
       {
@@ -1274,7 +1281,7 @@ function MobileTabLink({
       }
 
       {active && (
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-fuchsia-500" />
+        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-frost-accent" />
       )}
     </Link>
   );
@@ -1291,7 +1298,7 @@ function PendingGrid({
     0
   ) {
     return (
-      <p className="py-10 text-center text-sm text-zinc-600">
+      <p className="py-10 text-center text-sm text-frost-muted">
         No hay nada pendiente.
       </p>
     );
@@ -1312,7 +1319,7 @@ function PendingGrid({
               item.external_id
             )}
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-zinc-900">
+            <div className="relative aspect-2/3 overflow-hidden rounded-md bg-frost-surface">
               {item.cover_url && (
                 <Image
                   src={
@@ -1333,7 +1340,7 @@ function PendingGrid({
               )}
             </div>
 
-            <p className="mt-1 line-clamp-2 text-xs text-zinc-500">
+            <p className="mt-1 line-clamp-2 text-xs text-frost-muted">
               {
                 item.title
               }
@@ -1357,8 +1364,8 @@ function SidebarSection({
 }) {
   return (
     <section>
-      <div className="border-b border-zinc-800 pb-2">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+      <div className="border-b border-frost-border pb-2">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-frost-muted">
           {
             title
           }
@@ -1390,7 +1397,7 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between py-2">
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
+      <div className="flex items-center gap-2 text-sm text-frost-muted">
         {
           icon
         }
@@ -1400,7 +1407,7 @@ function StatRow({
         }
       </div>
 
-      <span className="text-sm text-zinc-300">
+      <span className="text-sm text-frost-text">
         {
           value
         }

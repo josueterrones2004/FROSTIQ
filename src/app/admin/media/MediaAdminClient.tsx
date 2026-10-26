@@ -1231,13 +1231,49 @@ export default function MediaAdminClient({
   }
 
   return (
-    <div className="grid min-w-0 gap-6 xl:grid-cols-[340px_minmax(0,1fr)] xl:gap-8">
+    <div className="grid min-w-0 gap-6 frost-admin-media-layout xl:gap-8">
+      <style>{`
+        /* FROST_ADMIN_MEDIA_STYLES_V1 */
+        .frost-admin-media-thumb-height { height: 68px; }
+        .frost-admin-media-thumb-width { width: 46px; }
+        :where(.frost-admin-media-text-9) { font-size: 9px; }
+        :where(.frost-admin-media-text-10) { font-size: 10px; }
+        .frost-admin-media-track-015 { letter-spacing: .15em; }
+        .frost-admin-media-track-012 { letter-spacing: .12em; }
+        .frost-admin-media-empty-height { min-height: 420px; }
+        .frost-admin-media-loading-height { min-height: 300px; }
+        .frost-admin-media-cover-aspect { aspect-ratio: 2 / 3; }
+        .frost-admin-media-cover-width { width: min(62vw, 210px); }
+        .frost-admin-media-artwork-width { width: 150px; }
+        .frost-admin-media-poster-thumb-width { width: 86px; }
+        .frost-admin-media-hide-scrollbar { scrollbar-width: none; }
+        .frost-admin-media-hide-scrollbar::-webkit-scrollbar { display: none; }
+        @media (min-width: 640px) {
+          .frost-admin-media-sm-text-10 { font-size: 10px; }
+          .frost-admin-media-sm-text-11 { font-size: 11px; }
+          .frost-admin-media-sm-loading-height { min-height: 500px; }
+          .frost-admin-media-sm-banner-aspect { aspect-ratio: 16 / 7; }
+          .frost-admin-media-sm-cover-width { width: 210px; }
+          .frost-admin-media-artwork-width { width: 176px; }
+          .frost-admin-media-poster-thumb-width { width: 96px; }
+        }
+        @media (min-width: 1024px) {
+          .frost-admin-media-lg-banner-aspect { aspect-ratio: 16 / 6; }
+          .frost-admin-media-poster-grid { grid-template-columns: 220px minmax(0, 1fr); }
+          .frost-admin-media-lg-cover-width { width: 220px; }
+        }
+        @media (min-width: 1280px) {
+          .frost-admin-media-layout { grid-template-columns: 340px minmax(0, 1fr); }
+          .frost-admin-media-sticky-top { top: 94px; }
+        }
+      `}</style>
+
       {/* ======================================
           SEARCH
       ====================================== */}
 
       <aside
-        className={`min-w-0 xl:sticky xl:top-[94px] xl:self-start ${
+        className={`min-w-0 xl:sticky frost-admin-media-sticky-top xl:self-start ${
           selected
             ? "hidden xl:block"
             : "block"
@@ -1253,7 +1289,7 @@ export default function MediaAdminClient({
             size={
               17
             }
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-frost-muted"
           />
 
           <input
@@ -1268,12 +1304,12 @@ export default function MediaAdminClient({
               )
             }
             placeholder="Buscar título..."
-            className="h-12 w-full rounded-xl border border-zinc-800 bg-zinc-900/60 pl-10 pr-4 text-sm text-zinc-200 outline-none transition focus:border-fuchsia-500"
+            className="h-12 w-full rounded-xl border border-frost-border bg-frost-surface/60 pl-10 pr-4 text-sm text-frost-text outline-none transition focus:border-frost-accent"
           />
         </form>
 
         {searching && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-zinc-600">
+          <div className="mt-4 flex items-center gap-2 text-sm text-frost-muted">
             <Loader2
               size={
                 15
@@ -1303,11 +1339,11 @@ export default function MediaAdminClient({
                 className={`flex w-full min-w-0 gap-3 rounded-xl border p-2 text-left transition ${
                   selected?.key ===
                   result.key
-                    ? "border-fuchsia-500/40 bg-fuchsia-500/5"
-                    : "border-transparent hover:border-zinc-800 hover:bg-zinc-900"
+                    ? "border-frost-accent/40 bg-frost-accent/5"
+                    : "border-transparent hover:border-frost-border hover:bg-frost-raised/65"
                 }`}
               >
-                <div className="relative h-[68px] w-[46px] shrink-0 overflow-hidden rounded-md bg-zinc-900">
+                <div className="relative frost-admin-media-thumb-height frost-admin-media-thumb-width shrink-0 overflow-hidden rounded-md bg-frost-surface">
                   {result.image ? (
                     <Image
                       src={
@@ -1320,20 +1356,20 @@ export default function MediaAdminClient({
                       className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-[9px] text-zinc-700">
+                    <div className="flex h-full items-center justify-center frost-admin-media-text-9 text-frost-muted">
                       —
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0 py-1">
-                  <p className="line-clamp-2 text-sm font-medium leading-5 text-zinc-200">
+                  <p className="line-clamp-2 text-sm font-medium leading-5 text-frost-text">
                     {
                       result.title
                     }
                   </p>
 
-                  <p className="mt-1 text-xs text-zinc-600">
+                  <p className="mt-1 text-xs text-frost-muted">
                     {getKindLabel(
                       result.kind
                     )}
@@ -1354,16 +1390,16 @@ export default function MediaAdminClient({
       ====================================== */}
 
       {!selected ? (
-        <div className="hidden min-h-[420px] items-center justify-center rounded-2xl border border-dashed border-zinc-800 px-6 text-center text-sm text-zinc-700 xl:flex">
+        <div className="hidden frost-admin-media-empty-height items-center justify-center rounded-2xl border border-dashed border-frost-border px-6 text-center text-sm text-frost-muted xl:flex">
           Busca y selecciona un título.
         </div>
       ) : loadingMedia ? (
-        <div className="flex min-h-[300px] items-center justify-center sm:min-h-[500px]">
+        <div className="flex frost-admin-media-loading-height items-center justify-center frost-admin-media-sm-loading-height">
           <Loader2
             size={
               26
             }
-            className="animate-spin text-fuchsia-400"
+            className="animate-spin text-frost-accent"
           />
         </div>
       ) : (
@@ -1385,7 +1421,7 @@ export default function MediaAdminClient({
                     ""
                   );
                 }}
-                className="mb-3 inline-flex items-center gap-2 text-xs text-zinc-500 transition hover:text-zinc-200 xl:hidden"
+                className="mb-3 inline-flex items-center gap-2 text-xs text-frost-muted transition hover:text-frost-text xl:hidden"
               >
                 <ArrowLeft
                   size={
@@ -1396,13 +1432,13 @@ export default function MediaAdminClient({
                 Cambiar título
               </button>
 
-              <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-fuchsia-400 sm:text-xs">
+              <p className="frost-admin-media-text-10 font-medium uppercase frost-admin-media-track-015 text-frost-accent sm:text-xs">
                 {getKindLabel(
                   selected.kind
                 )}
               </p>
 
-              <h2 className="mt-1 line-clamp-2 text-xl font-bold leading-tight text-zinc-100 sm:text-2xl">
+              <h2 className="mt-1 line-clamp-2 text-xl font-bold leading-tight text-frost-text sm:text-2xl">
                 {
                   selected.title
                 }
@@ -1414,7 +1450,7 @@ export default function MediaAdminClient({
                 selected.href
               }
               target="_blank"
-              className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-zinc-800 px-2.5 text-xs text-zinc-500 transition hover:text-white sm:h-10 sm:px-3 sm:text-sm"
+              className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-frost-border px-2.5 text-xs text-frost-muted transition hover:text-frost-text sm:h-10 sm:px-3 sm:text-sm"
             >
               <ExternalLink
                 size={
@@ -1434,11 +1470,11 @@ export default function MediaAdminClient({
 
           <div className="mt-7 sm:mt-8">
             <div>
-              <h3 className="font-semibold text-zinc-200">
+              <h3 className="font-semibold text-frost-text">
                 Banner
               </h3>
 
-              <p className="mt-1 text-xs leading-5 text-zinc-600">
+              <p className="mt-1 text-xs leading-5 text-frost-muted">
                 Se muestra el banner que está usando actualmente FROSTIQ.
               </p>
             </div>
@@ -1463,7 +1499,7 @@ export default function MediaAdminClient({
                     1
                   );
                 }}
-                className="min-h-10 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200"
+                className="min-h-10 rounded-xl border border-frost-border px-3 py-2 text-xs font-medium text-frost-muted transition hover:bg-frost-raised/65 hover:text-frost-text"
               >
                 Usar automático
               </button>
@@ -1477,7 +1513,7 @@ export default function MediaAdminClient({
                 onClick={() =>
                   bannerInputRef.current?.click()
                 }
-                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
+                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-frost-accent px-3 py-2 text-xs font-semibold text-frost-bg transition hover:bg-frost-accent/90 disabled:opacity-50"
               >
                 {uploading ===
                 "backdrop" ? (
@@ -1516,7 +1552,7 @@ export default function MediaAdminClient({
               }
             />
 
-            <div className="relative mt-3 aspect-video w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 sm:aspect-[16/7] sm:rounded-2xl lg:aspect-[16/6]">
+            <div className="relative mt-3 aspect-video w-full overflow-hidden rounded-xl border border-frost-border bg-frost-surface frost-admin-media-sm-banner-aspect sm:rounded-2xl frost-admin-media-lg-banner-aspect">
               {visibleBackdrop ? (
                 <Image
                   src={
@@ -1535,7 +1571,7 @@ export default function MediaAdminClient({
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-4 text-center text-xs text-zinc-700 sm:text-sm">
+                <div className="flex h-full items-center justify-center px-4 text-center text-xs text-frost-muted sm:text-sm">
                   No hay banner disponible.
                 </div>
               )}
@@ -1548,7 +1584,7 @@ export default function MediaAdminClient({
               }
             />
 
-            <div className="mt-4 grid gap-5 rounded-xl border border-zinc-800 bg-zinc-900/20 p-4 sm:rounded-2xl sm:p-5 md:grid-cols-3">
+            <div className="mt-4 grid gap-5 rounded-xl border border-frost-border bg-frost-surface/20 p-4 sm:rounded-2xl sm:p-5 md:grid-cols-3">
               <RangeControl
                 label="Posición X"
                 value={
@@ -1614,11 +1650,11 @@ export default function MediaAdminClient({
               backdropAssets.length >
                 0) && (
               <div className="mt-5 min-w-0">
-                <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-600 sm:text-xs">
+                <p className="mb-3 frost-admin-media-text-10 font-medium uppercase frost-admin-media-track-012 text-frost-muted sm:text-xs">
                   Imágenes disponibles
                 </p>
 
-                <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+                <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-3 frost-admin-media-hide-scrollbar sm:mx-0 sm:px-0">
                   {automaticBackdrop && (
                     <ArtworkButton
                       url={
@@ -1701,13 +1737,13 @@ export default function MediaAdminClient({
               POSTER
           ====================================== */}
 
-          <div className="mt-9 border-t border-zinc-800 pt-7 sm:mt-10 sm:pt-8">
+          <div className="mt-9 border-t border-frost-border pt-7 sm:mt-10 sm:pt-8">
             <div>
-              <h3 className="font-semibold text-zinc-200">
+              <h3 className="font-semibold text-frost-text">
                 Portada
               </h3>
 
-              <p className="mt-1 text-xs leading-5 text-zinc-600">
+              <p className="mt-1 text-xs leading-5 text-frost-muted">
                 Se muestra la portada que está usando actualmente FROSTIQ.
               </p>
             </div>
@@ -1732,7 +1768,7 @@ export default function MediaAdminClient({
                     1
                   );
                 }}
-                className="min-h-10 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200"
+                className="min-h-10 rounded-xl border border-frost-border px-3 py-2 text-xs font-medium text-frost-muted transition hover:bg-frost-raised/65 hover:text-frost-text"
               >
                 Usar automática
               </button>
@@ -1746,7 +1782,7 @@ export default function MediaAdminClient({
                 onClick={() =>
                   posterInputRef.current?.click()
                 }
-                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-700 disabled:opacity-50"
+                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-frost-raised px-3 py-2 text-xs font-semibold text-frost-text transition hover:bg-frost-raised disabled:opacity-50"
               >
                 {uploading ===
                 "poster" ? (
@@ -1785,9 +1821,9 @@ export default function MediaAdminClient({
               }
             />
 
-            <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-6">
+            <div className="mt-5 grid min-w-0 gap-5 frost-admin-media-poster-grid lg:gap-6">
               <div>
-                <div className="relative mx-auto aspect-[2/3] w-[min(62vw,210px)] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 sm:w-[210px] lg:mx-0 lg:w-[220px]">
+                <div className="relative mx-auto frost-admin-media-cover-aspect frost-admin-media-cover-width overflow-hidden rounded-xl border border-frost-border bg-frost-surface frost-admin-media-sm-cover-width lg:mx-0 frost-admin-media-lg-cover-width">
                   {visiblePoster ? (
                     <Image
                       src={
@@ -1806,7 +1842,7 @@ export default function MediaAdminClient({
                       }}
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-zinc-700">
+                    <div className="flex h-full items-center justify-center text-xs text-frost-muted">
                       Sin portada
                     </div>
                   )}
@@ -1822,7 +1858,7 @@ export default function MediaAdminClient({
               </div>
 
               <div className="min-w-0">
-                <div className="grid gap-5 rounded-xl border border-zinc-800 bg-zinc-900/20 p-4 sm:rounded-2xl sm:p-5 md:grid-cols-3">
+                <div className="grid gap-5 rounded-xl border border-frost-border bg-frost-surface/20 p-4 sm:rounded-2xl sm:p-5 md:grid-cols-3">
                   <RangeControl
                     label="Posición X"
                     value={
@@ -1888,11 +1924,11 @@ export default function MediaAdminClient({
                   posterAssets.length >
                     0) && (
                   <div className="mt-5 min-w-0">
-                    <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-600 sm:text-xs">
+                    <p className="mb-3 frost-admin-media-text-10 font-medium uppercase frost-admin-media-track-012 text-frost-muted sm:text-xs">
                       Portadas disponibles
                     </p>
 
-                    <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+                    <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-3 frost-admin-media-hide-scrollbar sm:mx-0 sm:px-0">
                       {automaticPoster && (
                         <PosterButton
                           url={
@@ -1977,7 +2013,7 @@ export default function MediaAdminClient({
               SAVE
           ====================================== */}
 
-          <div className="sticky bottom-0 z-30 -mx-4 mt-8 border-t border-zinc-800 bg-zinc-950/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 xl:static xl:mx-0 xl:mt-10 xl:flex xl:flex-wrap xl:items-center xl:gap-3 xl:bg-transparent xl:px-0 xl:pt-6 xl:backdrop-blur-none">
+          <div className="sticky bottom-0 z-30 -mx-4 mt-8 border-t border-frost-border bg-frost-bg/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 xl:static xl:mx-0 xl:mt-10 xl:flex xl:flex-wrap xl:items-center xl:gap-3 xl:bg-transparent xl:px-0 xl:pt-6 xl:backdrop-blur-none">
             <div className="grid grid-cols-2 gap-2 xl:flex">
               <button
                 type="button"
@@ -1987,7 +2023,7 @@ export default function MediaAdminClient({
                 disabled={
                   saving
                 }
-                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-zinc-800 px-3 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-white disabled:opacity-50 sm:text-sm"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-frost-border px-3 text-xs font-medium text-frost-muted transition hover:bg-frost-raised/65 hover:text-frost-text disabled:opacity-50 sm:text-sm"
               >
                 <RotateCcw
                   size={
@@ -2008,7 +2044,7 @@ export default function MediaAdminClient({
                 onClick={() => {
                   void saveOverride();
                 }}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-3 text-xs font-semibold text-white transition hover:bg-fuchsia-400 disabled:opacity-50 sm:text-sm xl:px-5"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-frost-accent px-3 text-xs font-semibold text-frost-bg transition hover:bg-frost-accent/90 disabled:opacity-50 sm:text-sm xl:px-5"
               >
                 {saving ? (
                   <Loader2
@@ -2063,14 +2099,14 @@ function CurrentStatus({
 }) {
   return (
     <p
-      className={`mt-2 text-[10px] font-medium ${
+      className={`mt-2 frost-admin-media-text-10 font-medium ${
         centered
           ? "text-center lg:text-left"
           : ""
       } ${
         custom
-          ? "text-fuchsia-400"
-          : "text-zinc-600"
+          ? "text-frost-accent"
+          : "text-frost-muted"
       }`}
     >
       {custom
@@ -2116,13 +2152,13 @@ function RangeControl({
   return (
     <label className="block min-w-0">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-medium text-zinc-500">
+        <span className="text-xs font-medium text-frost-muted">
           {
             label
           }
         </span>
 
-        <span className="font-mono text-xs text-zinc-400">
+        <span className="font-mono text-xs text-frost-muted">
           {Number.isInteger(
             value
           )
@@ -2159,7 +2195,7 @@ function RangeControl({
             )
           )
         }
-        className="mt-3 h-6 w-full accent-fuchsia-500"
+        className="mt-3 h-6 w-full accent-frost-accent"
       />
     </label>
   );
@@ -2189,13 +2225,13 @@ function ArtworkButton({
       onClick={
         onClick
       }
-      className={`w-[150px] shrink-0 overflow-hidden rounded-xl border text-left transition sm:w-44 ${
+      className={`frost-admin-media-artwork-width shrink-0 overflow-hidden rounded-xl border text-left transition sm:w-44 ${
         active
-          ? "border-fuchsia-400"
-          : "border-zinc-800 hover:border-zinc-600"
+          ? "border-frost-accent"
+          : "border-frost-border hover:border-frost-accent/40"
       }`}
     >
-      <div className="relative aspect-video bg-zinc-900">
+      <div className="relative aspect-video bg-frost-surface">
         <Image
           src={
             url
@@ -2208,10 +2244,10 @@ function ArtworkButton({
       </div>
 
       <p
-        className={`truncate bg-zinc-950 px-2 py-2 text-[10px] sm:text-[11px] ${
+        className={`truncate bg-frost-bg px-2 py-2 frost-admin-media-text-10 frost-admin-media-sm-text-11 ${
           active
-            ? "text-fuchsia-300"
-            : "text-zinc-500"
+            ? "text-frost-accent"
+            : "text-frost-muted"
         }`}
       >
         {
@@ -2246,13 +2282,13 @@ function PosterButton({
       onClick={
         onClick
       }
-      className="w-[86px] shrink-0 text-left sm:w-24"
+      className="frost-admin-media-poster-thumb-width shrink-0 text-left sm:w-24"
     >
       <div
-        className={`relative aspect-[2/3] overflow-hidden rounded-lg border transition ${
+        className={`relative frost-admin-media-cover-aspect overflow-hidden rounded-lg border transition ${
           active
-            ? "border-fuchsia-400"
-            : "border-zinc-800 hover:border-zinc-600"
+            ? "border-frost-accent"
+            : "border-frost-border hover:border-frost-accent/40"
         }`}
       >
         <Image
@@ -2267,10 +2303,10 @@ function PosterButton({
       </div>
 
       <p
-        className={`mt-1.5 truncate text-[9px] sm:text-[10px] ${
+        className={`mt-1.5 truncate frost-admin-media-text-9 frost-admin-media-sm-text-10 ${
           active
-            ? "text-fuchsia-300"
-            : "text-zinc-600"
+            ? "text-frost-accent"
+            : "text-frost-muted"
         }`}
       >
         {

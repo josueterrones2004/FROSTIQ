@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -10,9 +9,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import {
-  shouldUseOriginalImage,
-} from "@/lib/image-optimization";
+import { getPosterImageConfig } from "@/lib/image-optimization";
 
 export type RegisterSelection = {
   key: string;
@@ -52,19 +49,20 @@ export default function QuickRegisterSearch({
   onSelect,
 }: Props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Suggestion[]>([]);
+  const [results, setResults] =
+    useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState(-1);
+  const [error, setError] =
+    useState<string | null>(null);
+  const [activeIndex, setActiveIndex] =
+    useState(-1);
 
   const requestId = useRef(0);
 
   useEffect(() => {
     const normalized = query.trim();
 
-    if (normalized.length < 2) {
-      return;
-    }
+    if (normalized.length < 2) return;
 
     const controller = new AbortController();
     const id = ++requestId.current;
@@ -86,9 +84,10 @@ export default function QuickRegisterSearch({
               );
             }
 
-            const data = (await response.json()) as {
-              results?: Suggestion[];
-            };
+            const data =
+              (await response.json()) as {
+                results?: Suggestion[];
+              };
 
             return Array.isArray(data.results)
               ? data.results
@@ -196,35 +195,46 @@ export default function QuickRegisterSearch({
   function handleKeyDown(
     event: KeyboardEvent<HTMLInputElement>,
   ) {
-    if (event.key === "ArrowDown" && results.length) {
-      event.preventDefault();
-
-      setActiveIndex(
-        (current) => (current + 1) % results.length,
-      );
-
-      return;
-    }
-
-    if (event.key === "ArrowUp" && results.length) {
+    if (
+      event.key === "ArrowDown" &&
+      results.length
+    ) {
       event.preventDefault();
 
       setActiveIndex(
         (current) =>
-          current <= 0
-            ? results.length - 1
-            : current - 1,
+          (current + 1) % results.length,
       );
 
       return;
     }
 
-    if (event.key === "Enter" && results.length) {
+    if (
+      event.key === "ArrowUp" &&
+      results.length
+    ) {
+      event.preventDefault();
+
+      setActiveIndex((current) =>
+        current <= 0
+          ? results.length - 1
+          : current - 1,
+      );
+
+      return;
+    }
+
+    if (
+      event.key === "Enter" &&
+      results.length
+    ) {
       event.preventDefault();
 
       const selected =
         results[activeIndex] ??
-        (results.length === 1 ? results[0] : null);
+        (results.length === 1
+          ? results[0]
+          : null);
 
       if (selected) {
         selectResult(selected);
@@ -232,20 +242,21 @@ export default function QuickRegisterSearch({
     }
   }
 
-  const showResults = query.trim().length >= 2;
+  const showResults =
+    query.trim().length >= 2;
 
   return (
-    <div className="relative w-[240px] xl:w-[360px] 2xl:w-[440px]">
+    <div className="relative w-60 xl:w-90 2xl:w-110">
       <div className="relative">
         {loading ? (
           <Loader2
             size={17}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin text-violet-300"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin text-frost-accent"
           />
         ) : (
           <Search
             size={17}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-frost-muted"
           />
         )}
 
@@ -261,80 +272,91 @@ export default function QuickRegisterSearch({
           aria-label="Buscar una obra para registrar"
           aria-controls="register-suggestions"
           placeholder="Registrar una obra..."
-          className="h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/70 pl-10 pr-4 text-[15px] text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-violet-400/60"
+          className="h-11 w-full rounded-xl border border-frost-border bg-frost-surface pl-10 pr-4 text-sm text-frost-text outline-none transition-colors placeholder:text-frost-muted focus:border-frost-accent/60"
         />
       </div>
 
       {showResults && (
         <div
           id="register-suggestions"
-          className="absolute left-0 right-0 top-[52px] z-[130] max-h-[min(65vh,540px)] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950 p-1.5 shadow-2xl"
+          className="absolute inset-x-0 top-13 z-130 overflow-y-auto rounded-xl border border-frost-border bg-frost-bg p-1.5 shadow-2xl"
+          style={{
+            maxHeight: "min(65vh, 540px)",
+          }}
         >
           {error ? (
             <p
               role="alert"
-              className="px-3 py-4 text-sm text-red-300"
+              className="px-3 py-4 text-sm text-frost-danger"
             >
               {error}
             </p>
           ) : results.length === 0 ? (
-            <p className="px-3 py-4 text-sm text-zinc-500">
+            <p className="px-3 py-4 text-sm text-frost-muted">
               {loading
                 ? "Buscando obras..."
                 : "No hay coincidencias."}
             </p>
           ) : (
             <>
-              <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+              <p className="px-3 pb-2 pt-2 text-xs font-semibold uppercase tracking-widest text-frost-muted">
                 Selecciona una obra para registrar
               </p>
 
-              {results.map((item, index) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onMouseEnter={() =>
-                    setActiveIndex(index)
-                  }
-                  onClick={() => selectResult(item)}
-                  className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition ${
-                    activeIndex === index
-                      ? "bg-white/[0.07]"
-                      : "hover:bg-white/[0.05]"
-                  }`}
-                >
-                  <span className="relative h-[54px] w-9 shrink-0 overflow-hidden rounded bg-zinc-900">
-                    {item.image && (
-                      <Image
-                        src={item.image}
-                        alt=""
-                        fill
-                        sizes="36px"
-                        unoptimized={shouldUseOriginalImage(
-                          item.image,
-                        )}
-                        className="object-cover"
-                      />
-                    )}
-                  </span>
+              {results.map((item, index) => {
+                const posterImage = item.image
+                  ? getPosterImageConfig(item.image)
+                  : null;
 
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-zinc-100">
-                      {item.title}
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onMouseEnter={() =>
+                      setActiveIndex(index)
+                    }
+                    onClick={() =>
+                      selectResult(item)
+                    }
+                    className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors ${
+                      activeIndex === index
+                        ? "bg-frost-active"
+                        : "hover:bg-frost-raised"
+                    }`}
+                  >
+                    <span className="relative h-13.5 w-9 shrink-0 overflow-hidden rounded bg-frost-surface">
+                      {posterImage && (
+                        <Image
+                          src={posterImage.src}
+                          alt=""
+                          fill
+                          sizes="36px"
+                          unoptimized={
+                            posterImage.unoptimized
+                          }
+                          className="object-cover"
+                        />
+                      )}
                     </span>
 
-                    <span className="mt-0.5 block text-xs text-zinc-500">
-                      {labels[item.kind]}
-                      {item.year
-                        ? ` · ${item.year}`
-                        : ""}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-frost-text">
+                        {item.title}
+                      </span>
+
+                      <span className="mt-0.5 block text-xs text-frost-muted">
+                        {labels[item.kind]}
+                        {item.year
+                          ? ` · ${item.year}`
+                          : ""}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
 
               {loading && (
-                <p className="px-3 py-2 text-xs text-zinc-500">
+                <p className="px-3 py-2 text-xs text-frost-muted">
                   Buscando más resultados...
                 </p>
               )}

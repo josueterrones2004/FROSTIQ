@@ -1,14 +1,35 @@
 "use client";
 
-import { Check, ListFilter, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import {
-  ALL_TYPES, SORTS, TYPES, VIEWS, keyOf, matches,
-  type CompletedReview, type LibraryEntry, type LibraryMediaType,
-  type Sort, type View,
+  Check,
+  ListFilter,
+  Search,
+} from "lucide-react";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  ALL_TYPES,
+  SORTS,
+  TYPES,
+  VIEWS,
+  keyOf,
+  matches,
+  type CompletedReview,
+  type LibraryEntry,
+  type LibraryMediaType,
+  type Sort,
+  type View,
 } from "./libraryShared";
 
-function SortMenu({ value, onChange }: {
+function SortMenu({
+  value,
+  onChange,
+}: {
   value: Sort;
   onChange: (sort: Sort) => void;
 }) {
@@ -23,16 +44,26 @@ function SortMenu({ value, onChange }: {
         setOpen(false);
       }
     };
+
     const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
     };
 
     document.addEventListener("pointerdown", outside);
     document.addEventListener("keydown", escape);
 
     return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
+      document.removeEventListener(
+        "pointerdown",
+        outside,
+      );
+
+      document.removeEventListener(
+        "keydown",
+        escape,
+      );
     };
   }, [open]);
 
@@ -44,7 +75,7 @@ function SortMenu({ value, onChange }: {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="flex h-8 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 hover:text-white"
+        className="flex h-8 w-9 items-center justify-center rounded-md text-frost-accent transition-colors hover:bg-frost-raised"
       >
         <ListFilter size={18} />
       </button>
@@ -53,9 +84,13 @@ function SortMenu({ value, onChange }: {
         <div
           role="menu"
           aria-label="Ordenar por"
-          className="absolute right-0 top-[calc(100%+8px)] z-[100] min-w-[195px] rounded-xl border border-white/15 bg-[#1b1f2a] p-1.5 shadow-2xl"
+          className="absolute right-0 z-100 rounded-xl border border-frost-border bg-frost-surface p-1.5 shadow-2xl"
+          style={{
+            top: "calc(100% + 8px)",
+            minWidth: 195,
+          }}
         >
-          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+          <p className="px-3 py-2 frost-audit-text-10 font-semibold uppercase tracking-widest text-frost-muted">
             Ordenar por
           </p>
 
@@ -69,14 +104,16 @@ function SortMenu({ value, onChange }: {
                 onChange(option.value);
                 setOpen(false);
               }}
-              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm hover:bg-white/5 ${
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-frost-raised ${
                 option.value === value
-                  ? "text-violet-200"
-                  : "text-zinc-300"
+                  ? "text-frost-accent"
+                  : "text-frost-muted"
               }`}
             >
               {option.label}
-              {option.value === value && <Check size={15} />}
+              {option.value === value && (
+                <Check size={15} />
+              )}
             </button>
           ))}
         </div>
@@ -85,31 +122,51 @@ function SortMenu({ value, onChange }: {
   );
 }
 
-export function SearchBar({ value, onChange, sort, onSort }: {
+export function SearchBar({
+  value,
+  onChange,
+  sort,
+  onSort,
+}: {
   value: string;
   onChange: (value: string) => void;
   sort: Sort;
   onSort: (sort: Sort) => void;
 }) {
   return (
-    <div className="flex h-11 items-center rounded-xl border border-white/10 bg-[#1a1d27] px-2">
-      <Search size={17} className="ml-1 mr-2 shrink-0 text-zinc-500" />
+    <div className="flex h-11 items-center rounded-xl border border-frost-border bg-frost-surface px-2">
+      <Search
+        size={17}
+        className="ml-1 mr-2 shrink-0 text-frost-muted"
+      />
 
       <input
         type="search"
         aria-label="Buscar en biblioteca"
         placeholder="Buscar..."
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-full min-w-0 flex-1 bg-transparent pr-2 text-sm text-zinc-200 outline-none placeholder:text-zinc-600"
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        className="h-full min-w-0 flex-1 bg-transparent pr-2 text-sm text-frost-text outline-none placeholder:text-frost-muted"
       />
 
-      <SortMenu value={sort} onChange={onSort} />
+      <SortMenu
+        value={sort}
+        onChange={onSort}
+      />
     </div>
   );
 }
 
-export function Filters({ entries, reviews, view, setView, types, setTypes }: {
+export function Filters({
+  entries,
+  reviews,
+  view,
+  setView,
+  types,
+  setTypes,
+}: {
   entries: LibraryEntry[];
   reviews: CompletedReview[];
   view: View;
@@ -129,7 +186,10 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
           (review) =>
             types.includes(review.mediaType) &&
             !abandoned.has(
-              keyOf(review.mediaType, review.review.external_id),
+              keyOf(
+                review.mediaType,
+                review.review.external_id,
+              ),
             ),
         ).length
       : entries.filter(
@@ -141,7 +201,10 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+        <h2
+          className="mb-3 px-2 frost-audit-text-11 font-semibold uppercase text-frost-muted"
+          style={{ letterSpacing: "0.18em" }}
+        >
           Colección
         </h2>
 
@@ -152,14 +215,15 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
               type="button"
               aria-pressed={option.value === view}
               onClick={() => setView(option.value)}
-              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm ${
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                 option.value === view
-                  ? "bg-violet-400/10 font-medium text-violet-200"
-                  : "text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                  ? "bg-frost-active font-medium text-frost-accent"
+                  : "text-frost-muted hover:bg-frost-raised hover:text-frost-text"
               }`}
             >
               {option.label}
-              <span className="text-xs tabular-nums text-zinc-500">
+
+              <span className="text-xs tabular-nums text-frost-muted">
                 {count(option.value)}
               </span>
             </button>
@@ -169,13 +233,17 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
 
       <section>
         <div className="mb-3 flex items-center justify-between px-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+          <h2
+            className="frost-audit-text-11 font-semibold uppercase text-frost-muted"
+            style={{ letterSpacing: "0.18em" }}
+          >
             Tipos de medio
           </h2>
+
           <button
             type="button"
             onClick={() => setTypes(ALL_TYPES)}
-            className="text-xs text-violet-300 hover:text-violet-200"
+            className="text-xs text-frost-accent hover:text-frost-accent-hover"
           >
             Todos
           </button>
@@ -188,7 +256,7 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
           return (
             <label
               key={type.value}
-              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+              className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-frost-muted transition-colors hover:bg-frost-raised hover:text-frost-text"
             >
               <input
                 type="checkbox"
@@ -197,7 +265,9 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
                 onChange={() =>
                   setTypes(
                     checked
-                      ? types.filter((value) => value !== type.value)
+                      ? types.filter(
+                          (value) => value !== type.value,
+                        )
                       : [...types, type.value],
                   )
                 }
@@ -205,10 +275,10 @@ export function Filters({ entries, reviews, view, setView, types, setTypes }: {
 
               <span
                 aria-hidden="true"
-                className={`flex h-[18px] w-[18px] items-center justify-center rounded border ${
+                className={`flex h-4.5 w-4.5 items-center justify-center rounded-sm border ${
                   checked
-                    ? "border-violet-400/60 bg-violet-400/20 text-violet-300"
-                    : "border-zinc-700 bg-zinc-900"
+                    ? "border-frost-accent/60 bg-frost-active text-frost-accent"
+                    : "border-frost-border bg-frost-raised"
                 }`}
               >
                 {checked && <Check size={13} />}

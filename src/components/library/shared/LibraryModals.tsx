@@ -19,20 +19,22 @@ type Props = {
   removal: ReturnType<typeof useLibraryRemoveDialog>;
 };
 
-/** Monta los modales existentes, sin replicar sus operaciones ni estados. */
 export default function LibraryModals({
   progress,
   reviews,
   removal,
 }: Props) {
   const item = progress.progressItem;
+
   const canShowProgress =
-    !progress.progressLoading && !progress.progressError;
+    !progress.progressLoading &&
+    !progress.progressError;
 
   return (
     <>
       {item &&
-        (progress.progressLoading || progress.progressError) && (
+        (progress.progressLoading ||
+          progress.progressError) && (
           <LoadingDialog
             item={item}
             error={progress.progressError}
@@ -47,7 +49,9 @@ export default function LibraryModals({
             key={item.key}
             bookTitle={item.title}
             editions={progress.bookData.editions}
-            initialEditionId={progress.bookData.editions[0]?.id ?? null}
+            initialEditionId={
+              progress.bookData.editions[0]?.id ?? null
+            }
             initialPages={Math.min(
               progress.bookData.saved?.pages_read ?? 0,
               progress.bookData.editions[0]?.pageCount ?? 0,
@@ -77,7 +81,9 @@ export default function LibraryModals({
           removing={removal.removing}
           error={removal.error}
           onCancel={removal.cancelRemove}
-          onConfirm={() => void removal.confirmRemove()}
+          onConfirm={() =>
+            void removal.confirmRemove()
+          }
         />
       )}
 
@@ -85,11 +91,14 @@ export default function LibraryModals({
         <LibraryReviewModalCard
           mode="create"
           open
+          transition={reviews.reviewTransition}
           mediaType={reviews.reviewItem.mediaType}
           title={reviews.reviewItem.title}
           releaseYear={reviews.reviewItem.releaseYear}
           coverUrl={reviews.reviewItem.coverUrl}
-          initialRepeat={reviews.reviewItem.completedCount > 0}
+          initialRepeat={
+            reviews.reviewItem.completedCount > 0
+          }
           loading={reviews.reviewLoading}
           message={reviews.reviewMessage}
           onClose={reviews.closeReview}

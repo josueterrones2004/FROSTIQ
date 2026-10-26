@@ -370,14 +370,15 @@ export default function RegisterReviewModal({
   if (checking || initError) {
     return (
       <div
-        className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-5"
+        className="fixed inset-0 flex items-center justify-center bg-black/80 p-5"
+        style={{ zIndex: 300 }}
         role="dialog"
         aria-modal="true"
         aria-label="Preparando review"
       >
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-frost-border bg-frost-bg p-6">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-zinc-200">
+            <p className="text-sm text-frost-text">
               {checking
                 ? "Preparando review..."
                 : "No se pudo abrir la review"}
@@ -387,7 +388,7 @@ export default function RegisterReviewModal({
               type="button"
               onClick={onClose}
               aria-label="Cerrar"
-              className="rounded-lg p-2 text-zinc-400 hover:text-white"
+              className="rounded-lg p-2 text-frost-muted hover:text-frost-text"
             >
               <X size={18} />
             </button>
@@ -396,7 +397,7 @@ export default function RegisterReviewModal({
           {checking ? (
             <Loader2
               size={22}
-              className="mt-4 animate-spin text-violet-300"
+              className="mt-4 animate-spin text-frost-accent"
             />
           ) : (
             <p className="mt-4 text-sm text-red-300">

@@ -2,17 +2,30 @@
 
 import {
   useCallback,
+  useEffect,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
+
 import type { useRouter } from "next/navigation";
 
-import type { ReviewDraft } from "@/components/media/LibraryReviewModalCard";
-import { persistMediaReview } from "@/components/RegisterReviewModal";
-import type { createClient } from "@/lib/supabase/client";
+import type {
+  ReviewDraft,
+} from "@/components/media/LibraryReviewModalCard";
 
-import type { LibraryEntry } from "../libraryShared";
+import {
+  persistMediaReview,
+} from "@/components/RegisterReviewModal";
+
+import type {
+  createClient,
+} from "@/lib/supabase/client";
+
+import type {
+  LibraryEntry,
+} from "../libraryShared";
 
 type Supabase = ReturnType<typeof createClient>;
 
@@ -29,6 +42,15 @@ type Options = {
   >;
 };
 
+export type ReviewTransition =
+  | "idle"
+  | "entering"
+  | "active"
+  | "exiting-cancel"
+  | "exiting-save";
+
+const REVIEW_TRANSITION_MS = 360;
+
 export function useLibraryReviews({
   supabase,
   router,
@@ -43,26 +65,122 @@ export function useLibraryReviews({
   const [reviewMessage, setReviewMessage] =
     useState("");
 
-  const openReview = useCallback(
-    (item: LibraryEntry) => {
-      setReviewMessage("");
-      setReviewItem(item);
+  const [reviewTransition, setReviewTransition] =
+    useState<ReviewTransition>("idle");
+
+  const transitionTimer = useRef<
+    ReturnType<typeof setTimeout> | null
+  >(null);
+
+  const transitionRef =
+    useRef<ReviewTransition>("idle");
+
+  const reviewItemRef =
+    useRef<LibraryEntry | null>(null);
+
+  const loadingRef = useRef(false);
+
+  const clearTransitionTimer = useCallback(() => {
+    if (transitionTimer.current !== null) {
+      clearTimeout(transitionTimer.current);
+      transitionTimer.current = null;
+    }
+  }, []);
+
+  const changeTransition = useCallback(
+    (next: ReviewTransition) => {
+      transitionRef.current = next;
+      setReviewTransition(next);
     },
     [],
   );
 
-  const closeReview = useCallback(() => {
-    if (reviewLoading) return;
+  const finishTransition = useCallback(() => {
+    clearTransitionTimer();
 
+    reviewItemRef.current = null;
     setReviewItem(null);
     setReviewMessage("");
-  }, [reviewLoading]);
 
-  async function saveReview(draft: ReviewDraft) {
-    if (!reviewItem || reviewLoading) {
+    changeTransition("idle");
+  }, [
+    clearTransitionTimer,
+    changeTransition,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      clearTransitionTimer();
+    };
+  }, [clearTransitionTimer]);
+
+  const openReview = useCallback(
+    (item: LibraryEntry) => {
+      if (
+        loadingRef.current ||
+        transitionRef.current === "exiting-save" ||
+        transitionRef.current === "exiting-cancel"
+      ) {
+        return;
+      }
+
+      clearTransitionTimer();
+
+      reviewItemRef.current = item;
+
+      setReviewMessage("");
+      setReviewItem(item);
+
+      changeTransition("entering");
+
+      transitionTimer.current = setTimeout(() => {
+        transitionTimer.current = null;
+        changeTransition("active");
+      }, REVIEW_TRANSITION_MS);
+    },
+    [
+      clearTransitionTimer,
+      changeTransition,
+    ],
+  );
+
+  const closeReview = useCallback(() => {
+    if (
+      loadingRef.current ||
+      !reviewItemRef.current ||
+      transitionRef.current === "exiting-cancel" ||
+      transitionRef.current === "exiting-save"
+    ) {
       return;
     }
 
+    clearTransitionTimer();
+
+    changeTransition("exiting-cancel");
+
+    transitionTimer.current = setTimeout(
+      finishTransition,
+      REVIEW_TRANSITION_MS,
+    );
+  }, [
+    clearTransitionTimer,
+    changeTransition,
+    finishTransition,
+  ]);
+
+  async function saveReview(draft: ReviewDraft) {
+    const item = reviewItemRef.current;
+
+    if (
+      !item ||
+      loadingRef.current ||
+      transitionRef.current === "exiting-save" ||
+      transitionRef.current === "exiting-cancel"
+    ) {
+      return;
+    }
+
+    loadingRef.current = true;
     setReviewLoading(true);
     setReviewMessage("");
 
@@ -79,26 +197,47 @@ export function useLibraryReviews({
       const result = await persistMediaReview({
         supabase,
         userId: user.id,
-        mediaType: reviewItem.mediaType,
-        externalId: reviewItem.externalId,
-        title: reviewItem.title,
-        coverUrl: reviewItem.coverUrl,
-        backdropUrl: reviewItem.backdropUrl ?? null,
-        releaseYear: reviewItem.releaseYear,
+        mediaType: item.mediaType,
+        externalId: item.externalId,
+        title: item.title,
+        coverUrl: item.coverUrl,
+        backdropUrl: item.backdropUrl ?? null,
+        releaseYear: item.releaseYear,
         draft,
       });
 
-      setReviewItem(null);
       setFeedback(result.warning);
 
-      router.refresh();
+      clearTransitionTimer();
+
+      // La review permanece montada durante
+      // la animación de salida hacia la izquierda.
+      changeTransition("exiting-save");
+
+      transitionTimer.current = setTimeout(() => {
+        finishTransition();
+
+        // Actualizar los datos una vez finalizado
+        // el movimiento, no mientras se anima.
+        router.refresh();
+      }, REVIEW_TRANSITION_MS);
     } catch (error) {
+      // Si falla el guardado, la review sigue abierta
+      // y conserva los datos introducidos.
       setReviewMessage(
         error instanceof Error
           ? error.message
           : "No se pudo guardar la review.",
       );
+
+      if (
+        transitionRef.current === "entering"
+      ) {
+        clearTransitionTimer();
+        changeTransition("active");
+      }
     } finally {
+      loadingRef.current = false;
       setReviewLoading(false);
     }
   }
@@ -107,6 +246,7 @@ export function useLibraryReviews({
     reviewItem,
     reviewLoading,
     reviewMessage,
+    reviewTransition,
     openReview,
     closeReview,
     saveReview,

@@ -94,27 +94,29 @@ function Progress({
   label: string;
 }) {
   const percent =
-    max > 0 ? Math.min(100, (value / max) * 100) : 0;
+    max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
   return (
-    <div
-      role="progressbar"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={max}
-      aria-valuenow={Math.min(value, max)}
-      className="flex min-w-0 items-center gap-3"
-    >
-      <div className="h-[5px] min-w-0 flex-1 overflow-hidden rounded-full bg-white/10">
+    <div className="min-w-0 w-full">
+      <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+        <span className="truncate text-xs text-frost-muted">{label}</span>
+        <span className="shrink-0 text-xs font-semibold tabular-nums text-frost-text">
+          {Math.round(percent)}%
+        </span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={Math.min(value, max)}
+        className="h-1.5 w-full overflow-hidden rounded-full bg-frost-border/65"
+      >
         <div
-          className="h-full rounded-full bg-fuchsia-400 transition-[width] duration-500"
+          className="h-full rounded-full bg-frost-accent transition-all duration-500"
           style={{ width: `${percent}%` }}
         />
       </div>
-
-      <span className="shrink-0 text-xs tabular-nums text-zinc-400">
-        {Math.round(percent)}%
-      </span>
     </div>
   );
 }
@@ -128,14 +130,14 @@ function LoadingIndicator({
     <div
       role="status"
       aria-live="polite"
-      className="flex min-h-[165px] flex-col items-center justify-center gap-4 py-8"
+      className="flex min-h-40 flex-col items-center justify-center gap-4 py-8"
     >
       <span
         aria-hidden="true"
-        className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-fuchsia-400 motion-reduce:animate-none"
+        className="h-6 w-6 animate-spin rounded-full border-2 border-frost-border/60 border-t-frost-accent motion-reduce:animate-none"
       />
 
-      <p className="text-xs font-medium text-zinc-500">
+      <p className="text-xs font-medium text-frost-muted">
         {label}
       </p>
     </div>
@@ -1090,22 +1092,22 @@ export default function Seasons({
   if (!available.length) return null;
 
   return (
-    <section ref={sectionRef} className={embedded ? "" : "mt-12"}>
+    <section ref={sectionRef} className={embedded ? "min-w-0" : "mt-12 min-w-0"}>
       {/* ENCABEZADO */}
 
-      <div className="flex items-center justify-between gap-5 border-b border-white/[0.09] pb-4">
-        <div className="shrink-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+      <div className="flex min-w-0 flex-col gap-4 border-b border-frost-border/50 pb-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-frost-muted">
             Episodios
           </p>
 
-          <h2 className="mt-1 text-xl font-semibold text-zinc-100 sm:text-2xl">
+          <h2 className="mt-1 text-xl font-semibold text-frost-text sm:text-2xl">
             Temporadas
           </h2>
         </div>
 
-        {ready && seen.size > 0 && (
-          <div className="w-[38%] min-w-[110px] max-w-[250px]">
+        {ready && (
+          <div className="w-full min-w-0 sm:w-64">
             <Progress
               value={seen.size}
               max={total}
@@ -1123,8 +1125,8 @@ export default function Seasons({
         <>
           {/* SELECTOR DE TEMPORADAS */}
 
-          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max gap-7 border-b border-white/[0.07]">
+          <div className="min-w-0 overflow-x-auto ">
+            <div className="flex min-w-max gap-5 border-b border-frost-border/40 sm:gap-7">
               {available.map((item) => (
                 <button
                   key={item.id}
@@ -1139,8 +1141,8 @@ export default function Seasons({
                   }}
                   className={`relative py-4 text-sm font-medium transition ${
                     active === item.season_number
-                      ? "text-zinc-100"
-                      : "text-zinc-600 hover:text-zinc-300"
+                      ? "text-frost-text"
+                      : "text-frost-muted hover:text-frost-text"
                   }`}
                 >
                   <span className="sm:hidden">
@@ -1153,7 +1155,7 @@ export default function Seasons({
                   </span>
 
                   {active === item.season_number && (
-                    <span className="absolute inset-x-0 bottom-[-1px] h-[2px] rounded-full bg-fuchsia-400" />
+                    <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-frost-accent" />
                   )}
                 </button>
               ))}
@@ -1163,15 +1165,13 @@ export default function Seasons({
           {/* PROGRESO DE TEMPORADA */}
 
           {season && (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-5 flex min-w-0 flex-col gap-4 rounded-xl border border-frost-border/50 bg-frost-bg/35 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div className="min-w-0 flex-1">
-                {seasonSeen > 0 && (
-                  <Progress
-                    value={seasonSeen}
-                    max={season.episode_count}
-                    label={`Temporada ${active}: ${seasonSeen} de ${season.episode_count} vistos`}
-                  />
-                )}
+                <Progress
+                  value={seasonSeen}
+                  max={season.episode_count}
+                  label={`Temporada ${active} · ${seasonSeen} de ${season.episode_count} episodios`}
+                />
               </div>
 
               <button
@@ -1183,7 +1183,7 @@ export default function Seasons({
                   seasonDone
                 }
                 onClick={() => void markSeason()}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.035] px-3.5 py-2 text-xs font-medium text-zinc-300 transition hover:border-fuchsia-400/30 hover:bg-fuchsia-400/[0.06] hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-frost-border/60 bg-frost-surface/45 px-3.5 py-2.5 text-xs sm:w-auto font-medium text-frost-muted transition hover:border-frost-accent/30 hover:bg-frost-active/30 hover:text-frost-text disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <CircleCheck size={15} />
                 Marcar toda como vista
@@ -1201,7 +1201,7 @@ export default function Seasons({
                   label="Cargando episodios..."
                 />
               ) : (
-                <p className="py-12 text-center text-sm text-zinc-600">
+                <p className="py-12 text-center text-sm text-frost-muted">
                   No se pudieron cargar los episodios.
                 </p>
               )
@@ -1210,10 +1210,10 @@ export default function Seasons({
                 {showPreviousPreview && previousSeasonLastWatch && (
                   <article
                     data-progress-focus="true"
-                    className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-400/[0.025]"
+                    className="overflow-hidden rounded-xl border border-emerald-400/15 bg-emerald-400/5"
                   >
-                    <div className="sm:grid sm:grid-cols-[210px_minmax(0,1fr)]">
-                      <div className="relative aspect-video overflow-hidden bg-zinc-950 sm:aspect-auto sm:min-h-[138px]">
+                    <div className="flex min-w-0 flex-col sm:flex-row">
+                      <div className="relative aspect-video min-w-0 overflow-hidden bg-frost-bg sm:aspect-auto sm:min-h-40 sm:w-48 sm:shrink-0 lg:w-52">
                         {previousSeasonLastWatch.episode_still_url ? (
                           <Image
                             src={previousSeasonLastWatch.episode_still_url}
@@ -1224,25 +1224,25 @@ export default function Seasons({
                             className="object-cover"
                           />
                         ) : (
-                          <div className="flex h-full min-h-[138px] items-center justify-center text-xs text-zinc-600">
+                          <div className="flex h-full min-h-36 items-center justify-center text-xs text-frost-muted">
                             Último episodio visto
                           </div>
                         )}
                       </div>
-                      <div className="flex min-w-0 flex-col justify-between p-4 sm:p-5">
+                      <div className="flex min-w-0 flex-col justify-between gap-3 p-4 sm:p-5">
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400/70">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400/70">
                             Último episodio visto
                           </p>
-                          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-600">
+                          <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-frost-muted">
                             T{previousSeasonLastWatch.season_number} · E{previousSeasonLastWatch.episode_number}
                           </p>
-                          <h3 className="mt-1.5 text-base font-medium text-zinc-100">
+                          <h3 className="mt-1.5 text-base font-medium text-frost-text">
                             {previousSeasonLastWatch.episode_title ?? "Último episodio de la temporada anterior"}
                           </h3>
                         </div>
                         <div className="mt-4 flex justify-end">
-                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3.5 py-2 text-sm text-emerald-300">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3.5 py-2 text-sm text-emerald-300">
                             <CircleCheck size={15} /> Visto
                           </span>
                         </div>
@@ -1276,14 +1276,14 @@ export default function Seasons({
                       }
                       className={`overflow-hidden rounded-xl border transition ${
                         watched
-                          ? "border-emerald-400/[0.15] bg-emerald-400/[0.025]"
-                          : "border-white/[0.075] bg-white/[0.018]"
+                          ? "border-emerald-400/15 bg-emerald-400/5"
+                          : "border-frost-border/60 bg-frost-surface/30"
                       }`}
                     >
-                      <div className="sm:grid sm:grid-cols-[210px_minmax(0,1fr)]">
+                      <div className="flex min-w-0 flex-col sm:flex-row">
                         {/* IMAGEN */}
 
-                        <div className="relative aspect-video w-full overflow-hidden bg-zinc-950 sm:aspect-auto sm:min-h-[138px]">
+                        <div className="relative aspect-video w-full min-w-0 overflow-hidden bg-frost-bg sm:aspect-auto sm:min-h-40 sm:w-48 sm:shrink-0 lg:w-52">
                           {episode.still_path ? (
                             <Image
                               src={`https://image.tmdb.org/t/p/w500${episode.still_path}`}
@@ -1294,7 +1294,7 @@ export default function Seasons({
                               className="object-cover"
                             />
                           ) : (
-                            <div className="flex h-full min-h-[138px] items-center justify-center text-xs text-zinc-700">
+                            <div className="flex h-full min-h-36 items-center justify-center text-xs text-frost-muted">
                               Sin imagen
                             </div>
                           )}
@@ -1310,9 +1310,9 @@ export default function Seasons({
 
                         {/* INFORMACIÓN */}
 
-                        <div className="flex min-w-0 flex-col p-4 sm:min-h-[138px] sm:p-5">
+                        <div className="flex min-w-0 flex-col p-4 sm:min-h-40 sm:p-5">
                           <div className="min-w-0">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-frost-muted">
                               T
                               {
                                 episode.season_number
@@ -1323,12 +1323,12 @@ export default function Seasons({
                               }
                             </p>
 
-                            <h3 className="mt-1.5 text-[16px] font-medium leading-5 text-zinc-100">
+                            <h3 className="mt-1.5 wrap-break-words text-base font-semibold leading-snug text-frost-text">
                               {episode.name}
                             </h3>
 
                             {episode.air_date && (
-                              <p className="mt-1.5 text-xs text-zinc-600">
+                              <p className="mt-1.5 text-xs text-frost-muted">
                                 {dateLabel(
                                   episode.air_date,
                                 )}
@@ -1339,8 +1339,8 @@ export default function Seasons({
                           <p
                             className={`mt-3 text-sm leading-6 ${
                               episode.overview
-                                ? "line-clamp-3 text-zinc-400 sm:line-clamp-2"
-                                : "text-zinc-600"
+                                ? "line-clamp-2 text-frost-muted sm:line-clamp-3"
+                                : "text-frost-muted"
                             }`}
                           >
                             {episode.overview ||
@@ -1349,7 +1349,7 @@ export default function Seasons({
 
                           {/* MARCAR VISTO */}
 
-                          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-auto sm:justify-end sm:pt-4">
+                          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-frost-border/35 pt-3 sm:mt-auto sm:justify-end">
                             <button
                               type="button"
                               disabled={busy}
@@ -1367,8 +1367,8 @@ export default function Seasons({
                               }
                               className={`inline-flex h-9 items-center justify-center gap-2 rounded-full border px-3.5 text-sm font-medium transition disabled:opacity-40 ${
                                 watched
-                                  ? "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300 hover:bg-emerald-400/[0.11]"
-                                  : "border-white/[0.10] bg-white/[0.025] text-zinc-400 hover:border-fuchsia-400/30 hover:text-zinc-100"
+                                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15"
+                                  : "border-frost-border/60 bg-frost-surface/35 text-frost-muted hover:border-frost-accent/30 hover:text-frost-text"
                               }`}
                             >
                               <CircleCheck
@@ -1381,7 +1381,7 @@ export default function Seasons({
                             </button>
 
                             {history.length > 1 && (
-                              <span className="text-xs text-zinc-600">
+                              <span className="text-xs text-frost-muted">
                                 {
                                   history.length
                                 }{" "}
@@ -1393,7 +1393,7 @@ export default function Seasons({
                           {/* REWATCH Y QUITAR VISTO */}
 
                           {isExpanded && (
-                            <div className="mt-3 flex flex-wrap justify-start gap-1 border-t border-white/[0.06] pt-3 sm:justify-end">
+                            <div className="mt-3 flex flex-wrap justify-start gap-2 border-t border-frost-border/40 pt-3 sm:justify-end">
                               <button
                                 type="button"
                                 disabled={busy}
@@ -1403,7 +1403,7 @@ export default function Seasons({
                                     true,
                                   )
                                 }
-                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-200 disabled:opacity-40"
+                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-frost-muted hover:bg-frost-raised/60 hover:text-frost-text disabled:opacity-40"
                               >
                                 <RotateCcw
                                   size={14}
@@ -1419,7 +1419,7 @@ export default function Seasons({
                                     episode,
                                   )
                                 }
-                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-red-400/70 hover:bg-red-500/[0.06] hover:text-red-300 disabled:opacity-40"
+                                className="inline-flex h-8 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-red-400/70 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
                               >
                                 <Trash2
                                   size={14}
@@ -1444,7 +1444,7 @@ export default function Seasons({
       {message && (
         <p
           role="status"
-          className="mt-4 text-sm text-zinc-500"
+          className="mt-4 text-sm text-frost-muted"
         >
           {message}
         </p>

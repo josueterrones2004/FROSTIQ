@@ -3,13 +3,11 @@
 import {
   ArrowLeft,
   BookOpen,
-  Eye,
   Gamepad2,
   Heart,
   HeartCrack,
   Loader2,
   Pencil,
-  Repeat2,
   Save,
   ShieldAlert,
   ShieldCheck,
@@ -77,6 +75,7 @@ type CreateProps = {
   releaseYear?: number | string | null;
   coverUrl?: string | null;
   initialRepeat?: boolean;
+  transition?: "idle" | "entering" | "active" | "exiting-cancel" | "exiting-save";
   loading?: boolean;
   message?: string | null;
   onClose: () => void;
@@ -156,7 +155,7 @@ function ReviewCover({
   zoom?: number;
 }) {
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
+    <div className="relative h-full w-full overflow-hidden rounded-xl bg-frost-surface">
       {coverUrl ? (
         <Image
           src={coverUrl}
@@ -171,7 +170,7 @@ function ReviewCover({
           }}
         />
       ) : (
-        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-600">
+        <div className="flex h-full items-center justify-center px-2 text-center text-xs text-frost-muted">
           Sin imagen
         </div>
       )}
@@ -179,11 +178,11 @@ function ReviewCover({
   );
 }
 
-function AnimatedEye({ active }: { active: boolean }) {
+function AnimatedEye({ active, size = 34 }: { active: boolean; size?: number }) {
   return (
     <svg
-      width="34"
-      height="34"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -205,6 +204,52 @@ function AnimatedEye({ active }: { active: boolean }) {
         }}
       />
     </svg>
+  );
+}
+
+function RepeatMediaIcon({
+  mediaType,
+  isRepeat,
+  size = 34,
+}: {
+  mediaType: MediaType;
+  isRepeat: boolean;
+  size?: number;
+}) {
+  if (mediaType === "MOVIE" || mediaType === "SERIES") {
+    return <AnimatedEye active={isRepeat} size={size} />;
+  }
+
+  const Icon = mediaType === "GAME" ? Gamepad2 : BookOpen;
+
+  return (
+    <span
+      className="relative inline-flex shrink-0 items-center justify-center"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
+      <Icon size={size} strokeWidth={1.8} />
+      <svg
+        className="pointer-events-none absolute inset-0"
+        width={size}
+        height={size}
+        viewBox="0 0 34 34"
+        fill="none"
+      >
+        <path
+          d="M5 5 29 29"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          pathLength="1"
+          style={{
+            strokeDasharray: 1,
+            strokeDashoffset: isRepeat ? 1 : 0,
+            transition: "stroke-dashoffset 350ms cubic-bezier(.4,0,.2,1)",
+          }}
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -276,7 +321,7 @@ function AnimatedHeart({
             cy="20"
             r="11"
             fill="none"
-            stroke="#f472b6"
+            stroke="#ef4444"
             strokeWidth="3"
             className="mt-heart-ring"
           />
@@ -289,7 +334,7 @@ function AnimatedHeart({
                 cx={20 + Math.cos(angle) * 14}
                 cy={20 + Math.sin(angle) * 14}
                 r={i % 2 ? 1.4 : 1.9}
-                fill={i % 2 ? "#f472b6" : "#fb7185"}
+                fill={i % 2 ? "#ef4444" : "#f87171"}
                 className="mt-heart-spark"
                 style={{
                   animationDelay: `${i * 16}ms`,
@@ -351,19 +396,15 @@ function CreateOptions({
         aria-pressed={isRepeat}
         onClick={onRepeatChange}
         className={`flex min-w-0 flex-col items-center justify-center gap-1 py-1.5 text-center transition-colors disabled:opacity-50 ${
-          isRepeat ? "text-fuchsia-400" : "text-zinc-400"
+          isRepeat ? "text-frost-accent" : "text-frost-muted"
         }`}
       >
-        {mediaType === "MOVIE" ||
-        mediaType === "SERIES" ? (
-          <AnimatedEye active={isRepeat} />
-        ) : mediaType === "GAME" ? (
-          <Gamepad2 size={34} />
-        ) : (
-          <BookOpen size={34} />
-        )}
+        <RepeatMediaIcon
+          mediaType={mediaType}
+          isRepeat={isRepeat}
+        />
 
-        <span className="text-[11px] leading-4 sm:text-xs">
+        <span className="frost-review-text-11 leading-4 sm:text-xs">
           {getRepeatLabel(mediaType, isRepeat)}
         </span>
       </button>
@@ -375,13 +416,13 @@ function CreateOptions({
         onClick={onSpoilersChange}
         className={`flex min-w-0 flex-col items-center justify-center gap-1 py-1.5 text-center transition-colors disabled:opacity-50 ${
           containsSpoilers
-            ? "text-fuchsia-400"
-            : "text-zinc-400"
+            ? "text-frost-accent"
+            : "text-frost-muted"
         }`}
       >
         <AnimatedShield active={containsSpoilers} />
 
-        <span className="text-[11px] leading-4 sm:text-xs">
+        <span className="frost-review-text-11 leading-4 sm:text-xs">
           {containsSpoilers
             ? "Contiene spoilers"
             : "Sin spoilers"}
@@ -400,7 +441,7 @@ function CreateOptions({
           onLikedChange();
         }}
         className={`flex min-w-0 flex-col items-center justify-center gap-1 py-1.5 text-center transition-colors disabled:opacity-50 ${
-          liked ? "text-red-500" : "text-zinc-400"
+          liked ? "text-red-500" : "text-frost-muted"
         }`}
       >
         <AnimatedHeart
@@ -408,7 +449,7 @@ function CreateOptions({
           burst={heartBurst}
         />
 
-        <span className="text-[11px] leading-4 sm:text-xs">
+        <span className="frost-review-text-11 leading-4 sm:text-xs">
           {liked ? "Me gustó" : "No me gustó"}
         </span>
       </button>
@@ -422,18 +463,18 @@ function OptionButton({
   onClick,
   icon,
   label,
-  tone = "fuchsia",
+  tone = "accent",
 }: {
   active: boolean;
   disabled?: boolean;
   onClick?: () => void;
   icon: ReactNode;
   label: string;
-  tone?: "fuchsia" | "amber" | "red";
+  tone?: "accent" | "amber" | "red";
 }) {
   const styles = {
-    fuchsia:
-      "border-fuchsia-500/35 bg-fuchsia-500/10 text-fuchsia-300",
+    accent:
+      "border-frost-accent/35 bg-frost-active text-frost-accent",
     amber:
       "border-amber-500/30 bg-amber-500/10 text-amber-300",
     red:
@@ -449,11 +490,11 @@ function OptionButton({
       className={`flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl border px-1 py-3 text-center transition ${
         active
           ? styles[tone]
-          : "border-white/10 bg-white/[0.025] text-zinc-500 enabled:hover:bg-white/[0.05] enabled:hover:text-zinc-300"
+          : "border-frost-border/60 bg-frost-surface/35 text-frost-muted enabled:hover:bg-frost-raised/70 enabled:hover:text-frost-text"
       } disabled:cursor-default`}
     >
       {icon}
-      <span className="text-[10px] font-medium sm:text-xs">
+      <span className="frost-review-text-10 font-medium sm:text-xs">
         {label}
       </span>
     </button>
@@ -479,21 +520,19 @@ function ReviewOptions({
   onRepeatChange?: () => void;
   onSpoilersChange?: () => void;
 }) {
-  const RepeatIcon = isRepeat
-    ? Repeat2
-    : mediaType === "BOOK"
-      ? BookOpen
-      : mediaType === "GAME"
-        ? Gamepad2
-        : Eye;
-
   return (
     <div className="grid grid-cols-3 gap-2">
       <OptionButton
         active={isRepeat}
         disabled={disabled}
         onClick={onRepeatChange}
-        icon={<RepeatIcon size={19} />}
+        icon={
+          <RepeatMediaIcon
+            mediaType={mediaType}
+            isRepeat={isRepeat}
+            size={19}
+          />
+        }
         label={getRepeatLabel(mediaType, isRepeat)}
       />
 
@@ -554,6 +593,7 @@ function CreateReviewForm({
   releaseYear,
   coverUrl = null,
   initialRepeat = false,
+  transition = "active",
   loading = false,
   message,
   onClose,
@@ -645,7 +685,7 @@ function CreateReviewForm({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/80 lg:flex lg:items-center lg:justify-center lg:p-5"
+      className="frost-review-create-layer fixed inset-0 frost-review-z-9999 bg-black/80 lg:flex lg:items-center lg:justify-center lg:p-5"
       onMouseDown={(event) => {
         if (
           event.target === event.currentTarget
@@ -655,6 +695,64 @@ function CreateReviewForm({
       }}
     >
       <style>{`
+        .frost-review-text-10 { font-size: 10px; }
+        .frost-review-text-11 { font-size: 11px; }
+        .frost-review-text-22 { font-size: 22px; }
+        .frost-review-title-clamp { font-size: clamp(18px,4.6vw,22px); }
+        .frost-review-track-012 { letter-spacing: .12em; }
+        .frost-review-track-016 { letter-spacing: .16em; }
+        .frost-review-track-020 { letter-spacing: .2em; }
+        .frost-review-cover-height { height: clamp(94px,17dvh,142px); }
+        .frost-review-cover-width { width: clamp(68px,12dvh,100px); }
+        .frost-review-editor-height { height: 154px; }
+        .frost-review-safe-pt-10 { padding-top: max(10px,env(safe-area-inset-top)); }
+        .frost-review-safe-pb-10 { padding-bottom: max(10px,env(safe-area-inset-bottom)); }
+        .frost-review-safe-pt-12 { padding-top: max(12px,env(safe-area-inset-top)); }
+        .frost-review-safe-pb-12 { padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+        .frost-review-z-9999 { z-index: 9999; }
+        .frost-review-z-10000 { z-index: 10000; }
+        .frost-review-discard-shadow { box-shadow: 0 24px 90px rgba(0,0,0,.7); }
+        @media (min-width: 1024px) {
+          .frost-review-create-grid { grid-template-columns: 168px minmax(0,1fr); }
+          .frost-review-saved-grid { grid-template-columns: 145px minmax(0,1fr); }
+          .frost-review-lg-max-height { max-height: 92dvh; }
+          .frost-review-create-shadow { box-shadow: 0 30px 100px rgba(0,0,0,.65); }
+        }
+        @keyframes frost-review-enter {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes frost-review-cancel {
+          from { transform: translateX(0); }
+          to { transform: translateX(100%); }
+        }
+        @keyframes frost-review-save {
+          from { transform: translateX(0); }
+          to { transform: translateX(-100%); }
+        }
+        @media (max-width: 899px) {
+          .frost-review-create-layer {
+            background: transparent !important;
+            pointer-events: none;
+          }
+          .frost-review-create-panel {
+            pointer-events: auto;
+          }
+          .frost-review-create-panel[data-transition="entering"] {
+            animation: frost-review-enter 360ms cubic-bezier(.22,1,.36,1) both;
+          }
+          .frost-review-create-panel[data-transition="exiting-cancel"] {
+            animation: frost-review-cancel 360ms cubic-bezier(.22,1,.36,1) both;
+          }
+          .frost-review-create-panel[data-transition="exiting-save"] {
+            animation: frost-review-save 360ms cubic-bezier(.22,1,.36,1) both;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .frost-review-create-panel {
+            animation-duration: 1ms !important;
+          }
+        }
         @keyframes mt-heart-ring {
           from { opacity:.9; transform:scale(.2); transform-origin:center; }
           to { opacity:0; transform:scale(1.8); transform-origin:center; }
@@ -706,24 +804,25 @@ function CreateReviewForm({
         role="dialog"
         aria-modal="true"
         aria-label={`Registrar review de ${title}`}
-        className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-[#0a0a0d] text-zinc-100 lg:h-auto lg:max-h-[92dvh] lg:max-w-4xl lg:rounded-2xl lg:border lg:border-white/10 lg:shadow-[0_30px_100px_rgba(0,0,0,0.65)]"
+        data-transition={transition}
+        className="frost-review-create-panel flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-frost-bg text-frost-text lg:h-auto frost-review-lg-max-height lg:max-w-4xl lg:rounded-2xl lg:border lg:border-frost-border frost-review-create-shadow"
         onMouseDown={(event) =>
           event.stopPropagation()
         }
       >
         {/* MOBILE HEADER */}
-        <header className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2 pt-[max(10px,env(safe-area-inset-top))] lg:hidden">
+        <header className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2 frost-review-safe-pt-10 lg:hidden">
           <button
             type="button"
             onClick={requestClose}
             disabled={loading}
-            className="inline-flex min-w-0 items-center gap-2 text-fuchsia-400 disabled:opacity-50"
+            className="inline-flex min-w-0 items-center gap-2 text-frost-accent disabled:opacity-50"
           >
             <ArrowLeft
               size={18}
               className="shrink-0"
             />
-            <span className="truncate text-[11px] font-semibold uppercase tracking-[0.16em]">
+            <span className="truncate frost-review-text-11 font-semibold uppercase frost-review-track-016">
               {getMediaLabel(mediaType)}
             </span>
           </button>
@@ -732,7 +831,7 @@ function CreateReviewForm({
             type="button"
             onClick={save}
             disabled={loading}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-5 text-sm font-semibold text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-frost-accent px-5 text-sm font-semibold text-frost-bg transition hover:bg-frost-accent-hover disabled:opacity-50"
           >
             {loading && (
               <Loader2
@@ -746,16 +845,16 @@ function CreateReviewForm({
 
         {/* DESKTOP HEADER */}
         <header className="hidden shrink-0 px-6 pt-4 lg:block">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-fuchsia-400">
+          <p className="frost-review-text-10 font-semibold uppercase frost-review-track-020 text-frost-accent">
             {getMediaLabel(mediaType)}
           </p>
         </header>
 
-        <main className="mt-review-content flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 sm:px-6 lg:block lg:pb-3 lg:pt-2">
+        <main className="mt-review-content flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 frost-review-safe-pb-10 pt-2 sm:px-6 lg:block lg:pb-3 lg:pt-2">
           {/* MOBILE LAYOUT */}
           <div className="mt-review-mobile flex min-h-0 flex-1 flex-col lg:hidden">
             <div className="mt-review-summary flex shrink-0 items-center gap-4">
-              <div className="mt-review-cover h-[clamp(94px,17dvh,142px)] w-[clamp(68px,12dvh,100px)] shrink-0">
+              <div className="mt-review-cover frost-review-cover-height frost-review-cover-width shrink-0">
                 <ReviewCover
                   title={title}
                   coverUrl={coverUrl}
@@ -763,12 +862,12 @@ function CreateReviewForm({
               </div>
 
               <div className="min-w-0">
-                <h2 className="break-words text-[clamp(18px,4.6vw,22px)] font-semibold leading-tight tracking-tight text-white">
+                <h2 className="wrap-break-words frost-review-title-clamp font-semibold leading-tight tracking-tight text-frost-text">
                   {title}
                 </h2>
 
                 {releaseYear ? (
-                  <p className="mt-1.5 text-sm font-medium text-zinc-400 mt-review-year">
+                  <p className="mt-1.5 text-sm font-medium text-frost-muted mt-review-year">
                     {releaseYear}
                   </p>
                 ) : null}
@@ -787,23 +886,23 @@ function CreateReviewForm({
                 }
                 disabled={loading}
                 aria-label="Mostrar fecha en la review"
-                className="h-5 w-5 shrink-0 accent-fuchsia-500"
+                className="h-5 w-5 shrink-0 accent-frost-accent"
               />
 
-              <span className="text-sm text-zinc-400">
+              <span className="text-sm text-frost-muted">
                 {getDateLabel(mediaType)}
               </span>
 
               <time
                 dateTime={registrationDate}
-                className="text-sm font-medium tabular-nums text-zinc-200"
+                className="text-sm font-medium tabular-nums text-frost-text"
               >
                 {formatDate(registrationDate)}
               </time>
             </label>
 
             <div className="mt-review-rating mt-3 shrink-0">
-              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+              <p className="mb-1.5 frost-review-text-11 font-medium uppercase frost-review-track-012 text-frost-muted">
                 Tu puntuación
               </p>
 
@@ -817,11 +916,11 @@ function CreateReviewForm({
 
             {/* REVIEW EDITOR */}
             <div className="mt-review-editor -mx-4 mt-3 flex min-h-0 flex-1 flex-col sm:-mx-6">
-              <p className="mb-2 shrink-0 px-4 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500 sm:px-6">
+              <p className="mb-2 shrink-0 px-4 frost-review-text-11 font-medium uppercase frost-review-track-012 text-frost-muted sm:px-6">
                 Review
               </p>
 
-              <div className="shrink-0 border-t border-white/10" />
+              <div className="shrink-0 border-t border-frost-border/60" />
 
               <textarea
                 value={reviewText}
@@ -830,11 +929,11 @@ function CreateReviewForm({
                 }
                 placeholder="¿Qué te pareció?"
                 rows={4}
-                className="min-h-[80px] w-full flex-1 resize-none overflow-y-auto border-0 bg-white/[0.02] px-4 py-3 text-sm leading-6 text-zinc-200 outline-none placeholder:text-zinc-600 focus:outline-none sm:px-6"
+                className="min-h-20 w-full flex-1 resize-none overflow-y-auto border-0 bg-frost-surface/35 px-4 py-3 text-sm leading-6 text-frost-text outline-none placeholder:text-frost-muted focus:outline-none sm:px-6"
               />
             </div>
 
-            <div className="mt-review-options -mx-4 shrink-0 border-t border-white/10 px-4 py-1.5 sm:-mx-6 sm:px-6">
+            <div className="mt-review-options -mx-4 shrink-0 border-t border-frost-border/60 px-4 py-1.5 sm:-mx-6 sm:px-6">
               <CreateOptions
                 mediaType={mediaType}
                 liked={liked}
@@ -863,8 +962,8 @@ function CreateReviewForm({
           </div>
 
           {/* DESKTOP LAYOUT */}
-          <div className="hidden lg:grid lg:grid-cols-[168px_minmax(0,1fr)] lg:gap-5">
-            <div className="aspect-[2/3] w-full">
+          <div className="hidden lg:grid frost-review-create-grid lg:gap-5">
+            <div className="aspect-2/3 w-full">
               <ReviewCover
                 title={title}
                 coverUrl={coverUrl}
@@ -873,12 +972,12 @@ function CreateReviewForm({
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 className="break-words text-[22px] font-semibold leading-tight tracking-tight text-white">
+                <h2 className="wrap-break-words frost-review-text-22 font-semibold leading-tight tracking-tight text-frost-text">
                   {title}
                 </h2>
 
                 {releaseYear ? (
-                  <span className="text-sm font-medium tabular-nums text-zinc-500">
+                  <span className="text-sm font-medium tabular-nums text-frost-muted">
                     {releaseYear}
                   </span>
                 ) : null}
@@ -895,23 +994,23 @@ function CreateReviewForm({
                   }
                   disabled={loading}
                   aria-label="Mostrar fecha en la review"
-                  className="h-4 w-4 shrink-0 accent-fuchsia-500"
+                  className="h-4 w-4 shrink-0 accent-frost-accent"
                 />
 
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-frost-muted">
                   {getDateLabel(mediaType)}
                 </span>
 
                 <time
                   dateTime={registrationDate}
-                  className="text-sm tabular-nums text-zinc-200"
+                  className="text-sm tabular-nums text-frost-text"
                 >
                   {formatDate(registrationDate)}
                 </time>
               </label>
 
               <div className="mt-4">
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                <p className="mb-2 frost-review-text-11 font-medium uppercase frost-review-track-012 text-frost-muted">
                   Tu puntuación
                 </p>
 
@@ -924,7 +1023,7 @@ function CreateReviewForm({
               </div>
 
               <div className="mt-4">
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                <p className="mb-2 frost-review-text-11 font-medium uppercase frost-review-track-012 text-frost-muted">
                   Review
                 </p>
 
@@ -935,7 +1034,7 @@ function CreateReviewForm({
                   }
                   placeholder="¿Qué te pareció?"
                   rows={5}
-                  className="block h-[154px] w-full resize-none overflow-y-auto rounded-xl border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-fuchsia-500/60"
+                  className="block frost-review-editor-height w-full resize-none overflow-y-auto rounded-xl border border-frost-border/60 bg-frost-surface/45 p-4 text-sm leading-6 text-frost-text outline-none placeholder:text-frost-muted focus:border-frost-accent/60"
                 />
               </div>
 
@@ -976,7 +1075,7 @@ function CreateReviewForm({
               type="button"
               onClick={requestClose}
               disabled={loading}
-              className="h-11 rounded-xl px-5 text-sm font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200 disabled:opacity-50"
+              className="h-11 rounded-xl px-5 text-sm font-medium text-frost-muted transition hover:bg-frost-raised/65 hover:text-frost-text disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -985,7 +1084,7 @@ function CreateReviewForm({
               type="button"
               onClick={save}
               disabled={loading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-fuchsia-500 px-6 text-sm font-semibold text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-frost-accent px-6 text-sm font-semibold text-frost-bg transition hover:bg-frost-accent-hover disabled:opacity-50"
             >
               {loading && (
                 <Loader2
@@ -1003,7 +1102,7 @@ function CreateReviewForm({
       {/* DISCARD CONFIRMATION */}
       {confirmDiscard && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 frost-review-z-10000 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           onMouseDown={(event) =>
             event.stopPropagation()
           }
@@ -1013,18 +1112,18 @@ function CreateReviewForm({
             aria-modal="true"
             aria-labelledby="discard-review-title"
             aria-describedby="discard-review-description"
-            className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.7)]"
+            className="w-full max-w-sm rounded-2xl border border-frost-border bg-frost-bg p-6 frost-review-discard-shadow"
           >
             <h3
               id="discard-review-title"
-              className="text-lg font-semibold text-white"
+              className="text-lg font-semibold text-frost-text"
             >
               ¿Descartar review?
             </h3>
 
             <p
               id="discard-review-description"
-              className="mt-2 text-sm leading-6 text-zinc-400"
+              className="mt-2 text-sm leading-6 text-frost-muted"
             >
               Tienes cambios sin guardar. Si sales,
               se perderán.
@@ -1036,7 +1135,7 @@ function CreateReviewForm({
                 onClick={() =>
                   setConfirmDiscard(false)
                 }
-                className="h-10 rounded-xl border border-white/10 px-4 text-sm font-medium text-zinc-200 transition hover:bg-white/[0.05]"
+                className="h-10 rounded-xl border border-frost-border/60 px-4 text-sm font-medium text-frost-text transition hover:bg-frost-raised/70"
               >
                 Seguir editando
               </button>
@@ -1044,7 +1143,7 @@ function CreateReviewForm({
               <button
                 type="button"
                 onClick={onClose}
-                className="h-10 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-500"
+                className="h-10 rounded-xl bg-red-600 px-4 text-sm font-semibold text-frost-text transition hover:bg-red-500"
               >
                 Descartar review
               </button>
@@ -1213,6 +1312,31 @@ function SavedReviewCard({
 
   return (
     <>
+      <style>{`
+        .frost-review-text-10 { font-size: 10px; }
+        .frost-review-text-11 { font-size: 11px; }
+        .frost-review-text-22 { font-size: 22px; }
+        .frost-review-title-clamp { font-size: clamp(18px,4.6vw,22px); }
+        .frost-review-track-012 { letter-spacing: .12em; }
+        .frost-review-track-016 { letter-spacing: .16em; }
+        .frost-review-track-020 { letter-spacing: .2em; }
+        .frost-review-cover-height { height: clamp(94px,17dvh,142px); }
+        .frost-review-cover-width { width: clamp(68px,12dvh,100px); }
+        .frost-review-editor-height { height: 154px; }
+        .frost-review-safe-pt-10 { padding-top: max(10px,env(safe-area-inset-top)); }
+        .frost-review-safe-pb-10 { padding-bottom: max(10px,env(safe-area-inset-bottom)); }
+        .frost-review-safe-pt-12 { padding-top: max(12px,env(safe-area-inset-top)); }
+        .frost-review-safe-pb-12 { padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+        .frost-review-z-9999 { z-index: 9999; }
+        .frost-review-z-10000 { z-index: 10000; }
+        .frost-review-discard-shadow { box-shadow: 0 24px 90px rgba(0,0,0,.7); }
+        @media (min-width: 1024px) {
+          .frost-review-create-grid { grid-template-columns: 168px minmax(0,1fr); }
+          .frost-review-saved-grid { grid-template-columns: 145px minmax(0,1fr); }
+          .frost-review-lg-max-height { max-height: 92dvh; }
+          .frost-review-create-shadow { box-shadow: 0 30px 100px rgba(0,0,0,.65); }
+        }
+      `}</style>
       <div>
         <button
           type="button"
@@ -1220,7 +1344,7 @@ function SavedReviewCard({
           className="block w-full text-left"
           aria-label={`Abrir review de ${review.title}`}
         >
-          <div className="aspect-[2/3] w-full">
+          <div className="aspect-2/3 w-full">
             <ReviewCover
               title={review.title}
               coverUrl={review.cover_url}
@@ -1242,7 +1366,7 @@ function SavedReviewCard({
               showLabel={false}
             />
 
-            <div className="mt-2 flex items-center gap-3 text-zinc-500">
+            <div className="mt-2 flex items-center gap-3 text-frost-muted">
               {liked ? (
                 <Heart
                   size={17}
@@ -1253,15 +1377,11 @@ function SavedReviewCard({
                 <HeartCrack size={17} />
               )}
 
-              {isRepeat ? (
-                <Repeat2 size={17} />
-              ) : mediaType === "BOOK" ? (
-                <BookOpen size={17} />
-              ) : mediaType === "GAME" ? (
-                <Gamepad2 size={17} />
-              ) : (
-                <Eye size={17} />
-              )}
+              <RepeatMediaIcon
+                mediaType={mediaType}
+                isRepeat={isRepeat}
+                size={17}
+              />
 
               {containsSpoilers ? (
                 <ShieldAlert size={17} />
@@ -1276,20 +1396,20 @@ function SavedReviewCard({
       {open && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm lg:p-5"
+              className="fixed inset-0 frost-review-z-9999 flex items-center justify-center bg-black/75 backdrop-blur-sm lg:p-5"
               onMouseDown={closeModal}
             >
               <section
                 role="dialog"
                 aria-modal="true"
                 aria-label={`Review de ${review.title}`}
-                className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-[#0a0a0d] text-zinc-100 lg:h-auto lg:max-h-[92dvh] lg:max-w-3xl lg:rounded-2xl lg:border lg:border-white/10 lg:shadow-2xl"
+                className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-frost-bg text-frost-text lg:h-auto frost-review-lg-max-height lg:max-w-3xl lg:rounded-2xl lg:border lg:border-frost-border lg:shadow-2xl"
                 onMouseDown={(event) =>
                   event.stopPropagation()
                 }
               >
-                <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-4 pb-3 pt-[max(12px,env(safe-area-inset-top))] sm:px-6 lg:pt-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-fuchsia-400">
+                <div className="flex shrink-0 items-center justify-between border-b border-frost-border/50 px-4 pb-3 frost-review-safe-pt-12 sm:px-6 lg:pt-5">
+                  <p className="frost-review-text-10 font-semibold uppercase frost-review-track-020 text-frost-accent">
                     {getMediaLabel(mediaType)}
                   </p>
 
@@ -1298,14 +1418,14 @@ function SavedReviewCard({
                     onClick={closeModal}
                     disabled={loading}
                     aria-label="Cerrar"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition hover:text-white disabled:opacity-50"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-frost-muted transition hover:text-frost-text disabled:opacity-50"
                   >
                     <X size={20} />
                   </button>
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 lg:py-6">
-                  <div className="lg:grid lg:grid-cols-[145px_minmax(0,1fr)] lg:gap-7">
+                  <div className="lg:grid frost-review-saved-grid lg:gap-7">
                     <div className="hidden lg:block">
                       <Link
                         href={getMediaRoute(
@@ -1316,7 +1436,7 @@ function SavedReviewCard({
                           setOpen(false)
                         }
                       >
-                        <div className="aspect-[2/3] w-full">
+                        <div className="aspect-2/3 w-full">
                           <ReviewCover
                             title={review.title}
                             coverUrl={review.cover_url}
@@ -1338,7 +1458,7 @@ function SavedReviewCard({
                           onClick={() =>
                             setOpen(false)
                           }
-                          className="h-[84px] w-[60px] shrink-0"
+                          className="h-21 w-15 shrink-0"
                         >
                           <ReviewCover
                             title={review.title}
@@ -1350,12 +1470,12 @@ function SavedReviewCard({
                         </Link>
 
                         <div className="min-w-0">
-                          <h2 className="break-words text-lg font-bold">
+                          <h2 className="wrap-break-words text-lg font-bold">
                             {review.title}
                           </h2>
 
                           {review.release_year ? (
-                            <p className="mt-1 text-xs text-zinc-500">
+                            <p className="mt-1 text-xs text-frost-muted">
                               {review.release_year}
                             </p>
                           ) : null}
@@ -1363,19 +1483,19 @@ function SavedReviewCard({
                       </div>
 
                       <div className="hidden lg:flex lg:flex-wrap lg:items-baseline lg:gap-3">
-                        <h2 className="break-words text-2xl font-bold">
+                        <h2 className="wrap-break-words text-2xl font-bold">
                           {review.title}
                         </h2>
 
                         {review.release_year ? (
-                          <span className="text-base text-zinc-500">
+                          <span className="text-base text-frost-muted">
                             {review.release_year}
                           </span>
                         ) : null}
                       </div>
 
                       {editing ? (
-                        <div className="mt-4 border-b border-white/8 pb-4 lg:mt-5">
+                        <div className="mt-4 border-b border-frost-border/50 pb-4 lg:mt-5">
                           <label className="flex cursor-pointer flex-wrap items-center gap-3">
                             <input
                               type="checkbox"
@@ -1386,15 +1506,15 @@ function SavedReviewCard({
                                 )
                               }
                               disabled={loading}
-                              className="h-4 w-4 accent-fuchsia-500"
+                              className="h-4 w-4 accent-frost-accent"
                               aria-label="Mostrar fecha en la review"
                             />
 
-                            <span className="text-sm text-zinc-400">
+                            <span className="text-sm text-frost-muted">
                               {getDateLabel(mediaType)}
                             </span>
 
-                            <span className="text-sm text-zinc-200">
+                            <span className="text-sm text-frost-text">
                               {formatDate(
                                 review.consumed_at,
                               )}
@@ -1402,9 +1522,9 @@ function SavedReviewCard({
                           </label>
                         </div>
                       ) : showConsumedDate ? (
-                        <p className="mt-4 border-b border-white/8 pb-4 text-sm text-zinc-500 lg:mt-5">
+                        <p className="mt-4 border-b border-frost-border/50 pb-4 text-sm text-frost-muted lg:mt-5">
                           {getDateLabel(mediaType)}{" "}
-                          <span className="text-zinc-300">
+                          <span className="text-frost-muted">
                             {formatDate(
                               review.consumed_at,
                             )}
@@ -1416,7 +1536,7 @@ function SavedReviewCard({
                         (rating !== null &&
                           rating > 0)) && (
                         <div className="mt-5">
-                          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                          <p className="mb-2 frost-review-text-11 font-medium uppercase frost-review-track-012 text-frost-muted">
                             Tu puntuación
                           </p>
 
@@ -1479,15 +1599,15 @@ function SavedReviewCard({
                             }
                             placeholder="Escribe tu review..."
                             rows={5}
-                            className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-zinc-200 outline-none focus:border-fuchsia-500/60"
+                            className="w-full resize-none rounded-xl border border-frost-border/60 bg-frost-surface/45 p-4 text-sm leading-6 text-frost-text outline-none focus:border-frost-accent/60"
                           />
                         ) : hasText &&
                           containsSpoilers &&
                           !spoilersRevealed ? (
-                          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-5 text-center">
+                          <div className="rounded-xl border border-frost-border/60 bg-frost-surface/45 p-5 text-center">
                             <ShieldAlert
                               size={28}
-                              className="mx-auto text-zinc-400"
+                              className="mx-auto text-frost-muted"
                             />
 
                             <h3 className="mt-3 font-semibold">
@@ -1495,7 +1615,7 @@ function SavedReviewCard({
                               spoilers
                             </h3>
 
-                            <p className="mt-2 text-sm text-zinc-500">
+                            <p className="mt-2 text-sm text-frost-muted">
                               ¿Quieres continuar y
                               leerla?
                             </p>
@@ -1507,26 +1627,26 @@ function SavedReviewCard({
                                   true,
                                 )
                               }
-                              className="mt-4 rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-200"
+                              className="mt-4 rounded-lg border border-frost-border px-4 py-2 text-sm text-frost-text"
                             >
                               Mostrar review
                             </button>
                           </div>
                         ) : hasText ? (
-                          <div className="rounded-xl bg-white/[0.035] p-4">
-                            <p className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">
+                          <div className="rounded-xl bg-frost-surface/45 p-4">
+                            <p className="whitespace-pre-wrap text-sm leading-7 text-frost-muted">
                               {reviewText}
                             </p>
                           </div>
                         ) : (
-                          <p className="text-sm italic text-zinc-600">
+                          <p className="text-sm italic text-frost-muted">
                             Sin review escrita.
                           </p>
                         )}
                       </div>
 
                       {message && (
-                        <p className="mt-4 text-sm text-zinc-400">
+                        <p className="mt-4 text-sm text-frost-muted">
                           {message}
                         </p>
                       )}
@@ -1534,7 +1654,7 @@ function SavedReviewCard({
                   </div>
                 </div>
 
-                <footer className="shrink-0 border-t border-white/8 bg-[#0a0a0d] px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-6 lg:pb-4">
+                <footer className="shrink-0 border-t border-frost-border/50 bg-frost-bg px-4 frost-review-safe-pb-12 pt-3 sm:px-6 lg:pb-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <button
                       type="button"
@@ -1555,7 +1675,7 @@ function SavedReviewCard({
                           setEditing(true)
                         }
                         disabled={loading}
-                        className="flex h-10 items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm text-zinc-200 transition hover:bg-zinc-900 disabled:opacity-50"
+                        className="flex h-10 items-center gap-2 rounded-xl border border-frost-border px-4 text-sm text-frost-text transition hover:bg-frost-surface disabled:opacity-50"
                       >
                         <Pencil size={16} />
                         Editar
@@ -1566,7 +1686,7 @@ function SavedReviewCard({
                           type="button"
                           onClick={cancelEditing}
                           disabled={loading}
-                          className="h-10 rounded-xl px-3 text-sm text-zinc-500 disabled:opacity-50"
+                          className="h-10 rounded-xl px-3 text-sm text-frost-muted disabled:opacity-50"
                         >
                           Cancelar
                         </button>
@@ -1577,7 +1697,7 @@ function SavedReviewCard({
                             void saveChanges()
                           }
                           disabled={loading}
-                          className="flex h-10 items-center gap-2 rounded-xl bg-fuchsia-500 px-4 text-sm font-medium text-white transition hover:bg-fuchsia-400 disabled:opacity-50"
+                          className="flex h-10 items-center gap-2 rounded-xl bg-frost-accent px-4 text-sm font-medium text-frost-bg transition hover:bg-frost-accent-hover disabled:opacity-50"
                         >
                           <Save size={16} />
                           {loading
@@ -1599,7 +1719,7 @@ function SavedReviewCard({
       typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+              className="fixed inset-0 frost-review-z-10000 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
               onMouseDown={() => {
                 if (!loading) {
                   setConfirmDelete(false);
@@ -1610,7 +1730,7 @@ function SavedReviewCard({
                 role="alertdialog"
                 aria-modal="true"
                 aria-label="Confirmar eliminación de review"
-                className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl"
+                className="w-full max-w-md rounded-2xl border border-frost-border bg-frost-bg p-6 shadow-2xl"
                 onMouseDown={(event) =>
                   event.stopPropagation()
                 }
@@ -1623,9 +1743,9 @@ function SavedReviewCard({
                   ¿Borrar review?
                 </h3>
 
-                <p className="mt-2 text-sm leading-6 text-zinc-500">
+                <p className="mt-2 text-sm leading-6 text-frost-muted">
                   La review de{" "}
-                  <span className="font-medium text-zinc-300">
+                  <span className="font-medium text-frost-muted">
                     {review.title}
                   </span>{" "}
                   se eliminará permanentemente.
@@ -1639,7 +1759,7 @@ function SavedReviewCard({
                       setConfirmDelete(false)
                     }
                     disabled={loading}
-                    className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 disabled:opacity-50"
+                    className="rounded-xl border border-frost-border px-4 py-2.5 text-sm text-frost-muted disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -1650,7 +1770,7 @@ function SavedReviewCard({
                       void deleteReview()
                     }
                     disabled={loading}
-                    className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
+                    className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-frost-text transition hover:bg-red-500 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
                     {loading

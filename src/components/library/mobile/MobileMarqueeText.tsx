@@ -57,10 +57,10 @@ export default function MobileMarqueeText({
   }, [text]);
 
   const duration =
-    Math.min(
-      13,
-      Math.max(6, overflow / 18 + 5),
-    ) / 1.03;
+  Math.min(
+    8,
+    Math.max(3.5, overflow / 32 + 2.5),
+  );
 
   const style = {
     "--frostiq-marquee-offset": `-${overflow}px`,
@@ -75,11 +75,11 @@ export default function MobileMarqueeText({
     >
       <style>{`
         @keyframes frostiq-episode-marquee {
-          0%, 16% {
+          0%, 10% {
             transform: translateX(0);
           }
 
-          84%, 100% {
+          90%, 100% {
             transform: translateX(
               var(--frostiq-marquee-offset)
             );
@@ -103,7 +103,7 @@ export default function MobileMarqueeText({
       <span
         ref={content}
         style={style}
-        className={`inline-block max-w-none whitespace-nowrap text-[13px] font-semibold leading-5 text-white ${
+        className={`inline-block max-w-none whitespace-nowrap frost-audit-text-13 font-semibold leading-5 text-white ${
           overflow > 0
             ? "frostiq-marquee"
             : ""

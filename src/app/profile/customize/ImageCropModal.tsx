@@ -117,17 +117,24 @@ export default function ImageCropModal({
       : 3 / 1;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-950 lg:flex lg:items-center lg:justify-center lg:bg-black/80 lg:p-6 lg:backdrop-blur-sm">
-      <div className="flex h-[100dvh] w-full flex-col bg-zinc-950 lg:h-auto lg:max-h-[90dvh] lg:max-w-3xl lg:overflow-hidden lg:rounded-2xl lg:border lg:border-zinc-800">
+    <div className="fixed inset-0 frost-crop-overlay-z bg-frost-bg lg:flex lg:items-center lg:justify-center lg:bg-black/80 lg:p-6 lg:backdrop-blur-sm">
+      <style>{`
+        .frost-crop-overlay-z { z-index: 200; }
+        @media (min-width: 1024px) {
+          .frost-crop-dialog-max-height { max-height: 90dvh; }
+          .frost-crop-canvas-height { height: 500px; }
+        }
+      `}</style>
+      <div className="flex h-dvh w-full flex-col bg-frost-bg lg:h-auto frost-crop-dialog-max-height lg:max-w-3xl lg:overflow-hidden lg:rounded-2xl lg:border lg:border-frost-border">
         {/* HEADER */}
 
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-frost-border px-4">
           <button
             type="button"
             onClick={
               onCancel
             }
-            className="rounded-full p-2 text-zinc-300 hover:bg-zinc-900"
+            className="rounded-full p-2 text-frost-text hover:bg-frost-surface"
             aria-label="Cancelar"
           >
             <X
@@ -135,7 +142,7 @@ export default function ImageCropModal({
             />
           </button>
 
-          <h2 className="font-semibold text-zinc-100">
+          <h2 className="font-semibold text-frost-text">
             {type ===
             "avatar"
               ? "Ajustar foto"
@@ -150,7 +157,7 @@ export default function ImageCropModal({
             disabled={
               !croppedArea
             }
-            className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-full bg-frost-text px-4 py-2 text-sm font-semibold text-frost-bg disabled:opacity-40"
           >
             <Check
               size={15}
@@ -162,7 +169,7 @@ export default function ImageCropModal({
 
         {/* CROPPER */}
 
-        <div className="relative min-h-0 flex-1 bg-black lg:h-[500px] lg:flex-none">
+        <div className="relative min-h-0 flex-1 bg-black frost-crop-canvas-height lg:flex-none">
           <Cropper
             image={
               image
@@ -200,11 +207,11 @@ export default function ImageCropModal({
 
         {/* ZOOM */}
 
-        <div className="shrink-0 border-t border-zinc-800 px-5 py-5">
+        <div className="shrink-0 border-t border-frost-border px-5 py-5">
           <div className="flex items-center gap-4">
             <Minus
               size={17}
-              className="text-zinc-600"
+              className="text-frost-muted"
             />
 
             <input
@@ -230,13 +237,13 @@ export default function ImageCropModal({
                   )
                 )
               }
-              className="w-full accent-fuchsia-500"
+              className="w-full accent-frost-accent"
               aria-label="Zoom"
             />
 
             <Plus
               size={17}
-              className="text-zinc-600"
+              className="text-frost-muted"
             />
           </div>
         </div>

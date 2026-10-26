@@ -2,11 +2,15 @@
 
 import { useSyncExternalStore } from "react";
 
-const QUERY = "(min-width: 1024px)";
+const QUERY = "(min-width: 1280px)";
 
 function subscribe(onStoreChange: () => void): () => void {
   const mediaQuery = window.matchMedia(QUERY);
-  mediaQuery.addEventListener("change", onStoreChange);
+
+  mediaQuery.addEventListener(
+    "change",
+    onStoreChange,
+  );
 
   return () => {
     mediaQuery.removeEventListener(

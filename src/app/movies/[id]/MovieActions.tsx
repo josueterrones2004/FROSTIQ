@@ -322,7 +322,7 @@ export default function MovieActions({
           type="button"
           disabled={loading}
           onClick={() => void openWatchedModal()}
-          className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-fuchsia-500/15 px-4 text-sm font-medium text-fuchsia-200 transition hover:bg-fuchsia-500/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-frost-accent/15 px-4 text-sm font-medium text-frost-accent transition hover:bg-frost-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {loading ? (
             <Loader2
@@ -350,7 +350,7 @@ export default function MovieActions({
           className={`inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition sm:w-auto ${
             pending
               ? "bg-amber-500/12 text-amber-200"
-              : "bg-white/[0.035] text-zinc-400 hover:bg-white/[0.07] hover:text-zinc-200"
+              : "bg-frost-surface/35 text-frost-muted hover:bg-frost-raised/40 hover:text-frost-text"
           } disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Clock3 size={16} />
@@ -362,7 +362,7 @@ export default function MovieActions({
       </div>
 
       {message ? (
-        <p className="mt-3 text-xs text-zinc-500 sm:text-sm">
+        <p className="mt-3 text-xs text-frost-muted sm:text-sm">
           {message}
         </p>
       ) : null}

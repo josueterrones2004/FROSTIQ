@@ -1,7 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDownUp, ListFilter, Search } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  ArrowDownUp,
+  ListFilter,
+  Search,
+} from "lucide-react";
 
 import {
   ALL_TYPES,
@@ -86,7 +96,8 @@ export default function MobileLibrary({
   const [deleteError, setDeleteError] =
     useState<string | null>(null);
 
-  const sortTrigger = useRef<HTMLButtonElement>(null);
+  const sortTrigger =
+    useRef<HTMLButtonElement>(null);
 
   const closeSheet = useCallback(
     () => setSelected(null),
@@ -109,13 +120,17 @@ export default function MobileLibrary({
       }
     }
 
-    document.addEventListener("keydown", escape);
+    document.addEventListener(
+      "keydown",
+      escape,
+    );
 
     return () => {
       document.removeEventListener(
         "keydown",
         escape,
       );
+
       triggerButton?.focus();
     };
   }, [sortOpen]);
@@ -128,6 +143,11 @@ export default function MobileLibrary({
   const hasFilters =
     view !== "ALL" ||
     types.length !== ALL_TYPES.length;
+
+  const currentSortLabel =
+    SORTS.find(
+      (option) => option.value === sort,
+    )?.label ?? "Título A–Z";
 
   async function confirmCompletedDelete() {
     if (!deleteItem || deleting) return;
@@ -157,12 +177,8 @@ export default function MobileLibrary({
   }
 
   return (
-    <section className="mx-auto w-full max-w-[680px] pb-2 lg:hidden">
-      <h1 className="mb-6 text-center text-[25px] font-bold tracking-tight text-white">
-        Biblioteca
-      </h1>
-
-      {/* BÚSQUEDA CON FILTRO A LA DERECHA */}
+    <section className="mx-auto w-full max-w-275 pb-2 text-frost-text">
+      {/* BÚSQUEDA */}
 
       <div className="relative mb-6">
         <label
@@ -175,7 +191,7 @@ export default function MobileLibrary({
         <Search
           size={18}
           aria-hidden="true"
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+          className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-frost-muted"
         />
 
         <input
@@ -187,7 +203,7 @@ export default function MobileLibrary({
           }
           placeholder="Buscar..."
           autoComplete="off"
-          className="h-12 w-full rounded-xl border border-white/10 bg-[#1a1e2a] pl-11 pr-14 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-violet-400/50"
+          className="h-12 w-full rounded-xl border border-frost-border bg-frost-surface pl-11 pr-14 text-sm text-frost-text outline-none placeholder:text-frost-muted focus:border-frost-accent/70"
         />
 
         <button
@@ -195,22 +211,25 @@ export default function MobileLibrary({
           onClick={() => setFiltersOpen(true)}
           aria-label="Filtrar biblioteca"
           aria-haspopup="dialog"
-          className={`absolute right-1.5 top-1/2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg transition focus-visible:outline-2 focus-visible:outline-violet-300 ${
+          className={`absolute top-1/2 right-1.5 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-frost-accent transition-colors focus-visible:outline-2 focus-visible:outline-frost-accent ${
             hasFilters
-              ? "bg-violet-400/20 text-violet-200"
-              : "text-zinc-400 active:bg-white/10"
+              ? "bg-frost-active"
+              : "active:bg-frost-raised"
           }`}
         >
-          <ListFilter size={20} aria-hidden="true" />
+          <ListFilter
+            size={20}
+            aria-hidden="true"
+          />
         </button>
       </div>
 
-      {/* CONTADOR + ORDENAMIENTO */}
+      {/* CONTADOR Y ORDENAMIENTO */}
 
-      <div className="relative mb-5 flex min-h-11 items-center justify-between gap-3 border-b border-white/10 pb-3">
+      <div className="relative mb-5 flex min-h-11 items-center justify-between gap-3 border-b border-frost-border pb-3">
         <h2
           aria-live="polite"
-          className="min-w-0 text-[15px] font-semibold text-zinc-200"
+          className="min-w-0 text-base font-semibold text-frost-text"
         >
           {countLabel(count, view, types)}
         </h2>
@@ -218,20 +237,23 @@ export default function MobileLibrary({
         <button
           ref={sortTrigger}
           type="button"
-          aria-label="Ordenar biblioteca"
+          aria-label={`Orden actual: ${currentSortLabel}. Cambiar orden`}
           aria-expanded={sortOpen}
           aria-haspopup="true"
           onClick={() =>
             setSortOpen((current) => !current)
           }
-          className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-xs font-medium ${
-            sortOpen || sort !== "TITLE_ASC"
-              ? "text-violet-200"
-              : "text-zinc-400"
-          }`}
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-1 text-xs font-medium text-frost-accent transition-colors hover:bg-frost-active focus-visible:outline-2 focus-visible:outline-frost-accent"
         >
-          <ArrowDownUp size={17} aria-hidden="true" />
-          Ordenar
+          <ArrowDownUp
+            size={17}
+            aria-hidden="true"
+            className="shrink-0 text-frost-accent"
+          />
+
+          <span className="whitespace-nowrap text-frost-accent">
+            {currentSortLabel}
+          </span>
         </button>
 
         {sortOpen && (
@@ -240,14 +262,14 @@ export default function MobileLibrary({
               type="button"
               tabIndex={-1}
               aria-label="Cerrar ordenamiento"
-              className="fixed inset-0 z-[160] cursor-default"
+              className="fixed inset-0 z-160 cursor-default"
               onClick={() => setSortOpen(false)}
             />
 
             <div
               role="radiogroup"
               aria-label="Ordenar por"
-              className="absolute right-0 top-full z-[170] w-56 overflow-hidden rounded-xl border border-white/15 bg-[#262b39] p-1.5 shadow-2xl"
+              className="absolute top-full right-0 z-170 w-56 overflow-hidden rounded-xl border border-frost-border bg-frost-surface p-1.5 shadow-2xl"
             >
               {SORTS.map((option) => (
                 <button
@@ -259,10 +281,10 @@ export default function MobileLibrary({
                     setSort(option.value);
                     setSortOpen(false);
                   }}
-                  className={`flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm ${
+                  className={`flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm transition-colors ${
                     sort === option.value
-                      ? "bg-violet-400/15 font-semibold text-violet-200"
-                      : "text-zinc-200 active:bg-white/10"
+                      ? "bg-frost-active font-semibold text-frost-accent"
+                      : "text-frost-text hover:bg-frost-raised"
                   }`}
                 >
                   {option.label}
@@ -276,7 +298,7 @@ export default function MobileLibrary({
       {feedback && (
         <p
           role="status"
-          className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200"
+          className="mb-4 rounded-lg border border-frost-warning/30 bg-frost-warning/10 px-3 py-2 text-sm text-frost-warning"
         >
           {feedback}
         </p>
@@ -294,7 +316,7 @@ export default function MobileLibrary({
         onReset={onReset}
       />
 
-      {/* FILTROS SIN ORDENAMIENTO */}
+      {/* FILTROS */}
 
       {filtersOpen && (
         <MobileLibraryFilters
@@ -309,7 +331,7 @@ export default function MobileLibrary({
         />
       )}
 
-      {/* MODAL DE OBRA */}
+      {/* MENÚ DE OBRA */}
 
       {selected && (
         <MobileLibraryActionSheet
@@ -324,7 +346,7 @@ export default function MobileLibrary({
         />
       )}
 
-      {/* CONFIRMACIÓN PARA COMPLETADOS */}
+      {/* ELIMINACIÓN DE COMPLETADOS */}
 
       {deleteItem && (
         <MobileCompletedDeleteDialog
@@ -332,7 +354,9 @@ export default function MobileLibrary({
           busy={deleting}
           error={deleteError}
           onCancel={() => {
-            if (!deleting) setDeleteItem(null);
+            if (!deleting) {
+              setDeleteItem(null);
+            }
           }}
           onConfirm={() =>
             void confirmCompletedDelete()

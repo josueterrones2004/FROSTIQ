@@ -546,7 +546,12 @@ export default async function ConnectionsPage({
 
   return (
     <main className="pb-20">
-      <div className="mx-auto w-full max-w-[760px] px-4 py-6 sm:px-6 lg:py-8">
+      <style>{`
+        .frost-connections-width { max-width: 760px; }
+        .frost-connections-tab-height { min-height: 50px; }
+        .frost-connections-text-10 { font-size: 10px; }
+      `}</style>
+      <div className="mx-auto w-full frost-connections-width px-4 py-6 sm:px-6 lg:py-8">
         {/* HEADER */}
 
         <header>
@@ -554,7 +559,7 @@ export default async function ConnectionsPage({
             href={
               profilePath
             }
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-100"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
             aria-label="Volver al perfil"
           >
             <ArrowLeft
@@ -563,14 +568,14 @@ export default async function ConnectionsPage({
           </Link>
 
           <div className="mt-5">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+            <h1 className="text-2xl font-bold tracking-tight text-frost-text">
               {
                 displayName
               }
             </h1>
 
             {profile.username && (
-              <p className="mt-1 text-sm text-zinc-600">
+              <p className="mt-1 text-sm text-frost-muted">
                 @
                 {
                   profile.username
@@ -582,7 +587,7 @@ export default async function ConnectionsPage({
 
         {/* TABS */}
 
-        <nav className="mt-7 grid grid-cols-2 border-b border-zinc-800">
+        <nav className="mt-7 grid grid-cols-2 border-b border-frost-border">
           <ConnectionTabLink
             href={`${connectionsPath}?tab=followers`}
             active={
@@ -592,7 +597,7 @@ export default async function ConnectionsPage({
           >
             Seguidores
 
-            <span className="ml-1.5 text-zinc-600">
+            <span className="ml-1.5 text-frost-muted">
               {
                 followersCount
               }
@@ -608,7 +613,7 @@ export default async function ConnectionsPage({
           >
             Siguiendo
 
-            <span className="ml-1.5 text-zinc-600">
+            <span className="ml-1.5 text-frost-muted">
               {
                 followingCount
               }
@@ -623,10 +628,10 @@ export default async function ConnectionsPage({
           <div className="py-16 text-center">
             <Users
               size={30}
-              className="mx-auto text-zinc-700"
+              className="mx-auto text-frost-muted"
             />
 
-            <p className="mt-4 text-sm text-zinc-600">
+            <p className="mt-4 text-sm text-frost-muted">
               {activeTab ===
               "followers"
                 ? "Todavía no tiene seguidores."
@@ -634,7 +639,7 @@ export default async function ConnectionsPage({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-900">
+          <div className="divide-y divide-frost-border">
             {connectedProfiles.map(
               (
                 connectedProfile
@@ -670,7 +675,7 @@ export default async function ConnectionsPage({
                       }
                       className="shrink-0"
                     >
-                      <div className="h-12 w-12 overflow-hidden rounded-full bg-zinc-900 sm:h-14 sm:w-14">
+                      <div className="h-12 w-12 overflow-hidden rounded-full bg-frost-surface sm:h-14 sm:w-14">
                         {connectedProfile.avatar_url ? (
                           <CroppedProfileImage
                             src={
@@ -684,7 +689,7 @@ export default async function ConnectionsPage({
                             }
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center font-semibold text-zinc-500">
+                          <div className="flex h-full w-full items-center justify-center font-semibold text-frost-muted">
                             {connectedName
                               .slice(
                                 0,
@@ -704,7 +709,7 @@ export default async function ConnectionsPage({
                           href={
                             connectedPath
                           }
-                          className="min-w-0 truncate font-semibold text-zinc-200 transition hover:text-white"
+                          className="min-w-0 truncate font-semibold text-frost-text transition hover:text-white"
                         >
                           {
                             connectedName
@@ -713,14 +718,14 @@ export default async function ConnectionsPage({
 
                         {connectedProfile.special_role ===
                           "OWNER" && (
-                          <span className="shrink-0 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-medium text-fuchsia-300">
+                          <span className="shrink-0 rounded-full border border-frost-accent/30 bg-frost-accent/10 px-2 py-0.5 frost-connections-text-10 font-medium text-frost-accent">
                             Owner
                           </span>
                         )}
 
                         {connectedProfile.special_role ===
                           "BETA_TESTER" && (
-                          <span className="shrink-0 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                          <span className="shrink-0 rounded-full border border-frost-border bg-frost-surface px-2 py-0.5 frost-connections-text-10 text-frost-muted">
                             Beta Tester
                           </span>
                         )}
@@ -731,7 +736,7 @@ export default async function ConnectionsPage({
                           href={
                             connectedPath
                           }
-                          className="mt-0.5 block truncate text-sm text-zinc-600 transition hover:text-zinc-400"
+                          className="mt-0.5 block truncate text-sm text-frost-muted transition hover:text-frost-muted"
                         >
                           @
                           {
@@ -745,7 +750,7 @@ export default async function ConnectionsPage({
 
                     <div className="shrink-0">
                       {isCurrentUser ? (
-                        <span className="text-xs text-zinc-700">
+                        <span className="text-xs text-frost-muted">
                           Tú
                         </span>
                       ) : (
@@ -776,12 +781,12 @@ export default async function ConnectionsPage({
 
         {totalPages >
           1 && (
-          <div className="mt-8 flex items-center justify-between border-t border-zinc-900 pt-5">
+          <div className="mt-8 flex items-center justify-between border-t border-frost-border pt-5">
             {page >
             1 ? (
               <Link
                 href={`${connectionsPath}?tab=${activeTab}&page=${page - 1}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3.5 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
+                className="inline-flex items-center gap-1.5 rounded-full border border-frost-border px-3.5 py-2 text-sm text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
               >
                 <ChevronLeft
                   size={16}
@@ -793,7 +798,7 @@ export default async function ConnectionsPage({
               <div />
             )}
 
-            <span className="text-xs tabular-nums text-zinc-600">
+            <span className="text-xs tabular-nums text-frost-muted">
               {
                 page
               }
@@ -807,7 +812,7 @@ export default async function ConnectionsPage({
             totalPages ? (
               <Link
                 href={`${connectionsPath}?tab=${activeTab}&page=${page + 1}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 px-3.5 py-2 text-sm text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
+                className="inline-flex items-center gap-1.5 rounded-full border border-frost-border px-3.5 py-2 text-sm text-frost-muted transition hover:bg-frost-surface hover:text-frost-text"
               >
                 Siguiente
 
@@ -852,10 +857,10 @@ function ConnectionTabLink({
           ? "page"
           : undefined
       }
-      className={`relative flex min-h-[50px] items-center justify-center text-sm font-medium transition ${
+      className={`relative flex frost-connections-tab-height items-center justify-center text-sm font-medium transition ${
         active
-          ? "text-zinc-100"
-          : "text-zinc-600 hover:text-zinc-300"
+          ? "text-frost-text"
+          : "text-frost-muted hover:text-frost-text"
       }`}
     >
       {
@@ -863,7 +868,7 @@ function ConnectionTabLink({
       }
 
       {active && (
-        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-fuchsia-500" />
+        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-frost-accent" />
       )}
     </Link>
   );

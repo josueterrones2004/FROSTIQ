@@ -155,9 +155,9 @@ export default async function AdminMediaPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1500px] pb-24">
+    <main className="mx-auto w-full pb-24" style={{ maxWidth: 1500 }}>
       <div className="mb-6 flex items-start gap-3 sm:mb-8 sm:items-center">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/10 text-fuchsia-400 sm:h-11 sm:w-11">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-frost-accent/10 text-frost-accent sm:h-11 sm:w-11">
           <ImageIcon
             size={
               20
@@ -166,11 +166,11 @@ export default async function AdminMediaPage({
         </div>
 
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-zinc-100 sm:text-3xl">
+          <h1 className="text-xl font-bold text-frost-text sm:text-3xl">
             Administrar imágenes
           </h1>
 
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-zinc-600 sm:text-sm">
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-frost-muted sm:text-sm">
             Corrige banners, portadas y encuadres sin modificar código.
           </p>
         </div>

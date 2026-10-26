@@ -53,9 +53,7 @@ export default function MobileLibraryHero({
     inProgress &&
     Boolean(item.bookProgress?.totalPages);
 
-  /* =========================================
-     INFORMACIÓN CONTEXTUAL
-  ========================================= */
+  /* INFORMACIÓN CONTEXTUAL */
 
   const firstLabel = completed
     ? "Tu calificación"
@@ -97,8 +95,14 @@ export default function MobileLibraryHero({
   );
 
   return (
-    <div className="relative isolate overflow-hidden rounded-t-[24px] bg-[#202a37]">
-      {/* FONDO: HERO VISIBLE, LIGERAMENTE DIFUMINADO */}
+    <div
+      className="relative isolate overflow-hidden rounded-t-3xl bg-frost-raised"
+      style={{
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+      }}
+    >
+      {/* FONDO DIFUMINADO */}
 
       {background && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -111,12 +115,11 @@ export default function MobileLibraryHero({
             unoptimized={shouldUseOriginalImage(
               background,
             )}
-            className={`object-cover opacity-90 ${
-              hasBackdrop
-                ? "blur-[5px]"
-                : "blur-[8px]"
-            }`}
+            className="object-cover opacity-90"
             style={{
+              filter: hasBackdrop
+                ? "blur(5px)"
+                : "blur(8px)",
               objectPosition: backgroundPosition,
               transform: `scale(${backgroundZoom})`,
             }}
@@ -124,19 +127,29 @@ export default function MobileLibraryHero({
         </div>
       )}
 
-      {/* DEGRADADO PARA CONSERVAR LEGIBILIDAD */}
+      {/* DEGRADADO COBALT INK */}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#101720]/40 via-[#101720]/45 to-[#101720]/75" />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(5,7,11,0.4), rgba(5,7,11,0.45), rgba(5,7,11,0.75))",
+        }}
+      />
 
-      {/* CABECERA: PORTADA + CONTENIDO */}
+      {/* PORTADA E INFORMACIÓN */}
 
-      <div className="relative z-10 grid grid-cols-[minmax(100px,35%)_minmax(0,1fr)] items-center gap-3 p-3">
-        {/* PORTADA ORIGINAL SIN MARCO */}
-
+      <div
+        className="relative z-10 grid items-center gap-3 px-5 py-4"
+        style={{
+          gridTemplateColumns:
+            "minmax(90px, 32%) minmax(0, 1fr)",
+        }}
+      >
         <Link
           href={hrefOf(item)}
           aria-label={`Abrir ficha de ${item.title}`}
-          className="relative block aspect-[2/3] w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-violet-300"
+          className="relative block aspect-2/3 w-full overflow-hidden focus-visible:outline-2 focus-visible:outline-frost-accent"
         >
           {item.coverUrl ? (
             <Image
@@ -157,7 +170,7 @@ export default function MobileLibraryHero({
               }}
             />
           ) : (
-            <span className="flex h-full items-center justify-center bg-zinc-900/65 text-zinc-400">
+            <span className="flex h-full items-center justify-center bg-frost-surface/65 text-frost-muted">
               <ImageOff
                 size={26}
                 aria-hidden="true"
@@ -168,21 +181,29 @@ export default function MobileLibraryHero({
 
         {/* DATOS DEL MEDIO */}
 
-        <div className="flex min-w-0 flex-col justify-center gap-4 py-1">
+        <div className="flex min-w-0 flex-col justify-center gap-3 py-1">
           <h2
-            className="line-clamp-3 break-words text-[19px] font-bold leading-[1.2] tracking-tight text-white drop-shadow-md"
+            className="line-clamp-3 wrap-break-words font-bold tracking-tight text-frost-text drop-shadow-md"
+            style={{
+              fontSize: 19,
+              lineHeight: 1.2,
+            }}
             title={item.title}
           >
             {item.title}
           </h2>
 
-          {/* MÉTRICAS COMPACTAS:
-              LA PRIMERA CRECE Y LA SEGUNDA
-              OCUPA SOLO SU ESPACIO */}
+          {/* MÉTRICAS CON SU DISTRIBUCIÓN ORIGINAL */}
 
-          <div className="flex min-w-0 items-start gap-2.5">
-            <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[11px] font-medium leading-4 text-zinc-300">
+          <div
+            className="grid max-w-full items-start gap-x-5"
+            style={{
+              width: 214,
+              gridTemplateColumns: "126px 68px",
+            }}
+          >
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-medium leading-4 text-frost-muted" style={{ fontSize: 11 }}>
                 {firstLabel}
               </p>
 
@@ -196,7 +217,10 @@ export default function MobileLibraryHero({
                     size={14}
                   />
                 ) : (
-                  <p className="text-[13px] font-semibold leading-5 text-white">
+                  <p
+                    className="font-semibold leading-5 text-frost-text"
+                    style={{ fontSize: 13 }}
+                  >
                     Sin puntuación
                   </p>
                 )
@@ -206,7 +230,8 @@ export default function MobileLibraryHero({
                 />
               ) : (
                 <p
-                  className="line-clamp-2 text-[13px] font-semibold leading-5 text-white"
+                  className="line-clamp-2 font-semibold leading-5 text-frost-text"
+                  style={{ fontSize: 13 }}
                   title={firstValue}
                 >
                   {firstValue}
@@ -214,12 +239,18 @@ export default function MobileLibraryHero({
               )}
             </div>
 
-            <div className="w-[72px] shrink-0">
-              <p className="mb-1 whitespace-nowrap text-[11px] font-medium leading-4 text-zinc-300">
+            <div className="min-w-0">
+              <p
+                className="mb-1 whitespace-nowrap font-medium leading-4 text-frost-muted"
+                style={{ fontSize: 11 }}
+              >
                 {secondLabel}
               </p>
 
-              <p className="whitespace-nowrap text-[13px] font-semibold leading-5 text-white">
+              <p
+                className="whitespace-nowrap font-semibold leading-5 text-frost-text"
+                style={{ fontSize: 13 }}
+              >
                 {secondValue}
               </p>
             </div>

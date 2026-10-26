@@ -171,7 +171,7 @@ export default function MediaActionBar({
           PRIMARY
 
           Mismo lenguaje visual de Películas:
-          gran botón fucsia, ancho completo.
+          gran botón Cobalt Ink, ancho completo.
       ================================================== */}
 
       <button
@@ -197,17 +197,17 @@ export default function MediaActionBar({
           ${
             primaryActive
               ? `
-                border-fuchsia-400/35
-                bg-fuchsia-500/20
-                text-fuchsia-100
+                border-frost-accent/35
+                bg-frost-accent/20
+                text-frost-accent
               `
               : `
-                border-fuchsia-400/20
-                bg-fuchsia-500/15
-                text-fuchsia-200
-                hover:border-fuchsia-400/35
-                hover:bg-fuchsia-500/20
-                hover:text-fuchsia-100
+                border-frost-accent/20
+                bg-frost-accent/15
+                text-frost-accent
+                hover:border-frost-accent/35
+                hover:bg-frost-accent/20
+                hover:text-frost-accent
               `
           }
         `}
@@ -298,17 +298,17 @@ export default function MediaActionBar({
                         `
                         : active
                           ? `
-                            border-fuchsia-400/25
-                            bg-fuchsia-500/10
-                            text-fuchsia-200
+                            border-frost-accent/25
+                            bg-frost-accent/10
+                            text-frost-accent
                           `
                           : `
-                            border-white/[0.04]
-                            bg-white/[0.025]
-                            text-zinc-500
-                            hover:border-white/[0.09]
-                            hover:bg-white/[0.045]
-                            hover:text-zinc-300
+                            border-frost-border/40
+                            bg-frost-surface/25
+                            text-frost-muted
+                            hover:border-frost-border/80
+                            hover:bg-frost-surface/45
+                            hover:text-frost-text
                           `
                     }
                   `}
@@ -332,7 +332,7 @@ export default function MediaActionBar({
       ) : null}
 
       {message ? (
-        <p className="mt-2.5 text-xs leading-5 text-zinc-500">
+        <p className="mt-2.5 text-xs leading-5 text-frost-muted">
           {message}
         </p>
       ) : null}

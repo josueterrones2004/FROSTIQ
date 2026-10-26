@@ -388,7 +388,7 @@ export default function ActivityLikeButton({
         }}
         disabled={loading}
         aria-pressed={liked}
-        className={`inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`inline-flex items-center gap-2 text-sm text-frost-muted transition hover:text-frost-text disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       >
         <Heart
           size={18}
@@ -400,16 +400,16 @@ export default function ActivityLikeButton({
           className={
             liked
               ? "text-rose-500"
-              : "text-zinc-500"
+              : "text-frost-muted"
           }
         />
 
-        <span className="min-w-[8px] text-zinc-500">
+        <span className="min-w-2 text-frost-muted">
           {count}
         </span>
 
         {!liked ? (
-          <span className="text-zinc-500">
+          <span className="text-frost-muted">
             Me gusta
           </span>
         ) : null}
@@ -434,7 +434,7 @@ export default function ActivityLikeButton({
       className={`mt-4 flex items-center gap-2 text-sm transition ${
         liked
           ? "text-red-500"
-          : "text-zinc-500 hover:text-zinc-300"
+          : "text-frost-muted hover:text-frost-text"
       } disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       <Heart

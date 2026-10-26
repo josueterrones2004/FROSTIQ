@@ -26,12 +26,17 @@ type Options = {
   setFeedback: Dispatch<
     SetStateAction<string | null>
   >;
+  onStatusSaved?: (
+    item: LibraryEntry,
+    status: QuickStatus,
+  ) => void;
 };
 
 export function useLibraryStatus({
   supabase,
   router,
   setFeedback,
+  onStatusSaved,
 }: Options) {
   const [busyKey, setBusyKey] =
     useState<string | null>(null);
@@ -57,7 +62,7 @@ export function useLibraryStatus({
         );
       }
 
-      const status =
+      const status: QuickStatus =
         requested === "IN_PROGRESS" &&
         item.mediaType === "MOVIE"
           ? "PENDING"
@@ -84,6 +89,8 @@ export function useLibraryStatus({
         );
 
       if (error) throw error;
+
+      onStatusSaved?.(item, status);
 
       router.refresh();
     } catch (error) {

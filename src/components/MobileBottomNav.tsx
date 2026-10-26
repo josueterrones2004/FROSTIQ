@@ -30,10 +30,7 @@ type Props = {
   authenticated: boolean;
 };
 
-function isActive(
-  pathname: string,
-  href: string,
-) {
+function isActive(pathname: string, href: string) {
   return href === "/"
     ? pathname === "/"
     : pathname === href ||
@@ -49,10 +46,10 @@ function NavLabel({
 }) {
   return (
     <span
-      className={`max-w-full truncate px-0.5 text-[10px] font-medium ${
+      className={`max-w-full truncate px-0.5 frost-audit-text-10 font-medium ${
         active
-          ? "text-zinc-200"
-          : "text-zinc-600"
+          ? "text-frost-text"
+          : "text-frost-muted"
       }`}
     >
       {children}
@@ -60,13 +57,9 @@ function NavLabel({
   );
 }
 
-function ActiveLine({
-  active,
-}: {
-  active: boolean;
-}) {
+function ActiveLine({ active }: { active: boolean }) {
   return active ? (
-    <span className="absolute top-0 h-[2px] w-5 rounded-full bg-fuchsia-400" />
+    <span className="absolute top-0 h-0.5 w-5 rounded-full bg-frost-accent" />
   ) : null;
 }
 
@@ -85,20 +78,16 @@ export default function MobileBottomNav({
   );
 
   const homeActive =
-    !searchOpen &&
-    isActive(pathname, "/");
+    !searchOpen && isActive(pathname, "/");
 
   const libraryActive =
-    !searchOpen &&
-    isActive(pathname, "/library");
+    !searchOpen && isActive(pathname, "/library");
 
   const socialActive =
-    !searchOpen &&
-    isActive(pathname, "/social");
+    !searchOpen && isActive(pathname, "/social");
 
   const profileActive =
-    !searchOpen &&
-    isActive(pathname, "/profile");
+    !searchOpen && isActive(pathname, "/profile");
 
   const navItem =
     "relative flex min-w-0 flex-col items-center justify-center gap-1";
@@ -114,13 +103,11 @@ export default function MobileBottomNav({
 
         <Icon
           size={21}
-          strokeWidth={
-            active ? 2.3 : 1.9
-          }
+          strokeWidth={active ? 2.3 : 1.9}
           className={
             active
-              ? "text-zinc-100"
-              : "text-zinc-500"
+              ? "text-frost-accent"
+              : "text-frost-muted"
           }
         />
 
@@ -138,27 +125,27 @@ export default function MobileBottomNav({
         onClose={closeSearch}
       />
 
-      <nav className="fixed inset-x-0 bottom-0 z-[170] border-t border-zinc-800 bg-zinc-950/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_30px_rgba(0,0,0,0.22)] backdrop-blur-xl lg:hidden">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-170 border-t border-frost-border bg-frost-bg shadow-2xl desktop:hidden"
+        style={{
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
         {authenticated ? (
-          <div className="grid h-[68px] grid-cols-5">
+          <div className="grid h-17 grid-cols-5">
             <Link
               href="/"
               onClick={closeSearch}
               className={navItem}
             >
-              {navIcon(
-                House,
-                homeActive,
-                "Inicio",
-              )}
+              {navIcon(House, homeActive, "Inicio")}
             </Link>
 
             <button
               type="button"
-              onClick={() =>
-                setSearchOpen(true)
-              }
+              onClick={() => setSearchOpen(true)}
               className={navItem}
+              aria-label="Buscar"
             >
               {navIcon(
                 Search,
@@ -196,16 +183,14 @@ export default function MobileBottomNav({
               onClick={closeSearch}
               className={navItem}
             >
-              <ActiveLine
-                active={profileActive}
-              />
+              <ActiveLine active={profileActive} />
 
               {profile?.avatar_url ? (
-                <div
-                  className={`h-[23px] w-[23px] overflow-hidden rounded-full border ${
+                <span
+                  className={`relative block size-6 shrink-0 overflow-hidden rounded-full border ${
                     profileActive
-                      ? "border-fuchsia-400 ring-1 ring-fuchsia-400/30"
-                      : "border-zinc-700"
+                      ? "border-frost-accent ring-1 ring-frost-accent/30"
+                      : "border-frost-border"
                   }`}
                 >
                   <Image
@@ -215,55 +200,46 @@ export default function MobileBottomNav({
                       profile.username ??
                       "Perfil"
                     }
-                    width={46}
-                    height={46}
+                    fill
+                    sizes="24px"
                     unoptimized
-                    className="h-full w-full object-cover"
+                    className="object-cover"
                   />
-                </div>
+                </span>
               ) : (
                 <UserRound
                   size={22}
                   strokeWidth={
-                    profileActive
-                      ? 2.3
-                      : 1.9
+                    profileActive ? 2.3 : 1.9
                   }
                   className={
                     profileActive
-                      ? "text-zinc-100"
-                      : "text-zinc-500"
+                      ? "text-frost-accent"
+                      : "text-frost-muted"
                   }
                 />
               )}
 
-              <NavLabel
-                active={profileActive}
-              >
+              <NavLabel active={profileActive}>
                 Perfil
               </NavLabel>
             </Link>
           </div>
         ) : (
-          <div className="grid h-[68px] grid-cols-3">
+          <div className="grid h-17 grid-cols-3">
             <Link
               href="/"
               onClick={closeSearch}
               className={navItem}
             >
-              {navIcon(
-                House,
-                homeActive,
-                "Inicio",
-              )}
+              {navIcon(House, homeActive, "Inicio")}
             </Link>
 
             <button
               type="button"
-              onClick={() =>
-                setSearchOpen(true)
-              }
+              onClick={() => setSearchOpen(true)}
               className={navItem}
+              aria-label="Buscar"
             >
               {navIcon(
                 Search,
@@ -277,11 +253,7 @@ export default function MobileBottomNav({
               onClick={closeSearch}
               className={navItem}
             >
-              {navIcon(
-                LogIn,
-                false,
-                "Entrar",
-              )}
+              {navIcon(LogIn, false, "Entrar")}
             </Link>
           </div>
         )}

@@ -49,10 +49,19 @@ type Option = {
   key: string;
   label: string;
   icon: LucideIcon;
-  action: () => void;
   danger?: boolean;
-  customize?: boolean;
 };
+
+type NoticePhase =
+  | "hidden"
+  | "entering"
+  | "visible"
+  | "leaving";
+
+const SHEET_DURATION = 320;
+const DISMISS_DISTANCE = 95;
+const NOTICE_DURATION = 2100;
+const NOTICE_EXIT_DURATION = 240;
 
 function startLabel(
   type: LibraryEntry["mediaType"],
@@ -101,14 +110,162 @@ export default function MobileLibraryActionSheet({
       scroll: number;
     } | null>(null);
 
-  const [notice, setNotice] =
+  const dragDistanceRef = useRef(0);
+  const closingRef = useRef(false);
+
+  const closeTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const noticeTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const noticeExitTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pendingActionRef =
+    useRef<(() => void) | null>(null);
+
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  const reducedMotionRef = useRef(false);
+
+  const [visible, setVisible] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  const [dragging, setDragging] = useState(false);
+  const [dragY, setDragY] = useState(0);
+
+  const [noticePhase, setNoticePhase] =
+    useState<NoticePhase>("hidden");
+
+  const [noticeBuzz, setNoticeBuzz] =
+    useState(0);
+
+  const [noticeHasAppeared, setNoticeHasAppeared] =
     useState(false);
 
-  /* =========================================
-     HISTORIAL Y TECLADO
-  ========================================= */
+  const clearNoticeTimers = useCallback(() => {
+    if (noticeTimerRef.current !== null) {
+      clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
+    }
+
+    if (noticeExitTimerRef.current !== null) {
+      clearTimeout(noticeExitTimerRef.current);
+      noticeExitTimerRef.current = null;
+    }
+  }, []);
+
+  const finishClose = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+
+    const pendingAction =
+      pendingActionRef.current;
+
+    pendingActionRef.current = null;
+
+    onCloseRef.current();
+
+    pendingAction?.();
+  }, []);
+
+  const requestClose = useCallback(
+    (afterClose?: () => void) => {
+      if (closingRef.current) return;
+
+      closingRef.current = true;
+
+      pendingActionRef.current =
+        afterClose ?? null;
+
+      touchStartPosition.current = null;
+      dragDistanceRef.current = 0;
+
+      setDragging(false);
+      setDragY(0);
+      setClosing(true);
+
+      clearNoticeTimers();
+      setNoticePhase("hidden");
+
+      if (reducedMotionRef.current) {
+        finishClose();
+        return;
+      }
+
+      closeTimerRef.current = setTimeout(
+        finishClose,
+        SHEET_DURATION + 20,
+      );
+    },
+    [clearNoticeTimers, finishClose],
+  );
+
+  const run = useCallback(
+    (action: () => void) => {
+      requestClose(action);
+    },
+    [requestClose],
+  );
+
+  const dismissNotice = useCallback(() => {
+    if (
+      noticeExitTimerRef.current !== null
+    ) {
+      clearTimeout(noticeExitTimerRef.current);
+    }
+
+    if (reducedMotionRef.current) {
+      setNoticePhase("hidden");
+      return;
+    }
+
+    setNoticePhase("leaving");
+
+    noticeExitTimerRef.current = setTimeout(
+      () => {
+        setNoticePhase("hidden");
+        noticeExitTimerRef.current = null;
+      },
+      NOTICE_EXIT_DURATION,
+    );
+  }, []);
+
+  const showNotice = useCallback(() => {
+    if (closingRef.current) return;
+
+    clearNoticeTimers();
+
+    if (noticeHasAppeared) {
+      setNoticePhase("visible");
+      setNoticeBuzz((current) => current + 1);
+    } else {
+      setNoticeHasAppeared(true);
+      setNoticePhase("entering");
+    }
+
+    noticeTimerRef.current = setTimeout(
+      dismissNotice,
+      NOTICE_DURATION,
+    );
+  }, [
+    clearNoticeTimers,
+    dismissNotice,
+    noticeHasAppeared,
+  ]);
 
   useEffect(() => {
+    reducedMotionRef.current =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
     const previousOverflow =
       document.body.style.overflow;
 
@@ -128,15 +285,19 @@ export default function MobileLibraryActionSheet({
       window.location.href,
     );
 
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setVisible(true);
+      });
+    });
+
     function handlePop() {
-      onClose();
+      requestClose();
     }
 
     function handleKey(
       event: KeyboardEvent,
     ) {
-      // Si la review original está abierta,
-      // dejamos que maneje su propio Escape.
       const savedReviewOpen =
         document.querySelector(
           '[role="dialog"][aria-label^="Review de "]',
@@ -146,7 +307,7 @@ export default function MobileLibraryActionSheet({
 
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        requestClose();
         return;
       }
 
@@ -154,14 +315,13 @@ export default function MobileLibraryActionSheet({
 
       const buttons =
         panelRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]),a[href]',
+          'button:not(:disabled),a[href]',
         );
 
       if (!buttons?.length) return;
 
       const first = buttons[0];
-      const last =
-        buttons[buttons.length - 1];
+      const last = buttons[buttons.length - 1];
 
       if (
         event.shiftKey &&
@@ -189,6 +349,8 @@ export default function MobileLibraryActionSheet({
     );
 
     return () => {
+      cancelAnimationFrame(frame);
+
       window.removeEventListener(
         "popstate",
         handlePop,
@@ -198,6 +360,10 @@ export default function MobileLibraryActionSheet({
         "keydown",
         handleKey,
       );
+
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+      }
 
       document.body.style.overflow =
         previousOverflow;
@@ -211,90 +377,120 @@ export default function MobileLibraryActionSheet({
 
       previousFocus?.focus();
     };
-  }, [marker, onClose]);
-
-  /* =========================================
-     AVISO DE PERSONALIZACIÓN
-  ========================================= */
+  }, [marker, requestClose]);
 
   useEffect(() => {
-    if (!notice) return;
-
-    const timeout = window.setTimeout(
-      () => setNotice(false),
-      2700,
-    );
-
-    return () =>
-      window.clearTimeout(timeout);
-  }, [notice]);
-
-  const run = useCallback(
-    (action: () => void) => {
-      onClose();
-      action();
-    },
-    [onClose],
-  );
-
-  /* =========================================
-     DESLIZAR PARA CERRAR
-  ========================================= */
+    return () => {
+      clearNoticeTimers();
+    };
+  }, [clearNoticeTimers]);
 
   function handleTouchStart(
     event: TouchEvent<HTMLElement>,
   ) {
+    if (closingRef.current) return;
+
     const touch = event.touches[0];
+
+    if (!touch) return;
 
     touchStartPosition.current = {
       x: touch.clientX,
       y: touch.clientY,
-      scroll:
-        panelRef.current?.scrollTop ?? 0,
+      scroll: panelRef.current?.scrollTop ?? 0,
     };
+
+    dragDistanceRef.current = 0;
+  }
+
+  function handleTouchMove(
+    event: TouchEvent<HTMLElement>,
+  ) {
+    const start = touchStartPosition.current;
+
+    if (
+      !start ||
+      closingRef.current ||
+      start.scroll > 0
+    ) {
+      return;
+    }
+
+    const touch = event.touches[0];
+
+    if (!touch) return;
+
+    const dy = touch.clientY - start.y;
+    const dx = touch.clientX - start.x;
+
+    if (
+      dy <= 0 ||
+      dy <= Math.abs(dx) * 1.4
+    ) {
+      if (!dragging) {
+        dragDistanceRef.current = 0;
+      }
+
+      return;
+    }
+
+    const distance = Math.max(0, dy);
+
+    dragDistanceRef.current = distance;
+
+    setDragging(true);
+    setDragY(distance);
   }
 
   function handleTouchEnd(
     event: TouchEvent<HTMLElement>,
   ) {
-    const start =
-      touchStartPosition.current;
+    const start = touchStartPosition.current;
 
     touchStartPosition.current = null;
 
-    if (!start) return;
+    if (!start || closingRef.current) return;
 
-    const touch =
-      event.changedTouches[0];
+    const touch = event.changedTouches[0];
 
-    const dy =
-      touch.clientY - start.y;
-
-    const dx =
-      touch.clientX - start.x;
-
-    if (
-      dy > 90 &&
-      dy > Math.abs(dx) * 1.4 &&
-      start.scroll <= 0
-    ) {
-      onClose();
+    if (!touch) {
+      setDragging(false);
+      setDragY(0);
+      return;
     }
+
+    const dy = touch.clientY - start.y;
+    const dx = touch.clientX - start.x;
+
+    const shouldClose =
+      dy >= DISMISS_DISTANCE &&
+      dy > Math.abs(dx) * 1.4 &&
+      start.scroll <= 0;
+
+    dragDistanceRef.current = 0;
+
+    if (shouldClose) {
+      requestClose();
+      return;
+    }
+
+    setDragging(false);
+    setDragY(0);
   }
 
-  /* =========================================
-     OPCIONES POR ESTADO
-  ========================================= */
+  function handleTouchCancel() {
+    touchStartPosition.current = null;
+    dragDistanceRef.current = 0;
+    setDragging(false);
+    setDragY(0);
+  }
 
   const completed =
     item.status === null &&
     item.completedCount > 0;
 
-  const dropped =
-    item.status === "DROPPED";
-
-  const pending =
-    item.status === "PENDING";
+  const dropped = item.status === "DROPPED";
+  const pending = item.status === "PENDING";
 
   const canProgress =
     item.mediaType === "SERIES" ||
@@ -304,24 +500,18 @@ export default function MobileLibraryActionSheet({
     key: "customize",
     label: "Personalizar",
     icon: Paintbrush,
-    customize: true,
-    action: () => setNotice(true),
   };
 
   const writeReview: Option = {
     key: "review",
     label: "Registrar review",
     icon: Star,
-    action: () =>
-      run(() => actions.rate(item)),
   };
 
   const detail: Option = {
     key: "detail",
     label: "Abrir ficha",
     icon: ArrowUpRight,
-    action: () =>
-      window.location.assign(hrefOf(item)),
   };
 
   const remove: Option = {
@@ -329,12 +519,6 @@ export default function MobileLibraryActionSheet({
     label: "Eliminar de la biblioteca",
     icon: Trash2,
     danger: true,
-    action: () =>
-      run(() =>
-        completed
-          ? onRequestCompletedDelete(item)
-          : actions.remove(item),
-      ),
   };
 
   let options: Option[];
@@ -345,32 +529,17 @@ export default function MobileLibraryActionSheet({
         key: "view-review",
         label: "Ver review",
         icon: Star,
-        action: () => {},
       },
       customize,
       {
         key: "again",
         label: repeatLabel(item.mediaType),
         icon: RotateCcw,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "IN_PROGRESS",
-            ),
-          ),
       },
       {
         key: "pending",
         label: "Marcar como pendiente",
         icon: Clock3,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "PENDING",
-            ),
-          ),
       },
       detail,
       remove,
@@ -381,25 +550,11 @@ export default function MobileLibraryActionSheet({
         key: "pending",
         label: "Marcar como pendiente",
         icon: Clock3,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "PENDING",
-            ),
-          ),
       },
       {
         key: "start",
         label: startLabel(item.mediaType),
         icon: Play,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "IN_PROGRESS",
-            ),
-          ),
       },
       writeReview,
       detail,
@@ -413,13 +568,6 @@ export default function MobileLibraryActionSheet({
         key: "start",
         label: startLabel(item.mediaType),
         icon: Play,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "IN_PROGRESS",
-            ),
-          ),
       },
       detail,
       remove,
@@ -429,77 +577,200 @@ export default function MobileLibraryActionSheet({
       customize,
       writeReview,
       ...(canProgress
-        ? [
-            {
-              key: "progress",
-              label: "Registrar avance",
-              icon: BookOpen,
-              action: () =>
-                run(() =>
-                  actions.progress(item),
-                ),
-            },
-          ]
+        ? [{
+            key: "progress",
+            label: "Registrar avance",
+            icon: BookOpen,
+          }]
         : []),
       detail,
       {
         key: "drop",
         label: "Marcar como abandonado",
         icon: CircleOff,
-        action: () =>
-          run(() =>
-            actions.status(
-              item,
-              "DROPPED",
-            ),
-          ),
       },
       remove,
     ];
   }
 
-  /* =========================================
-     MODAL
-  ========================================= */
+  function handleOption(key: string) {
+    switch (key) {
+      case "customize":
+        showNotice();
+        return;
+      case "review":
+        run(() => actions.rate(item));
+        return;
+      case "detail":
+        run(() => window.location.assign(hrefOf(item)));
+        return;
+      case "remove":
+        run(() => {
+          if (completed) {
+            onRequestCompletedDelete(item);
+          } else {
+            actions.remove(item);
+          }
+        });
+        return;
+      case "again":
+      case "start":
+        run(() => actions.status(item, "IN_PROGRESS"));
+        return;
+      case "pending":
+        run(() => actions.status(item, "PENDING"));
+        return;
+      case "drop":
+        run(() => actions.status(item, "DROPPED"));
+        return;
+      case "progress":
+        run(() => actions.progress(item));
+        return;
+    }
+  }
+
+  const panelTransform =
+    closing || !visible
+      ? "translateY(100%)"
+      : `translateY(${dragY}px)`;
+
+  const noticeVisible =
+    noticePhase !== "hidden";
 
   return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`Gestionar ${item.title}`}
-      className="fixed inset-0 z-[8500] lg:hidden"
+      className="fixed inset-0"
+      style={{ zIndex: 8500 }}
     >
+      <style>{`
+        @keyframes frost-action-notice-enter {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -24px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+
+        @keyframes frost-action-notice-exit {
+          from {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+          to {
+            opacity: 0;
+            transform: translate(-50%, -24px);
+          }
+        }
+
+        @keyframes frost-action-notice-buzz {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          20% {
+            transform: translateX(-5px);
+          }
+          40% {
+            transform: translateX(5px);
+          }
+          60% {
+            transform: translateX(-3px);
+          }
+          80% {
+            transform: translateX(3px);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .frost-action-notice {
+            animation-duration: 1ms !important;
+          }
+          .frost-action-sheet-panel,
+          .frost-action-sheet-backdrop {
+            transition: none !important;
+          }
+        }
+      `}</style>
+
       <button
         type="button"
         tabIndex={-1}
         aria-label="Cerrar al tocar fuera"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
+        onClick={() => requestClose()}
+        className="frost-action-sheet-backdrop absolute inset-0 bg-black"
+        style={{
+          opacity:
+            visible && !closing
+              ? 0.75
+              : 0,
+          backdropFilter: "blur(2px)",
+          transition: `opacity ${SHEET_DURATION}ms ease`,
+        }}
       />
 
-      {notice && (
-        <p
-          role="status"
-          className="absolute left-1/2 top-[calc(14px+env(safe-area-inset-top))] z-[8600] -translate-x-1/2 rounded-xl border border-violet-400/30 bg-[#25253d] px-5 py-3 text-center text-sm font-semibold text-violet-200 shadow-xl"
+      {noticeVisible && (
+        <div
+          className="frost-action-notice pointer-events-none absolute left-1/2 rounded-xl border border-frost-accent/30 bg-frost-raised px-5 py-3 text-center text-sm font-semibold text-frost-accent shadow-xl"
+          style={{
+            top: "calc(14px + env(safe-area-inset-top))",
+            zIndex: 8600,
+            transform: "translateX(-50%)",
+            animation:
+              noticePhase === "leaving"
+                ? `frost-action-notice-exit ${NOTICE_EXIT_DURATION}ms ease-in both`
+                : noticePhase === "entering"
+                  ? "frost-action-notice-enter 280ms ease-out both"
+                  : "none",
+          }}
         >
-          Próximamente
-        </p>
+          <span
+            key={noticeBuzz}
+            role="status"
+            className="block"
+            style={{
+              animation:
+                noticeBuzz > 0
+                  ? "frost-action-notice-buzz 280ms ease-in-out"
+                  : undefined,
+            }}
+          >
+            Próximamente
+          </span>
+        </div>
       )}
 
       <section
         ref={panelRef}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="absolute inset-x-0 bottom-0 max-h-[89svh] overflow-y-auto overscroll-contain rounded-t-[24px] bg-[#1a1e29] pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_50px_rgba(0,0,0,.6)]"
+        onTouchCancel={handleTouchCancel}
+        className="frost-action-sheet-panel absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain rounded-t-3xl bg-frost-surface shadow-2xl"
+        style={{
+          maxHeight: "89svh",
+          paddingBottom: "env(safe-area-inset-bottom)",
+          boxShadow:
+            "0 -18px 50px rgba(0,0,0,0.6)",
+          transform: panelTransform,
+          transition:
+            dragging
+              ? "none"
+              : `transform ${SHEET_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          willChange: "transform",
+          touchAction: "pan-y",
+        }}
       >
         <MobileLibraryHero
           item={item}
           review={review}
         />
 
-        {/* SEPARADORES A TODO EL ANCHO */}
-
-        <div className="divide-y divide-white/10">
+        <div className="divide-y divide-frost-border/40">
           {options.map((option) => {
             if (
               option.key === "view-review" &&
@@ -513,9 +784,7 @@ export default function MobileLibraryActionSheet({
               );
             }
 
-            if (
-              option.key === "view-review"
-            ) {
+            if (option.key === "view-review") {
               return null;
             }
 
@@ -525,11 +794,12 @@ export default function MobileLibraryActionSheet({
               <button
                 key={option.key}
                 type="button"
-                onClick={option.action}
-                className={`flex min-h-[58px] w-full items-center gap-3.5 px-5 text-left text-[14px] transition-colors active:bg-white/[0.06] ${
+                disabled={closing}
+                onClick={() => handleOption(option.key)}
+                className={`flex min-h-14.5 w-full items-center gap-3.5 px-5 text-left text-sm transition-colors active:bg-frost-raised disabled:opacity-50 ${
                   option.danger
-                    ? "text-rose-300"
-                    : "text-zinc-100"
+                    ? "text-frost-danger"
+                    : "text-frost-text"
                 }`}
               >
                 <Icon
@@ -537,20 +807,18 @@ export default function MobileLibraryActionSheet({
                   aria-hidden="true"
                   className={
                     option.danger
-                      ? "text-rose-400"
-                      : "text-zinc-400"
+                      ? "text-frost-danger"
+                      : "text-frost-muted"
                   }
                 />
 
                 <span className="min-w-0 flex-1">
-                  <span className="min-w-0 flex-1">
-                   {option.label}
-                 </span>
+                  {option.label}
                 </span>
 
                 <ChevronRight
                   size={16}
-                  className="text-zinc-500"
+                  className="text-frost-muted"
                   aria-hidden="true"
                 />
               </button>

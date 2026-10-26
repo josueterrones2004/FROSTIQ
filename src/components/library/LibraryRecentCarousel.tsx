@@ -12,6 +12,7 @@ import {
   FilePenLine,
   Gamepad2,
   Library,
+  ListTodo,
   RotateCcw,
   Star,
   Trash2,
@@ -30,7 +31,11 @@ import {
 import { createPortal } from "react-dom";
 
 import StarRating from "@/components/media/StarRating";
-import { shouldUseOriginalImage } from "@/lib/image-optimization";
+
+import {
+  getPosterImageConfig,
+  shouldUseOriginalImage,
+} from "@/lib/image-optimization";
 
 import {
   LIBRARY_PROGRESS_EVENT,
@@ -46,6 +51,39 @@ import {
   type CompletedReview,
   type LibraryEntry,
 } from "./libraryShared";
+
+function getCarouselBackdropImageConfig(
+  source: string,
+) {
+  try {
+    const url = new URL(source);
+
+    if (
+      url.protocol === "https:" &&
+      url.hostname === "image.tmdb.org" &&
+      /^\/t\/p\/(original|w\d+)\//.test(
+        url.pathname,
+      )
+    ) {
+      url.pathname = url.pathname.replace(
+        /^\/t\/p\/(original|w\d+)\//,
+        "/t/p/w780/",
+      );
+
+      return {
+        src: url.toString(),
+        unoptimized: true,
+      };
+    }
+  } catch {
+    // Conservar la URL original.
+  }
+
+  return {
+    src: source,
+    unoptimized: shouldUseOriginalImage(source),
+  };
+}
 
 type CarouselProps = {
   entries: LibraryEntry[];
@@ -94,18 +132,18 @@ function ProgressSkeleton() {
       aria-label="Cargando siguiente episodio"
       className="flex min-w-0 items-center gap-1.5 overflow-hidden"
     >
-      <span className="shrink-0 text-[11px] text-zinc-400">
+      <span className="shrink-0 frost-text-11 text-frost-muted">
         Siguiente:
       </span>
 
       <span
         aria-hidden="true"
-        className="h-[9px] w-12 shrink-0 animate-pulse rounded-[3px] bg-white/[0.14] motion-reduce:animate-none"
+        className="h-2.25 w-12 shrink-0 animate-pulse rounded-sm bg-frost-border motion-reduce:animate-none"
       />
 
       <span
         aria-hidden="true"
-        className="h-[9px] w-7 shrink-0 animate-pulse rounded-[3px] bg-white/[0.09] motion-reduce:animate-none"
+        className="h-2.25 w-7 shrink-0 animate-pulse rounded-sm bg-frost-border/70 motion-reduce:animate-none"
       />
     </span>
   );
@@ -406,47 +444,18 @@ function CardMenu({
           event.stopPropagation();
           toggle();
         }}
-        className={`group/manage relative z-30 flex h-full min-h-[62px] w-[64px] shrink-0 items-center justify-center rounded-lg border transition-[background-color,border-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 disabled:opacity-50 ${
-          open
-            ? "border-violet-400 bg-[#4c438d] shadow-[0_0_18px_rgba(139,92,246,0.20)]"
-            : "border-[#59628f] bg-[#333d69] hover:border-violet-400 hover:bg-[#49457e] hover:shadow-[0_0_18px_rgba(139,92,246,0.17)]"
-        }`}
+        className="group/manage relative z-30 flex h-full min-h-15.5 w-16 shrink-0 items-center justify-center rounded-lg border border-frost-accent bg-frost-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-frost-accent disabled:opacity-50"
       >
-        <svg
-          viewBox="0 0 24 24"
-          width="27"
-          height="27"
-          fill="none"
+        <ListTodo
+          size={27}
+          strokeWidth={1.8}
           aria-hidden="true"
-          className="text-[#d4d9f8] transition-colors group-hover/manage:text-white"
-        >
-          <path
-            d="M3 6H21M3 12H21M3 18H21"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-
-          {[
-            { cx: 8, cy: 6 },
-            { cx: 16, cy: 12 },
-            { cx: 10, cy: 18 },
-          ].map(({ cx, cy }) => (
-            <circle
-              key={`${cx}-${cy}`}
-              cx={cx}
-              cy={cy}
-              r="2.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              className={`transition-colors duration-200 ${
-                open
-                  ? "fill-[#d6caff]"
-                  : "fill-[#333d69] group-hover/manage:fill-[#d6caff] group-focus-visible/manage:fill-[#d6caff]"
-              }`}
-            />
-          ))}
-        </svg>
+          className={`transition-all duration-300 ease-out group-hover/manage:scale-110 group-hover/manage:text-frost-accent-hover group-focus-visible/manage:scale-110 group-focus-visible/manage:text-frost-accent-hover ${
+            open
+              ? "scale-110 text-frost-accent-hover"
+              : "text-frost-text"
+          }`}
+        />
       </button>
 
       {open &&
@@ -461,8 +470,9 @@ function CardMenu({
               top: position.top,
               left: position.left,
               width: 240,
+              zIndex: 9998,
             }}
-            className="z-[9998] rounded-xl border border-violet-300/35 bg-[#252d3e] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
+            className="rounded-xl border border-frost-accent/35 bg-frost-raised p-1.5 shadow-2xl"
           >
             {menuItems.map((action) => {
               const Icon = action.icon;
@@ -477,10 +487,10 @@ function CardMenu({
                     setOpen(false);
                     action.run();
                   }}
-                  className={`flex min-h-[43px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition disabled:opacity-40 ${
+                  className={`flex min-h-10.75 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition disabled:opacity-40 ${
                     action.destructive
                       ? "text-red-300 hover:bg-red-400/10"
-                      : "text-zinc-200 hover:bg-white/[0.07]"
+                      : "text-frost-text hover:bg-frost-raised"
                   }`}
                 >
                   <Icon size={17} />
@@ -513,6 +523,12 @@ function RecentCard({
 
   const image =
     item.backdropUrl || item.coverUrl;
+
+  const imageConfig = image
+    ? item.backdropUrl
+      ? getCarouselBackdropImageConfig(image)
+      : getPosterImageConfig(image)
+    : null;
 
   const rating =
     review?.review.rating ?? null;
@@ -547,28 +563,28 @@ function RecentCard({
     item.nextEpisode === undefined;
 
   return (
-    <article className="group relative w-[300px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#1b273b] transition-colors hover:border-violet-400/35">
+    <article className="group relative w-75 shrink-0 overflow-hidden rounded-xl border border-frost-border/60 bg-frost-surface transition-colors hover:border-frost-accent/35">
       {/* IMAGEN PANORÁMICA */}
 
-      <div className="relative h-[170px] overflow-hidden rounded-t-xl bg-[#111723]">
-        {image ? (
+      <div className="relative h-42.5 overflow-hidden rounded-t-xl bg-frost-bg">
+        {imageConfig ? (
           <div className="absolute inset-0 overflow-hidden">
             <div
               className={`relative h-full w-full transition-transform duration-500 ease-out motion-reduce:transition-none ${
                 menuOpen
-                  ? "scale-[1.07]"
-                  : "group-hover:scale-[1.07]"
+                  ? "scale-105"
+                  : "group-hover:scale-105"
               }`}
             >
               <Image
-                src={image}
+                src={imageConfig.src}
                 alt={item.title}
                 fill
                 sizes="300px"
                 draggable={false}
                 loading={eager ? "eager" : "lazy"}
                 unoptimized={
-                  shouldUseOriginalImage(image)
+                  imageConfig.unoptimized
                 }
                 className="pointer-events-none select-none object-cover"
                 style={
@@ -592,7 +608,7 @@ function RecentCard({
             </div>
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center text-zinc-500">
+          <div className="flex h-full items-center justify-center text-frost-muted">
             <Library size={30} />
           </div>
         )}
@@ -604,7 +620,7 @@ function RecentCard({
           className="absolute inset-0 z-10"
         />
 
-        <div className="pointer-events-none absolute left-0 top-3 z-20 flex h-7 max-w-[calc(100%-20px)] items-center gap-1.5 bg-[#78b7dc] px-3 text-[11px] font-semibold uppercase text-[#071019]">
+        <div className="pointer-events-none absolute left-0 top-3 z-20 flex h-7 frost-carousel-tag-width items-center gap-1.5 bg-frost-accent px-3 frost-text-11 font-semibold uppercase text-frost-bg">
           <TagIcon size={13} />
 
           <span className="truncate">
@@ -615,15 +631,15 @@ function RecentCard({
 
       {/* TRES RENGLONES + BOTÓN */}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_64px] gap-3 rounded-b-xl bg-[#1b273b] px-4 py-3">
-        <div className="grid min-w-0 grid-rows-[20px_18px_16px] gap-[4px]">
+      <div className="grid frost-carousel-cols gap-3 rounded-b-xl bg-frost-surface px-4 py-3">
+        <div className="grid min-w-0 frost-carousel-rows gap-1">
           {/* RENGLÓN 1 */}
 
           <Link
             href={hrefOf(item)}
             title={item.title}
             draggable={false}
-            className="block min-w-0 truncate text-sm font-semibold leading-5 text-white transition hover:text-violet-200"
+            className="block min-w-0 truncate text-sm font-semibold leading-5 text-frost-text transition hover:text-frost-accent-hover"
           >
             {item.title}
           </Link>
@@ -648,7 +664,7 @@ function RecentCard({
                   item,
                   bookProgress,
                 )}
-                className="min-w-0 flex-1 truncate text-[11px] leading-[18px] text-zinc-400"
+                className="min-w-0 flex-1 truncate frost-text-11 leading-4.5 text-frost-muted"
               >
                 {contextLabel(
                   item,
@@ -661,7 +677,7 @@ function RecentCard({
               <FilePenLine
                 size={13}
                 aria-label="Review registrada"
-                className="shrink-0 text-violet-300/70"
+                className="shrink-0 text-frost-accent/70"
               />
             )}
           </div>
@@ -670,7 +686,7 @@ function RecentCard({
 
           <time
             dateTime={date}
-            className="text-[11px] leading-4 tabular-nums text-zinc-500"
+            className="frost-text-11 leading-4 tabular-nums text-frost-muted"
           >
             {dateLabel(date)}
           </time>
@@ -749,7 +765,6 @@ export default function LibraryRecentCarousel({
             totalPages: detail.totalPages!,
           },
         }));
-
       }
     }
 
@@ -772,24 +787,24 @@ export default function LibraryRecentCarousel({
 
   const visibleEntries = useMemo(() => {
     const updated = entries.map((item) => {
-        const change = changes[item.key];
+      const change = changes[item.key];
 
-        if (!change) return item;
+      if (!change) return item;
 
-        return {
-          ...item,
+      return {
+        ...item,
 
-          updatedAt:
-            change.updatedAt > item.updatedAt
-              ? change.updatedAt
-              : item.updatedAt,
+        updatedAt:
+          change.updatedAt > item.updatedAt
+            ? change.updatedAt
+            : item.updatedAt,
 
-          nextEpisode:
-            change.nextEpisode !== undefined
-              ? change.nextEpisode
-              : item.nextEpisode,
-        };
-      });
+        nextEpisode:
+          change.nextEpisode !== undefined
+            ? change.nextEpisode
+            : item.nextEpisode,
+      };
+    });
 
     updated.sort((a, b) => {
       const aReview = reviews.get(a.key);
@@ -886,6 +901,7 @@ export default function LibraryRecentCarousel({
 
     return () => {
       observer.disconnect();
+
       window.cancelAnimationFrame(
         frame,
       );
@@ -988,10 +1004,36 @@ export default function LibraryRecentCarousel({
 
   return (
     <>
+      <style>{`
+        .frost-text-11 {
+          font-size: 11px;
+        }
+
+        .frost-carousel-tag-width {
+          max-width: calc(100% - 20px);
+        }
+
+        .frost-carousel-cols {
+          grid-template-columns: minmax(0, 1fr) 64px;
+        }
+
+        .frost-carousel-rows {
+          grid-template-rows: 20px 18px 16px;
+        }
+
+        .frost-carousel-hide-scrollbar {
+          scrollbar-width: none;
+        }
+
+        .frost-carousel-hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
       {visibleEntries.length > 0 && (
         <section className="mb-10 hidden lg:block">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            <h2 className="text-xl font-semibold tracking-tight text-frost-text sm:text-2xl">
               Actualizados recientemente
             </h2>
 
@@ -1018,7 +1060,7 @@ export default function LibraryRecentCarousel({
                   >
                     <span
                       aria-hidden="true"
-                      className={`block h-[14px] w-[14px] bg-contain bg-center bg-no-repeat ${
+                      className={`block size-3.5 bg-contain bg-center bg-no-repeat ${
                         direction === -1
                           ? "rotate-180"
                           : ""
@@ -1054,7 +1096,7 @@ export default function LibraryRecentCarousel({
                   suppressClick.current = false;
                 }
               }}
-              className="overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="overflow-x-auto pb-3 frost-carousel-hide-scrollbar"
               style={{
                 touchAction: "pan-y",
               }}
@@ -1086,15 +1128,14 @@ export default function LibraryRecentCarousel({
             </div>
 
             {edges.right && (
-              <div 
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 right-0 z-40 w-20 bg-gradient-to-l from-black via-black/75 to-transparent"              
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 right-0 z-40 w-20 bg-linear-to-l from-frost-bg via-frost-bg/75 to-transparent"
               />
             )}
           </div>
         </section>
       )}
-
     </>
   );
 }

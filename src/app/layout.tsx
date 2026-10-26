@@ -65,7 +65,7 @@ export default async function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className="bg-zinc-950 text-zinc-100">
+      <body className="bg-frost-bg text-frost-text">
         <AppShell
           authenticated={Boolean(user)}
           profile={profile}

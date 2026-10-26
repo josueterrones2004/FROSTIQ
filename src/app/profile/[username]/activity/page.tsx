@@ -65,7 +65,7 @@ export default async function ActivityPage({
     <main className="mx-auto max-w-5xl pb-20">
       <Link
         href={`/profile/${username}`}
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 transition hover:text-zinc-200"
+        className="inline-flex items-center gap-2 text-sm text-frost-muted transition hover:text-frost-text"
       >
         <ArrowLeft size={16} />
 
@@ -77,9 +77,9 @@ export default async function ActivityPage({
           Actividad reciente
         </h1>
 
-        <p className="mt-2 text-zinc-500">
+        <p className="mt-2 text-frost-muted">
           Toda la actividad de{" "}
-          <span className="text-zinc-300">
+          <span className="text-frost-text">
             {displayName}
           </span>
         </p>

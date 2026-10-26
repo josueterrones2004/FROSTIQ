@@ -843,7 +843,18 @@ export default async function BookPage({
   ======================================================= */
 
   return (
-    <div className="min-h-full bg-black">
+    <div className="min-h-full bg-frost-bg">
+      <style>{`
+        .frost-books-genres-heading {
+          font-size: 11px;
+          letter-spacing: 0.21em;
+        }
+        @media (min-width: 1024px) {
+          .frost-books-genres-grid {
+            grid-template-columns: minmax(0, 1fr) 320px;
+          }
+        }
+      `}</style>
       <MediaDetailLayout
         title={
           book.title
@@ -936,14 +947,14 @@ export default async function BookPage({
 
       {subjects.length >
       0 ? (
-        <section className="-mt-8 bg-black sm:-mt-10 lg:-mt-12">
+        <section className="-mt-8 bg-frost-bg sm:-mt-10 lg:-mt-12">
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+            <div className="lg:grid frost-books-genres-grid lg:gap-10">
               <div className="hidden lg:block" />
 
               <div>
-                <div className="border-b border-white/10 pb-3">
-                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.21em] text-zinc-500">
+                <div className="border-b border-frost-border/60 pb-3">
+                  <h2 className="frost-books-genres-heading font-semibold uppercase text-frost-muted">
                     Géneros
                   </h2>
                 </div>
@@ -957,7 +968,7 @@ export default async function BookPage({
                         key={
                           subject
                         }
-                        className="rounded-full bg-white/[0.045] px-3 py-1.5 text-xs text-zinc-300"
+                        className="rounded-full bg-frost-raised/25 px-3 py-1.5 text-xs text-frost-text"
                       >
                         {
                           subject
@@ -979,7 +990,7 @@ export default async function BookPage({
       ================================================== */}
 
       <section
-        className={`bg-black pb-12 ${
+        className={`bg-frost-bg pb-12 ${
           subjects.length >
           0
             ? "pt-9"

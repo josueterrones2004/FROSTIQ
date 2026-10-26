@@ -743,7 +743,48 @@ export default async function ProfilePage({
 
   return (
     <main className="pb-20">
-      <div className="mx-auto w-full lg:max-w-[1160px]">
+      <style>{`
+        .frost-profile-text-10 {
+          font-size: 10px;
+        }
+
+        .frost-profile-text-11 {
+          font-size: 11px;
+        }
+
+        .frost-profile-text-13 {
+          font-size: 13px;
+        }
+
+        .frost-profile-tracking {
+          letter-spacing: 0.18em;
+        }
+
+        @media (min-width: 1024px) {
+          .frost-profile-max-width {
+            max-width: 1160px;
+          }
+
+          .frost-profile-name-large {
+            font-size: 28px;
+          }
+
+          .frost-profile-text-lg-11 {
+            font-size: 11px;
+          }
+
+          .frost-profile-desktop-grid {
+            grid-template-columns: minmax(0, 1fr) 270px;
+          }
+        }
+
+        @media (min-width: 1280px) {
+          .frost-profile-desktop-grid {
+            grid-template-columns: minmax(0, 1fr) 290px;
+          }
+        }
+      `}</style>
+      <div className="mx-auto w-full frost-profile-max-width">
         <ProfileMediaHeader
           banner={
             profile?.banner_url ? (
@@ -772,7 +813,7 @@ export default async function ProfilePage({
                 }
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-zinc-500">
+              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-frost-muted">
                 {displayName
                   .slice(
                     0,
@@ -785,7 +826,7 @@ export default async function ProfilePage({
           action={
             <Link
               href="/profile/customize"
-              className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-950/95 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-900"
+              className="inline-flex items-center gap-2 rounded-full border border-frost-border bg-frost-bg/95 px-4 py-2 text-sm font-medium text-frost-text transition hover:border-frost-accent/40 hover:bg-frost-surface"
             >
               <Settings2
                 size={
@@ -805,7 +846,7 @@ export default async function ProfilePage({
         >
           <div className="text-left">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-100 lg:text-[28px]">
+              <h1 className="text-2xl font-bold tracking-tight text-frost-text frost-profile-name-large">
                 {
                   displayName
                 }
@@ -813,27 +854,27 @@ export default async function ProfilePage({
 
               {profile?.special_role ===
                 "OWNER" && (
-                <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-medium text-fuchsia-300 lg:text-[11px]">
+                <span className="rounded-full border border-frost-accent/30 bg-frost-accent/10 px-2 py-0.5 frost-profile-text-10 font-medium text-frost-accent frost-profile-text-lg-11">
                   Owner
                 </span>
               )}
 
               {profile?.special_role ===
                 "BETA_TESTER" && (
-                <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-400 lg:text-[11px]">
+                <span className="rounded-full border border-frost-border bg-frost-surface px-2 py-0.5 frost-profile-text-10 text-frost-muted frost-profile-text-lg-11">
                   Beta Tester
                 </span>
               )}
             </div>
 
             {username && (
-              <p className="mt-0.5 text-sm text-zinc-500">
+              <p className="mt-0.5 text-sm text-frost-muted">
                 @{username}
               </p>
             )}
 
             {profile?.bio?.trim() ? (
-              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-frost-text">
                 {
                   profile.bio
                 }
@@ -846,13 +887,13 @@ export default async function ProfilePage({
                   href={`/profile/${username}/connections?tab=following`}
                   className="group"
                 >
-                  <span className="font-semibold text-zinc-200 transition group-hover:text-white">
+                  <span className="font-semibold text-frost-text transition group-hover:text-frost-text">
                     {
                       followingCount
                     }
                   </span>
 
-                  <span className="ml-1.5 text-zinc-500 transition group-hover:text-zinc-300">
+                  <span className="ml-1.5 text-frost-muted transition group-hover:text-frost-text">
                     Siguiendo
                   </span>
                 </Link>
@@ -861,13 +902,13 @@ export default async function ProfilePage({
                   href={`/profile/${username}/connections?tab=followers`}
                   className="group"
                 >
-                  <span className="font-semibold text-zinc-200 transition group-hover:text-white">
+                  <span className="font-semibold text-frost-text transition group-hover:text-frost-text">
                     {
                       followersCount
                     }
                   </span>
 
-                  <span className="ml-1.5 text-zinc-500 transition group-hover:text-zinc-300">
+                  <span className="ml-1.5 text-frost-muted transition group-hover:text-frost-text">
                     Seguidores
                   </span>
                 </Link>
@@ -876,7 +917,7 @@ export default async function ProfilePage({
           </div>
         </ProfileMediaHeader>
 
-        <nav className="mt-6 grid w-full grid-cols-3 border-y border-zinc-800 lg:hidden">
+        <nav className="mt-6 grid w-full grid-cols-3 border-y border-frost-border lg:hidden">
           <MobileTabLink
             href="/profile?tab=profile"
             active={
@@ -967,7 +1008,7 @@ export default async function ProfilePage({
           )}
         </div>
 
-        <div className="mt-9 hidden items-start gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_270px] xl:grid-cols-[minmax(0,1fr)_290px]">
+        <div className="mt-9 hidden items-start gap-10 px-6 lg:grid frost-profile-desktop-grid">
           <div className="min-w-0">
             {username && (
               <ProfileSections
@@ -991,7 +1032,7 @@ export default async function ProfilePage({
             <SidebarSection
               title="Estadísticas"
             >
-              <div className="divide-y divide-zinc-900">
+              <div className="divide-y divide-frost-border">
                 <StatRow
                   icon={
                     <Library
@@ -1077,12 +1118,12 @@ export default async function ProfilePage({
                 />
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-zinc-900 pt-3 text-xs">
-                <span className="text-zinc-600">
+              <div className="mt-3 flex items-center justify-between border-t border-frost-border pt-3 text-xs">
+                <span className="text-frost-muted">
                   Pendientes
                 </span>
 
-                <span className="font-medium text-zinc-400">
+                <span className="font-medium text-frost-muted">
                   {
                     pendingItems.length
                   }
@@ -1111,7 +1152,7 @@ export default async function ProfilePage({
                         className="group flex items-center gap-3"
                       >
                         {item.cover_url ? (
-                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-zinc-900">
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-frost-surface">
                             <Image
                               src={
                                 item.cover_url
@@ -1137,17 +1178,17 @@ export default async function ProfilePage({
                             />
                           </div>
                         ) : (
-                          <div className="h-14 w-10 shrink-0 bg-zinc-900" />
+                          <div className="h-14 w-10 shrink-0 bg-frost-surface" />
                         )}
 
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-300 transition group-hover:text-white">
+                          <p className="truncate text-sm font-medium text-frost-text transition group-hover:text-frost-text">
                             {
                               item.title
                             }
                           </p>
 
-                          <p className="mt-1 text-xs text-zinc-600">
+                          <p className="mt-1 text-xs text-frost-muted">
                             {getCurrentLabel(
                               item.media_type
                             )}
@@ -1158,7 +1199,7 @@ export default async function ProfilePage({
                   )}
                 </div>
               ) : (
-                <p className="text-sm leading-6 text-zinc-600">
+                <p className="text-sm leading-6 text-frost-muted">
                   No tienes ningún medio en curso.
                 </p>
               )}
@@ -1185,7 +1226,7 @@ export default async function ProfilePage({
                         className="group flex gap-3"
                       >
                         {review.cover_url ? (
-                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-zinc-900">
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden bg-frost-surface">
                             <Image
                               src={
                                 review.cover_url
@@ -1211,23 +1252,23 @@ export default async function ProfilePage({
                             />
                           </div>
                         ) : (
-                          <div className="h-14 w-10 shrink-0 bg-zinc-900" />
+                          <div className="h-14 w-10 shrink-0 bg-frost-surface" />
                         )}
 
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-300 transition group-hover:text-white">
+                          <p className="truncate text-sm font-medium text-frost-text transition group-hover:text-frost-text">
                             {
                               review.title
                             }
                           </p>
 
-                          <p className="mt-1 text-xs text-zinc-600">
+                          <p className="mt-1 text-xs text-frost-muted">
                             {getMediaLabel(
                               review.media_type
                             )}
                           </p>
 
-                          <p className="mt-0.5 text-[11px] text-zinc-700">
+                          <p className="mt-0.5 frost-profile-text-11 text-frost-muted">
                             {formatShortDate(
                               review.created_at
                             )}
@@ -1238,7 +1279,7 @@ export default async function ProfilePage({
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600">
+                <p className="text-sm text-frost-muted">
                   Todavía no has publicado reviews.
                 </p>
               )}
@@ -1248,36 +1289,36 @@ export default async function ProfilePage({
               title="Social"
             >
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between text-zinc-500">
+                <div className="flex items-center justify-between text-frost-muted">
                   <span>
                     Seguidores
                   </span>
 
-                  <span className="font-medium text-zinc-300">
+                  <span className="font-medium text-frost-text">
                     {
                       followersCount
                     }
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-zinc-500">
+                <div className="flex items-center justify-between text-frost-muted">
                   <span>
                     Siguiendo
                   </span>
 
-                  <span className="font-medium text-zinc-300">
+                  <span className="font-medium text-frost-text">
                     {
                       followingCount
                     }
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-zinc-900 pt-3 text-zinc-500">
+                <div className="flex items-center justify-between border-t border-frost-border pt-3 text-frost-muted">
                   <span>
                     Favoritos
                   </span>
 
-                  <span className="font-medium text-zinc-300">
+                  <span className="font-medium text-frost-text">
                     {
                       favorites.length
                     }
@@ -1314,10 +1355,10 @@ function MobileTabLink({
       scroll={
         false
       }
-      className={`relative flex min-h-[52px] items-center justify-center px-2 text-center text-[13px] font-medium leading-4 transition ${
+      className={`relative flex min-h-13 items-center justify-center px-2 text-center frost-profile-text-13 font-medium leading-4 transition ${
         active
-          ? "text-zinc-100"
-          : "text-zinc-600 hover:text-zinc-300"
+          ? "text-frost-text"
+          : "text-frost-muted hover:text-frost-text"
       }`}
     >
       {
@@ -1325,7 +1366,7 @@ function MobileTabLink({
       }
 
       {active && (
-        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-fuchsia-500" />
+        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-frost-accent" />
       )}
     </Link>
   );
@@ -1338,8 +1379,8 @@ function MobileSectionTitle({
     ReactNode;
 }) {
   return (
-    <div className="mb-4 border-b border-zinc-800 pb-2.5">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+    <div className="mb-4 border-b border-frost-border pb-2.5">
+      <h2 className="frost-profile-text-11 font-semibold uppercase frost-profile-tracking text-frost-muted">
         {
           children
         }
@@ -1359,7 +1400,7 @@ function PendingGrid({
     0
   ) {
     return (
-      <p className="py-10 text-center text-sm text-zinc-600">
+      <p className="py-10 text-center text-sm text-frost-muted">
         No tienes nada pendiente.
       </p>
     );
@@ -1381,7 +1422,7 @@ function PendingGrid({
             )}
             className="group min-w-0"
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-zinc-900">
+            <div className="relative aspect-2/3 overflow-hidden rounded-md bg-frost-surface">
               {item.cover_url ? (
                 <Image
                   src={
@@ -1407,13 +1448,13 @@ function PendingGrid({
                   }}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center px-2 text-center text-[10px] text-zinc-600">
+                <div className="flex h-full items-center justify-center px-2 text-center frost-profile-text-10 text-frost-muted">
                   Sin portada
                 </div>
               )}
             </div>
 
-            <p className="mt-1.5 line-clamp-2 text-[11px] leading-4 text-zinc-500">
+            <p className="mt-1.5 line-clamp-2 frost-profile-text-11 leading-4 text-frost-muted">
               {
                 item.title
               }
@@ -1437,8 +1478,8 @@ function SidebarSection({
 }) {
   return (
     <section>
-      <div className="border-b border-zinc-800 pb-2.5">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+      <div className="border-b border-frost-border pb-2.5">
+        <h2 className="frost-profile-text-11 font-semibold uppercase frost-profile-tracking text-frost-muted">
           {
             title
           }
@@ -1470,8 +1511,8 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between py-2.5">
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
-        <span className="text-zinc-600">
+      <div className="flex items-center gap-2 text-sm text-frost-muted">
+        <span className="text-frost-muted">
           {
             icon
           }
@@ -1484,7 +1525,7 @@ function StatRow({
         </span>
       </div>
 
-      <span className="text-sm font-medium tabular-nums text-zinc-300">
+      <span className="text-sm font-medium tabular-nums text-frost-text">
         {
           value
         }

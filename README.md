@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 Media Tracker
+# ❄️ FROSTIQ
 
 **Track movies, series, books and games in one place — with personal libraries, reviews, progress tracking and social features.**
 
@@ -11,19 +11,19 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 
-**[🌐 Live app](https://frostiq.app)** 
+**[🌐 FROSTIQ website](https://frostiq.app)**
 
 </div>
 
 ---
 
-Media Tracker is a full-stack web application for keeping track of the movies, series, books and video games you consume.
+FROSTIQ is a full-stack web application for keeping track of the movies, series, books and video games you consume.
 
 The project combines a personal media library with social features such as public profiles, follows, activity feeds, reviews, favorites and progress tracking. It is built as an evolving personal product rather than a finished one, so features and design continue to change as the project grows.
 
 > **Language:** the interface is currently available only in **Spanish**. English support and broader localization are planned for a future update.
 >
-> **Project status:** Media Tracker is currently in **pre-alpha** and under active development. It is not a finished product.
+> **Project status:** FROSTIQ is currently in **pre-alpha** and under active development. It is not a finished product. **v0.4.1 is being prepared for production; v0.3.1 remains the latest production version.**
 
 ## ✨ What it includes
 
@@ -45,7 +45,7 @@ The project combines a personal media library with social features such as publi
 
 ## 📚 Personal library
 
-Media Tracker supports four types of media:
+FROSTIQ supports four types of media:
 
 - 🎬 Movies
 - 📺 Series
@@ -83,7 +83,7 @@ Entries can include:
 
 Reviews can be edited or removed later.
 
-Media Tracker uses its own confirmation interface for review deletion instead of relying on the browser's default popup.
+FROSTIQ uses its own confirmation interface for review deletion instead of relying on the browser's default popup.
 
 ---
 
@@ -91,7 +91,7 @@ Media Tracker uses its own confirmation interface for review deletion instead of
 
 Series include episode-level tracking.
 
-Media Tracker keeps information such as:
+FROSTIQ keeps information such as:
 
 - Season
 - Episode number
@@ -142,7 +142,7 @@ Profiles can also display special roles such as **Owner** and **Beta Tester**.
 
 ## 👥 Social features
 
-Media Tracker includes a social layer for discovering what other users are watching, reading and playing.
+FROSTIQ includes a social layer for discovering what other users are watching, reading and playing.
 
 Current social features include:
 
@@ -175,7 +175,7 @@ Media data is pulled from external providers including **TMDB**, **Open Library*
 
 ## 📱 Installable PWA
 
-Media Tracker can be installed as a Progressive Web App.
+FROSTIQ can be installed as a Progressive Web App.
 
 On supported browsers, the application can show an installation option directly from the site. Once installed, it can:
 
@@ -183,7 +183,7 @@ On supported browsers, the application can show an installation option directly 
 - Open in standalone mode.
 - Behave more like an installed application instead of a regular browser tab.
 
-On iPhone and iPad, Media Tracker shows a short guide for using:
+On iPhone and iPad, FROSTIQ shows a short guide for using:
 
 ```text
 Share → Add to Home Screen → Add
@@ -193,7 +193,7 @@ Share → Add to Home Screen → Add
 
 ## 📰 In-app changelog
 
-Media Tracker includes an in-app changelog system for new versions.
+FROSTIQ includes an in-app changelog system for new versions.
 
 When a new version is published, the application can show its changes automatically and remember that the changelog has already been seen in that browser.
 
@@ -214,7 +214,7 @@ Supabase is used for authentication, profiles, library data, reviews, activity a
 
 ## 🚧 Project status
 
-Media Tracker is a **pre-alpha project in constant evolution**.
+FROSTIQ is a **pre-alpha project in constant evolution**.
 
 It is not intended to represent a finished commercial product yet. Features may be incomplete, redesigned, replaced or removed while the application continues to evolve.
 
@@ -230,9 +230,12 @@ English support is planned for a future version, with the goal of making the int
 
 ## 🗓️ Development history
 
+> **Latest development version:** `v0.4.1` (release candidate). **Latest production version:** `v0.3.1`.
+
+
 ### v0.1.0 — September 25, 2026
 
-The first functional version introduced the core Media Tracker experience:
+The first functional version introduced the original Media Tracker experience:
 
 - Movies, series and books.
 - Personal library states.
@@ -287,10 +290,37 @@ A small hotfix focused on stability, consistency and the review experience:
 - Fixed pointer interaction errors in the star-rating component.
 - Removed outdated review forms and improved visual consistency.
 
+### v0.4.0 — October 23, 2026 (Internal milestone)
+
+**Status: Internal development version; not deployed to production.**
+
+- Replaced separate media collections with a unified library for movies, series, games and books.
+- Rebuilt library cards, recent activity rails, status filters and responsive desktop and mobile views.
+- Refined season and episode tracking and introduced page-based book progress.
+- Improved media registration, review forms, search and mobile navigation.
+- Continued the transition from the Media Tracker name to FROSTIQ.
+
+### v0.4.1 — October 26, 2026 (Release candidate)
+
+**Status: Pending production deployment.**
+
+This release combines the internal 0.4.0 changes with the latest FROSTIQ design refinements.
+
+- Introduced the Cobalt Ink color palette throughout the application.
+- Completed the transition to the FROSTIQ branding.
+- Refined the unified library, cover presentation, filters, sorting and search.
+- Improved mobile library cards, responsive grids and the filter panel.
+- Refined series episode tracking and book reading progress.
+- Improved consistency in reviews, media details, profiles and social interfaces.
+- Updated the in-app changelog with real screenshots of the library on desktop and mobile.
+- Corrected visual inconsistencies, contrast and responsive behavior.
+
+**Next:** Theme palette selection is planned for a future update and is not included in 0.4.1.
+
 ---
 
 ## 🧪 Early-stage software
 
-Because Media Tracker is still in pre-alpha, you may encounter bugs, unfinished features or behavior that changes between versions.
+Because FROSTIQ is still in pre-alpha, you may encounter bugs, unfinished features or behavior that changes between versions.
 
 That is expected at this stage of the project — the application is being actively built, tested and refined over time.

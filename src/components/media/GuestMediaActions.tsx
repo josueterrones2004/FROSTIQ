@@ -10,12 +10,12 @@ import Link from "next/link";
 export default function GuestMediaActions() {
   return (
     <section className="mt-6">
-      <div className="max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-5">
-        <p className="text-sm font-medium text-zinc-200">
+      <div className="max-w-xl rounded-2xl border border-frost-border bg-frost-surface/60 p-4 sm:p-5">
+        <p className="text-sm font-medium text-frost-text">
           Guarda este título en tu biblioteca
         </p>
 
-        <p className="mt-1 text-sm leading-6 text-zinc-500">
+        <p className="mt-1 text-sm leading-6 text-frost-muted">
           Inicia sesión para añadirlo a pendientes,
           registrar tu progreso, marcarlo como completado
           o publicar una review.
@@ -24,7 +24,7 @@ export default function GuestMediaActions() {
         <div className="mt-4 flex flex-wrap gap-2.5">
           <Link
             href="/auth?mode=login"
-            className="inline-flex items-center gap-2 rounded-xl bg-fuchsia-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-fuchsia-400"
+            className="inline-flex items-center gap-2 rounded-xl bg-frost-accent px-4 py-2.5 text-sm font-semibold text-frost-bg transition hover:bg-frost-accent-hover"
           >
             <LogIn
               size={
@@ -37,7 +37,7 @@ export default function GuestMediaActions() {
 
           <Link
             href="/auth?mode=register"
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-frost-border bg-frost-surface px-4 py-2.5 text-sm font-medium text-frost-text transition hover:border-frost-accent/40 hover:bg-frost-raised hover:text-frost-text"
           >
             <UserPlus
               size={

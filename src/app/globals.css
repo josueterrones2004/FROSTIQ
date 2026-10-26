@@ -1,16 +1,71 @@
 @import "tailwindcss";
 
+@custom-variant desktop (@media (min-width: 900px));
+
+/* =========================================
+   FROSTIQ — COBALT INK
+   Design tokens v1
+========================================= */
+
 :root {
+  /* Fondos */
+  --frost-bg: #05070b;
+  --frost-surface: #12161f;
+  --frost-surface-raised: #1c2330;
+
+  /* Bordes */
+  --frost-border: #2b3545;
+
+  /* Tipografía */
+  --frost-text: #f0f3f8;
+  --frost-text-muted: #9ca8b8;
+
+  /* Identidad */
+  --frost-accent: #4688e8;
+  --frost-accent-hover: #6ba3f0;
+  --frost-accent-active: #172b49;
+
+  /* Estados funcionales */
+  --frost-success: #78b892;
+  --frost-warning: #d2a56d;
+  --frost-danger: #c77786;
+
+  /* Variables originales */
   --background: #ffffff;
   --foreground: #171717;
 }
 
+/* =========================================
+   TAILWIND CSS 4
+========================================= */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-frost-bg: var(--frost-bg);
+  --color-frost-surface: var(--frost-surface);
+  --color-frost-raised: var(--frost-surface-raised);
+  --color-frost-border: var(--frost-border);
+
+  --color-frost-text: var(--frost-text);
+  --color-frost-muted: var(--frost-text-muted);
+
+  --color-frost-accent: var(--frost-accent);
+  --color-frost-accent-hover: var(--frost-accent-hover);
+  --color-frost-active: var(--frost-accent-active);
+
+  --color-frost-success: var(--frost-success);
+  --color-frost-warning: var(--frost-warning);
+  --color-frost-danger: var(--frost-danger);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+/* =========================================
+   COMPATIBILIDAD CON EL TEMA ACTUAL
+========================================= */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -23,4 +78,136 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* FROSTIQ — Interacciones móviles */
+
+@keyframes frost-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes frost-sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes frost-modal-in {
+  from { opacity: 0; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes frost-modal-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(.92); }
+}
+
+@keyframes frost-toast-in {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes frost-toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-24px); }
+}
+
+@keyframes frost-toast-buzz {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes frost-review-enter {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes frost-review-leave {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+.frost-sheet-enter {
+  animation: frost-sheet-in 320ms cubic-bezier(.22,1,.36,1) both;
+}
+
+.frost-sheet-exit {
+  animation: frost-sheet-out 260ms ease-in both;
+}
+
+.frost-modal-enter {
+  animation: frost-modal-in 280ms cubic-bezier(.22,1,.36,1) both;
+}
+
+.frost-modal-exit {
+  animation: frost-modal-out 220ms ease-in both;
+}
+
+.frost-toast-enter {
+  animation: frost-toast-in 260ms ease-out both;
+}
+
+.frost-toast-exit {
+  animation: frost-toast-out 220ms ease-in both;
+}
+
+.frost-toast-buzz {
+  animation: frost-toast-buzz 280ms ease-in-out;
+}
+
+.frost-review-enter {
+  animation: frost-review-enter 360ms cubic-bezier(.22,1,.36,1) both;
+}
+
+.frost-review-leave {
+  animation: frost-review-leave 320ms ease-in-out both;
+}
+
+/* Oculta el indicador, sin desactivar el scroll */
+@media (max-width: 899px) {
+  .frost-mobile-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .frost-mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frost-sheet-enter,
+  .frost-sheet-exit,
+  .frost-modal-enter,
+  .frost-modal-exit,
+  .frost-toast-enter,
+  .frost-toast-exit,
+  .frost-toast-buzz,
+  .frost-review-enter,
+  .frost-review-leave {
+    animation-duration: 1ms;
+  }
+}
+
+/* FROST_AUDIT_UTILITIES_V1 */
+.frost-audit-text-10 { font-size: 10px; }
+.frost-audit-text-11 { font-size: 11px; }
+.frost-audit-text-13 { font-size: 13px; }
+.frost-audit-max-1440 { max-width: 1440px; }
+
+/* FROST_MOBILE_LIBRARY_GRID_V1 */
+@media (min-width: 560px) {
+  .frost-mobile-library-grid-columns {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 800px) {
+  .frost-mobile-library-grid-columns {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
